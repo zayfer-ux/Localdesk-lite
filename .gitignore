@@ -1,0 +1,21 @@
+# Credenciales y variables privadas
+.env
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Entorno virtual
+.venv/
+venv/
+
+# Configuración del editor
+.vscode/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Base de datos local
+*.db
