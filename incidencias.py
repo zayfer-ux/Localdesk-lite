@@ -49,3 +49,28 @@ def registrar_incidencia():
         cliente.close()
     except Exception as e:
         print(f"\n[Error] No se pudo guardar el registro: {e}")
+
+def mostrar_incidencias():
+    print("\n" + "-" * 40)
+    print(" LISTADO DE INCIDENCIAS")
+    print("-" * 40)
+    
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        
+        # Consultar los campos más importantes
+        sql = "SELECT id, titulo, equipo, prioridad, estado FROM incidencias"
+        resultado = cliente.execute(sql)
+        
+        if not resultado.rows:
+            print("\n[Info] No hay incidencias registradas en este momento.")
+        else:
+            for fila in resultado.rows:
+                # fila[0] es id, fila[1] es titulo, fila[2] es equipo, fila[3] es prioridad, fila[4] es estado
+                print(f"ID: {fila[0]} | Estado: {fila[4]} | Prioridad: {fila[3]}")
+                print(f"Equipo: {fila[2]} | Problema: {fila[1]}")
+                print("-" * 40)
+                
+        cliente.close()
+    except Exception as e:
+        print(f"\n[Error] No se pudieron consultar los registros: {e}")

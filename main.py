@@ -23,7 +23,7 @@ def ejecutar_programa():
             incidencias.registrar_incidencia()
 
         elif opcion == "2":
-            print("\nLa función de mostrar estará disponible próximamente.")
+            incidencias.mostrar_incidencias()
 
         elif opcion == "3":
             print("\nLa función de búsqueda estará disponible próximamente.")
@@ -46,6 +46,7 @@ def ejecutar_programa():
 
         else:
             print("\n[Error] Opción incorrecta. Seleccione una opción del 1 al 8.")
+
 
 if __name__ == "__main__":
     ejecutar_programa()
