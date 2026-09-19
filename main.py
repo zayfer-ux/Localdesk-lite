@@ -26,7 +26,7 @@ def ejecutar_programa():
             incidencias.mostrar_incidencias()
 
         elif opcion == "3":
-            print("\nLa función de búsqueda estará disponible próximamente.")
+            incidencias.buscar_incidencia()
 
         elif opcion == "4":
             print("\nLa función de actualización estará disponible próximamente.")

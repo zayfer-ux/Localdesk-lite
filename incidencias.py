@@ -74,3 +74,46 @@ def mostrar_incidencias():
         cliente.close()
     except Exception as e:
         print(f"\n[Error] No se pudieron consultar los registros: {e}")
+
+def buscar_incidencia():
+    print("\n" + "-" * 40)
+    print(" BUSCAR INCIDENCIA")
+    print("-" * 40)
+    
+    id_buscar = input("Ingrese el ID de la incidencia: ").strip()
+    
+    if not id_buscar.isdigit():
+        print("\n[Error] El ID debe ser un número entero.")
+        return
+        
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        
+        sql = "SELECT * FROM incidencias WHERE id = ?"
+        resultado = cliente.execute(sql, (id_buscar,))
+        
+        if not resultado.rows:
+            print(f"\n[Info] No se encontró ninguna incidencia con el ID {id_buscar}.")
+        else:
+            fila = resultado.rows[0]
+            # La base de datos devuelve una tupla con los campos en el orden en que se crearon
+            print("\n--- DETALLES DE LA INCIDENCIA ---")
+            print(f"ID:            {fila[0]}")
+            print(f"Estado:        {fila[7]}")
+            print(f"Prioridad:     {fila[6]}")
+            print(f"Título:        {fila[1]}")
+            print(f"Categoría:     {fila[4]}")
+            print(f"Equipo:        {fila[2]}")
+            print(f"Área:          {fila[3]}")
+            print(f"Descripción:   {fila[5]}")
+            print(f"Reportado por: {fila[8]}")
+            print(f"Fecha reporte: {fila[10]}")
+            
+            # Si ya tiene una solución y fecha de solución, las mostramos
+            if fila[9]:
+                print(f"Solución:      {fila[9]}")
+                print(f"Fecha sol.:    {fila[11]}")
+                
+        cliente.close()
+    except Exception as e:
+        print(f"\n[Error] No se pudo realizar la búsqueda: {e}")
