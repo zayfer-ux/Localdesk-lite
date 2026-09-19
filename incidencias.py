@@ -117,3 +117,57 @@ def buscar_incidencia():
         cliente.close()
     except Exception as e:
         print(f"\n[Error] No se pudo realizar la búsqueda: {e}")
+
+def actualizar_estado():
+    print("\n" + "-" * 40)
+    print(" ACTUALIZAR ESTADO DE INCIDENCIA")
+    print("-" * 40)
+    
+    id_buscar = input("Ingrese el ID de la incidencia a actualizar: ").strip()
+    
+    if not id_buscar.isdigit():
+        print("\n[Error] El ID debe ser un número entero.")
+        return
+        
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        
+        # Verificar que el registro existe antes de actualizar
+        sql_verificar = "SELECT id, estado FROM incidencias WHERE id = ?"
+        resultado = cliente.execute(sql_verificar, (id_buscar,))
+        
+        if not resultado.rows:
+            print(f"\n[Info] No se encontró ninguna incidencia con el ID {id_buscar}.")
+            cliente.close()
+            return
+            
+        estado_actual = resultado.rows[0][1]
+        print(f"\nEstado actual: {estado_actual}")
+        print("Opciones: 1. Pendiente | 2. En revisión")
+        print("(Nota: Para marcar como 'Resuelta', utilice la opción 5 del menú principal).")
+        
+        opcion_estado = input("Seleccione el nuevo estado (1 o 2): ").strip()
+        
+        if opcion_estado == "1":
+            nuevo_estado = "Pendiente"
+        elif opcion_estado == "2":
+            nuevo_estado = "En revisión"
+        else:
+            print("\n[Error] Opción no válida. Se canceló la actualización.")
+            cliente.close()
+            return
+            
+        if nuevo_estado == estado_actual:
+            print(f"\n[Info] La incidencia ya tiene el estado '{nuevo_estado}'.")
+            cliente.close()
+            return
+            
+        # Ejecutar la actualización en la base de datos
+        sql_actualizar = "UPDATE incidencias SET estado = ? WHERE id = ?"
+        cliente.execute(sql_actualizar, (nuevo_estado, id_buscar))
+        
+        print(f"\n[Éxito] El estado se actualizó correctamente a '{nuevo_estado}'.")
+            
+        cliente.close()
+    except Exception as e:
+        print(f"\n[Error] No se pudo actualizar el estado: {e}")

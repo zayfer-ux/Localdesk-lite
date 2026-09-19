@@ -29,7 +29,7 @@ def ejecutar_programa():
             incidencias.buscar_incidencia()
 
         elif opcion == "4":
-            print("\nLa función de actualización estará disponible próximamente.")
+            incidencias.actualizar_estado()
 
         elif opcion == "5":
             print("\nLa función para registrar soluciones estará disponible próximamente.")
