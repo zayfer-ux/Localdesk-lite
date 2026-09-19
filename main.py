@@ -1,3 +1,5 @@
+import incidencias
+
 def mostrar_menu():
     print("\n" + "=" * 40)
     print("          LOCALDESK LITE")
@@ -18,7 +20,7 @@ def ejecutar_programa():
         opcion = input("Seleccione una opción: ").strip()
 
         if opcion == "1":
-            print("\nLa función de registrar estará disponible próximamente.")
+            incidencias.registrar_incidencia()
 
         elif opcion == "2":
             print("\nLa función de mostrar estará disponible próximamente.")
@@ -43,8 +45,7 @@ def ejecutar_programa():
             break
 
         else:
-            print("\nOpción incorrecta. Seleccione una opción del 1 al 8.")
-
+            print("\n[Error] Opción incorrecta. Seleccione una opción del 1 al 8.")
 
 if __name__ == "__main__":
     ejecutar_programa()
