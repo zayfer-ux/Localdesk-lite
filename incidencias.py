@@ -171,3 +171,57 @@ def actualizar_estado():
         cliente.close()
     except Exception as e:
         print(f"\n[Error] No se pudo actualizar el estado: {e}")
+
+def registrar_solucion():
+    print("\n" + "-" * 40)
+    print(" REGISTRAR SOLUCIÓN")
+    print("-" * 40)
+    
+    id_buscar = input("Ingrese el ID de la incidencia a resolver: ").strip()
+    
+    if not id_buscar.isdigit():
+        print("\n[Error] El ID debe ser un número entero.")
+        return
+        
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        
+        # Comprobar si existe y ver su estado actual
+        sql_verificar = "SELECT estado FROM incidencias WHERE id = ?"
+        resultado = cliente.execute(sql_verificar, (id_buscar,))
+        
+        if not resultado.rows:
+            print(f"\n[Info] No se encontró ninguna incidencia con el ID {id_buscar}.")
+            cliente.close()
+            return
+            
+        estado_actual = resultado.rows[0][0]
+        
+        if estado_actual == "Resuelta":
+            print("\n[Info] Esta incidencia ya se encuentra resuelta.")
+            cliente.close()
+            return
+            
+        solucion = input("Describa la solución aplicada: ").strip()
+        
+        if not solucion:
+            print("\n[Error] La solución no puede estar vacía.")
+            cliente.close()
+            return
+            
+        fecha_solucion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        nuevo_estado = "Resuelta"
+        
+        # Ejecutar la actualización múltiple
+        sql_actualizar = """
+        UPDATE incidencias 
+        SET solucion = ?, estado = ?, fecha_solucion = ? 
+        WHERE id = ?
+        """
+        cliente.execute(sql_actualizar, (solucion, nuevo_estado, fecha_solucion, id_buscar))
+        
+        print(f"\n[Éxito] Incidencia {id_buscar} marcada como 'Resuelta'.")
+            
+        cliente.close()
+    except Exception as e:
+        print(f"\n[Error] No se pudo registrar la solución: {e}")

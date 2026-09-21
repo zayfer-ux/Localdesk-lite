@@ -32,7 +32,7 @@ def ejecutar_programa():
             incidencias.actualizar_estado()
 
         elif opcion == "5":
-            print("\nLa función para registrar soluciones estará disponible próximamente.")
+            incidencias.registrar_solucion()
 
         elif opcion == "6":
             print("\nLa función para eliminar estará disponible próximamente.")
