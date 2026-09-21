@@ -35,7 +35,7 @@ def ejecutar_programa():
             incidencias.registrar_solucion()
 
         elif opcion == "6":
-            print("\nLa función para eliminar estará disponible próximamente.")
+            incidencias.eliminar_incidencia()
 
         elif opcion == "7":
             print("\nLas estadísticas estarán disponibles próximamente.")

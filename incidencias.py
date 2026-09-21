@@ -225,3 +225,44 @@ def registrar_solucion():
         cliente.close()
     except Exception as e:
         print(f"\n[Error] No se pudo registrar la solución: {e}")
+
+def eliminar_incidencia():
+    print("\n" + "-" * 40)
+    print(" ELIMINAR INCIDENCIA")
+    print("-" * 40)
+    
+    id_buscar = input("Ingrese el ID de la incidencia a eliminar: ").strip()
+    
+    if not id_buscar.isdigit():
+        print("\n[Error] El ID debe ser un número entero.")
+        return
+        
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        
+        # Verificar que el registro existe y obtener datos básicos para la confirmación
+        sql_verificar = "SELECT titulo, equipo FROM incidencias WHERE id = ?"
+        resultado = cliente.execute(sql_verificar, (id_buscar,))
+        
+        if not resultado.rows:
+            print(f"\n[Info] No se encontró ninguna incidencia con el ID {id_buscar}.")
+            cliente.close()
+            return
+            
+        titulo = resultado.rows[0][0]
+        equipo = resultado.rows[0][1]
+        
+        # Confirmación de seguridad
+        print(f"\n⚠️ Advertencia: Está a punto de eliminar el reporte '{titulo}' del equipo '{equipo}'.")
+        confirmacion = input("¿Está completamente seguro? (s/n): ").strip().lower()
+        
+        if confirmacion == 's':
+            sql_eliminar = "DELETE FROM incidencias WHERE id = ?"
+            cliente.execute(sql_eliminar, (id_buscar,))
+            print(f"\n[Éxito] La incidencia {id_buscar} fue eliminada permanentemente.")
+        else:
+            print("\n[Info] Operación cancelada. El registro no fue eliminado.")
+            
+        cliente.close()
+    except Exception as e:
+        print(f"\n[Error] No se pudo eliminar el registro: {e}")
