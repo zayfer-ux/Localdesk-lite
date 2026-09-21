@@ -38,7 +38,7 @@ def ejecutar_programa():
             incidencias.eliminar_incidencia()
 
         elif opcion == "7":
-            print("\nLas estadísticas estarán disponibles próximamente.")
+            incidencias.mostrar_estadisticas()
 
         elif opcion == "8":
             print("\nGracias por utilizar LocalDesk Lite.")

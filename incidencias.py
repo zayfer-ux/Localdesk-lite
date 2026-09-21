@@ -266,3 +266,44 @@ def eliminar_incidencia():
         cliente.close()
     except Exception as e:
         print(f"\n[Error] No se pudo eliminar el registro: {e}")
+
+def mostrar_estadisticas():
+    print("\n" + "=" * 40)
+    print(" ESTADÍSTICAS DEL SISTEMA")
+    print("=" * 40)
+    
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        
+        # Consultar el total de incidencias
+        resultado_total = cliente.execute("SELECT COUNT(*) FROM incidencias")
+        total = resultado_total.rows[0][0]
+        
+        if total == 0:
+            print("\n[Info] No hay incidencias registradas para generar estadísticas.")
+            cliente.close()
+            return
+            
+        print(f"\nTotal de reportes históricos: {total}")
+        
+        # Consultar incidencias agrupadas por estado
+        print("\n--- Desglose por Estado ---")
+        resultado_estados = cliente.execute("SELECT estado, COUNT(*) FROM incidencias GROUP BY estado")
+        for fila in resultado_estados.rows:
+            estado = fila[0]
+            cantidad = fila[1]
+            print(f"- {estado}: {cantidad}")
+            
+        # Consultar incidencias agrupadas por categoría
+        print("\n--- Desglose por Categoría ---")
+        resultado_categorias = cliente.execute("SELECT categoria, COUNT(*) FROM incidencias GROUP BY categoria")
+        for fila in resultado_categorias.rows:
+            categoria = fila[0]
+            cantidad = fila[1]
+            print(f"- {categoria}: {cantidad}")
+            
+        print("\n" + "=" * 40)
+        
+        cliente.close()
+    except Exception as e:
+        print(f"\n[Error] No se pudieron generar las estadísticas: {e}")
