@@ -1,52 +1,49 @@
-# LocalDesk Lite
+# 🖥️ LocalDesk Lite
 
-LocalDesk Lite es un sistema sencillo desarrollado en Python para registrar
-y dar seguimiento a incidencias de equipos de cómputo en pequeños negocios
-o instituciones educativas.
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![Turso](https://img.shields.io/badge/Turso_DB-000000?style=flat-square&logo=sqlite&logoColor=white)
+![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-FF8C00?style=flat-square)
 
-## Problema
+> **LocalDesk Lite** es un sistema de consola ágil y directo, desarrollado en Python, diseñado para registrar, gestionar y dar seguimiento a incidencias de equipos de cómputo en pequeños negocios e instituciones educativas.
 
-Los problemas técnicos generalmente se comunican de manera verbal o mediante
-mensajes, lo que dificulta conocer su estado y conservar un historial de las
-soluciones realizadas.
+---
 
-## Objetivo
+## 🚨 El Problema vs. 💡 La Solución
 
-Desarrollar un sistema que permita registrar, consultar, actualizar y resolver
-incidencias relacionadas con equipos de cómputo.
+**El Problema:**  
+Los reportes técnicos suelen comunicarse de manera informal (en pasillos, notas de papel o mensajes directos). Esto provoca que los reportes se olviden, los usuarios ignoren el estado de su equipo, y no exista un historial de fallas o soluciones.
 
-## Funciones planeadas
+**La Solución:**  
+Centralizar el caos. LocalDesk Lite permite documentar qué problema ocurrió, en qué equipo, quién lo reportó y, lo más importante, conservar un registro histórico de cómo se resolvió para agilizar futuros mantenimientos.
 
-- Registrar incidencias.
-- Mostrar incidencias.
-- Buscar incidencias.
-- Actualizar su estado.
-- Registrar soluciones.
-- Eliminar registros incorrectos.
-- Mostrar estadísticas básicas.
+---
 
-## Tecnologías
+## ✨ Funciones y Progreso (Roadmap)
 
-- Python
-- Turso
-- SQL
-- Antigravity IDE
-- Git
-- GitHub
+El desarrollo se encuentra en su primera fase. A continuación el estado actual de las funcionalidades:
 
-## Estado del proyecto
+- [x] 📝 **Registrar:** Crear nuevas incidencias tecnológicas.
+- [x] 📋 **Mostrar:** Visualizar el listado general de reportes activos.
+- [x] 🔍 **Buscar:** Consultar los detalles completos de una incidencia por ID.
+- [x] 🔄 **Actualizar:** Cambiar el estado del reporte (Pendiente / En revisión).
+- [ ] ✅ **Resolver:** Registrar la solución aplicada y marcar como finalizada.
+- [ ] 🗑️ **Eliminar:** Borrar registros duplicados o incorrectos.
+- [ ] 📊 **Estadísticas:** Mostrar un panel básico con el conteo de incidencias.
 
-Primera versión en desarrollo.
+---
 
-Actualmente, el programa cuenta con el menú principal y la validación de
-opciones.
+## 🛠️ Stack Tecnológico
 
-## Ejecución
+* **Lenguaje:** Python
+* **Base de Datos:** Turso (Edge SQL)
+* **IDE:** Antigravity IDE
+* **Control de Versiones:** Git & GitHub
 
-Para iniciar el programa:
+---
 
+## 🚀 Instalación y Ejecución
+
+Para iniciar el programa en tu entorno local, clona el repositorio, asegúrate de tener tu archivo `.env` configurado con tus credenciales de Turso, y ejecuta el siguiente comando en tu terminal:
+
+```bash
 python main.py
-
-## Autor
-
-Misael Chan Oceguera
