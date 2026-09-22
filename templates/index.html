@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalDesk Lite</title>
+    <!-- Importar Bootstrap para un diseño profesional -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row mb-4">
+            <div class="col">
+                <h2>LocalDesk Lite - Panel Principal</h2>
+                <p class="text-muted">Sistema de gestión de incidencias técnicas</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Problema</th>
+                            <th>Equipo</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Aquí Flask insertará los datos de la base de datos -->
+                        {% for item in incidencias %}
+                        <tr>
+                            <td>{{ item[0] }}</td>
+                            <td><strong>{{ item[1] }}</strong></td>
+                            <td>{{ item[2] }}</td>
+                            <td>
+                                <!-- Colores dinámicos según el estado -->
+                                {% if item[7] == 'Resuelta' %}
+                                <span class="badge bg-success">Resuelta</span>
+                                {% elif item[7] == 'En revisión' %}
+                                <span class="badge bg-warning text-dark">En revisión</span>
+                                {% else %}
+                                <span class="badge bg-danger">Pendiente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item[6] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">No hay incidencias registradas en este momento.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
