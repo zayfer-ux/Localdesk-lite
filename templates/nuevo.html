@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Incidencia - LocalDesk Lite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+    <div class="container mt-5" style="max-width: 800px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Registrar Nueva Incidencia</h2>
+            <a href="/" class="btn btn-secondary">Volver al inicio</a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- El formulario enviará los datos usando el método POST -->
+                <form action="/nuevo" method="POST">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Título breve del problema</label>
+                            <input type="text" name="titulo" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Identificador del Equipo</label>
+                            <input type="text" name="equipo" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Área o Departamento</label>
+                            <input type="text" name="area" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Categoría</label>
+                            <select name="categoria" class="form-select">
+                                <option value="Hardware">Hardware</option>
+                                <option value="Software">Software</option>
+                                <option value="Red">Red</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Prioridad</label>
+                            <select name="prioridad" class="form-select">
+                                <option value="Baja">Baja</option>
+                                <option value="Media" selected>Media</option>
+                                <option value="Alta">Alta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descripción detallada</label>
+                        <textarea name="descripcion" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Reportado por (Nombre)</label>
+                        <input type="text" name="reportado_por" class="form-control" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Guardar Incidencia</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
