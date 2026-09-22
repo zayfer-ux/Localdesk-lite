@@ -60,5 +60,24 @@ def nuevo_registro():
     # Si entra normal (GET), solo le mostramos el formulario
     return render_template('nuevo.html')
 
+# Ruta 3: Ver los detalles de una incidencia específica
+@app.route('/incidencia/<int:id>')
+def ver_detalle(id):
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        # Buscar el registro exacto usando el ID
+        resultado = cliente.execute("SELECT * FROM incidencias WHERE id = ?", (id,))
+        cliente.close()
+        
+        if resultado.rows:
+            # Extraer la primera (y única) fila encontrada
+            datos_incidencia = resultado.rows[0]
+            return render_template('detalle.html', incidencia=datos_incidencia)
+        else:
+            return "<h1>Error: Incidencia no encontrada</h1>", 404
+            
+    except Exception as e:
+        return f"<h1>Error al conectar con la base de datos: {e}</h1>"
+
 if __name__ == '__main__':
     app.run(debug=True)
