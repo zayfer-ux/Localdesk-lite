@@ -11,7 +11,7 @@ token = os.getenv("TURSO_AUTH_TOKEN")
 
 app = Flask(__name__)
 
-# Ruta 1: Mostrar el panel principal (Ya la teníamos)
+# Ruta 1: Mostrar el panel principal y estadísticas
 @app.route('/')
 def inicio():
     try:
@@ -19,11 +19,22 @@ def inicio():
         resultado = cliente.execute("SELECT * FROM incidencias ORDER BY id DESC")
         lista_incidencias = resultado.rows
         cliente.close()
+        
+        # Calcular estadísticas rápidas
+        stats = {
+            'total': len(lista_incidencias),
+            'pendientes': sum(1 for i in lista_incidencias if i[7] == 'Pendiente'),
+            'revision': sum(1 for i in lista_incidencias if i[7] == 'En revisión'),
+            'resueltas': sum(1 for i in lista_incidencias if i[7] == 'Resuelta')
+        }
+        
     except Exception as e:
         lista_incidencias = []
+        stats = {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}
         print(f"Error base de datos: {e}")
 
-    return render_template('index.html', incidencias=lista_incidencias)
+    # Enviar datos y estadísticas al HTML
+    return render_template('index.html', incidencias=lista_incidencias, stats=stats)
 
 # Ruta 2: Mostrar el formulario y guardar los datos (NUEVA)
 @app.route('/nuevo', methods=['GET', 'POST'])

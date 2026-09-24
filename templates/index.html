@@ -17,58 +17,92 @@
                 <p class="text-muted">Sistema de gestión de incidencias técnicas</p>
                 <!-- Botón de crear nuevo registro -->
                 <a href="/nuevo" class="btn btn-primary mb-3">📝 Registrar Nueva Incidencia</a>
-            </div>
-        </div>
-
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <table class="table table-hover align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Problema</th>
-                            <th>Equipo</th>
-                            <th>Estado</th>
-                            <th>Prioridad</th>
-                            <th>Acciones</th> <!-- NUEVA COLUMNA -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Aquí Flask insertará los datos -->
-                        {% for item in incidencias %}
-                        <tr>
-                            <td>{{ item[0] }}</td>
-                            <td><strong>{{ item[1] }}</strong></td>
-                            <td>{{ item[2] }}</td>
-                            <td>
-                                <!-- Colores dinámicos según el estado -->
-                                {% if item[7] == 'Resuelta' %}
-                                <span class="badge bg-success">Resuelta</span>
-                                {% elif item[7] == 'En revisión' %}
-                                <span class="badge bg-warning text-dark">En revisión</span>
+                <!-- PANEL DE ESTADÍSTICAS -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Histórico</h6>
+                                <h3 class="mb-0">{{ stats.total }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title">Pendientes</h6>
+                                <h3 class="mb-0">{{ stats.pendientes }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title">En Revisión</h6>
+                                <h3 class="mb-0">{{ stats.revision }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title">Resueltas</h6>
+                                <h3 class="mb-0">{{ stats.resueltas }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- FIN PANEL DE ESTADÍSTICAS -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Problema</th>
+                                    <th>Equipo</th>
+                                    <th>Estado</th>
+                                    <th>Prioridad</th>
+                                    <th>Acciones</th> <!-- NUEVA COLUMNA -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Aquí Flask insertará los datos -->
+                                {% for item in incidencias %}
+                                <tr>
+                                    <td>{{ item[0] }}</td>
+                                    <td><strong>{{ item[1] }}</strong></td>
+                                    <td>{{ item[2] }}</td>
+                                    <td>
+                                        <!-- Colores dinámicos según el estado -->
+                                        {% if item[7] == 'Resuelta' %}
+                                        <span class="badge bg-success">Resuelta</span>
+                                        {% elif item[7] == 'En revisión' %}
+                                        <span class="badge bg-warning text-dark">En revisión</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item[6] }}</td>
+                                    <td>
+                                        <!-- NUEVO BOTÓN DE DETALLES -->
+                                        <a href="/incidencia/{{ item[0] }}" class="btn btn-sm btn-info text-white">Ver
+                                            detalles</a>
+                                    </td>
+                                </tr>
                                 {% else %}
-                                <span class="badge bg-danger">Pendiente</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ item[6] }}</td>
-                            <td>
-                                <!-- NUEVO BOTÓN DE DETALLES -->
-                                <a href="/incidencia/{{ item[0] }}" class="btn btn-sm btn-info text-white">Ver
-                                    detalles</a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <!-- Ajustado a 6 columnas -->
-                            <td colspan="6" class="text-center py-4">No hay incidencias registradas en este momento.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                <tr>
+                                    <!-- Ajustado a 6 columnas -->
+                                    <td colspan="6" class="text-center py-4">No hay incidencias registradas en este
+                                        momento.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 </body>
 
 </html>
