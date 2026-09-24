@@ -26,9 +26,8 @@ El desarrollo se encuentra en su primera fase. A continuación el estado actual 
 - [x] 📋 **Mostrar:** Visualizar el listado general de reportes activos.
 - [x] 🔍 **Buscar:** Consultar los detalles completos de una incidencia por ID.
 - [x] 🔄 **Actualizar:** Cambiar el estado del reporte (Pendiente / En revisión).
-- [ ] ✅ **Resolver:** Registrar la solución aplicada y marcar como finalizada.
-- [ ] 🗑️ **Eliminar:** Borrar registros duplicados o incorrectos.
-- [ ] 📊 **Estadísticas:** Mostrar un panel básico con el conteo de incidencias.
+- [x] 🗑️ **Eliminar:** Borrar registros duplicados o incorrectos.
+- [ x] 📊 **Estadísticas:** Mostrar un panel básico con el conteo de incidencias.
 
 ---
 
