@@ -108,5 +108,17 @@ def resolver_incidencia(id):
         
     return redirect(url_for('ver_detalle', id=id))
 
+# Ruta 6: Eliminar registro
+@app.route('/eliminar/<int:id>', methods=['POST'])
+def eliminar_incidencia(id):
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        cliente.execute("DELETE FROM incidencias WHERE id = ?", (id,))
+        cliente.close()
+    except Exception as e:
+        print(f"Error al eliminar incidencia: {e}")
+        
+    return redirect(url_for('inicio'))
+
 if __name__ == '__main__':
     app.run(debug=True)

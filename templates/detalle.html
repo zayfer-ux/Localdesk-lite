@@ -12,7 +12,14 @@
     <div class="container mt-5" style="max-width: 800px;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Detalle de Incidencia #{{ incidencia[0] }}</h2>
-            <a href="/" class="btn btn-secondary">Volver al inicio</a>
+            <div class="d-flex gap-2">
+                <a href="/" class="btn btn-secondary">Volver al inicio</a>
+                <!-- Botón de Eliminar con confirmación -->
+                <form action="/eliminar/{{ incidencia[0] }}" method="POST"
+                    onsubmit="return confirm('⚠️ ¿Estás completamente seguro de eliminar esta incidencia? Esta acción no se puede deshacer.');">
+                    <button type="submit" class="btn btn-danger">🗑️ Eliminar</button>
+                </form>
+            </div>
         </div>
 
         <div class="card shadow-sm mb-4">
@@ -50,7 +57,6 @@
                     <div class="col-sm-8">{{ incidencia[10] }}</div>
                 </div>
 
-                <!-- Si ESTÁ resuelta, mostrar la solución -->
                 {% if incidencia[9] %}
                 <hr>
                 <div class="row mb-3">
@@ -61,13 +67,10 @@
                     <div class="col-sm-4 text-muted">Fecha de solución:</div>
                     <div class="col-sm-8">{{ incidencia[11] }}</div>
                 </div>
-
-                <!-- Si NO está resuelta, mostrar panel de gestión -->
                 {% else %}
                 <hr>
                 <h5 class="mb-3">Panel de Gestión</h5>
                 <div class="row">
-                    <!-- Cambiar Estado -->
                     <div class="col-md-5 mb-3">
                         <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
                             <select name="nuevo_estado" class="form-select">
@@ -79,7 +82,6 @@
                             <button type="submit" class="btn btn-warning">Actualizar</button>
                         </form>
                     </div>
-                    <!-- Registrar Solución -->
                     <div class="col-md-7">
                         <form action="/resolver/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
                             <input type="text" name="solucion" class="form-control"
