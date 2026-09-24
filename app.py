@@ -79,5 +79,34 @@ def ver_detalle(id):
     except Exception as e:
         return f"<h1>Error al conectar con la base de datos: {e}</h1>"
 
+# Ruta 4: Actualizar el estado a Pendiente o En revisión
+@app.route('/actualizar_estado/<int:id>', methods=['POST'])
+def actualizar_estado(id):
+    nuevo_estado = request.form['nuevo_estado']
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        cliente.execute("UPDATE incidencias SET estado = ? WHERE id = ?", (nuevo_estado, id))
+        cliente.close()
+    except Exception as e:
+        print(f"Error al actualizar estado: {e}")
+        
+    return redirect(url_for('ver_detalle', id=id))
+
+# Ruta 5: Registrar solución y marcar como Resuelta
+@app.route('/resolver/<int:id>', methods=['POST'])
+def resolver_incidencia(id):
+    solucion = request.form['solucion']
+    fecha_solucion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        sql = "UPDATE incidencias SET solucion = ?, estado = 'Resuelta', fecha_solucion = ? WHERE id = ?"
+        cliente.execute(sql, (solucion, fecha_solucion, id))
+        cliente.close()
+    except Exception as e:
+        print(f"Error al resolver incidencia: {e}")
+        
+    return redirect(url_for('ver_detalle', id=id))
+
 if __name__ == '__main__':
     app.run(debug=True)

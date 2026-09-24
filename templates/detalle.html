@@ -17,8 +17,8 @@
 
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{{ incidencia[1] }}</h5> <!-- Título -->
-                <span class="badge bg-light text-dark fs-6">{{ incidencia[7] }}</span> <!-- Estado -->
+                <h5 class="mb-0">{{ incidencia[1] }}</h5>
+                <span class="badge bg-light text-dark fs-6">{{ incidencia[7] }}</span>
             </div>
             <div class="card-body">
                 <div class="row mb-3">
@@ -50,7 +50,7 @@
                     <div class="col-sm-8">{{ incidencia[10] }}</div>
                 </div>
 
-                <!-- Si hay solución, mostrarla -->
+                <!-- Si ESTÁ resuelta, mostrar la solución -->
                 {% if incidencia[9] %}
                 <hr>
                 <div class="row mb-3">
@@ -60,6 +60,33 @@
                 <div class="row">
                     <div class="col-sm-4 text-muted">Fecha de solución:</div>
                     <div class="col-sm-8">{{ incidencia[11] }}</div>
+                </div>
+
+                <!-- Si NO está resuelta, mostrar panel de gestión -->
+                {% else %}
+                <hr>
+                <h5 class="mb-3">Panel de Gestión</h5>
+                <div class="row">
+                    <!-- Cambiar Estado -->
+                    <div class="col-md-5 mb-3">
+                        <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
+                            <select name="nuevo_estado" class="form-select">
+                                <option value="Pendiente" {% if incidencia[7]=='Pendiente' %}selected{% endif %}>
+                                    Pendiente</option>
+                                <option value="En revisión" {% if incidencia[7]=='En revisión' %}selected{% endif %}>En
+                                    revisión</option>
+                            </select>
+                            <button type="submit" class="btn btn-warning">Actualizar</button>
+                        </form>
+                    </div>
+                    <!-- Registrar Solución -->
+                    <div class="col-md-7">
+                        <form action="/resolver/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
+                            <input type="text" name="solucion" class="form-control"
+                                placeholder="Describa la solución..." required>
+                            <button type="submit" class="btn btn-success">Resolver</button>
+                        </form>
+                    </div>
                 </div>
                 {% endif %}
             </div>
