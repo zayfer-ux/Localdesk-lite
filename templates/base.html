@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalDesk Lite</title>
+    <!-- Bootstrap para la cuadrícula -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome para los iconos del menú -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tus estilos personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <!-- MENÚ LATERAL -->
+        <nav class="sidebar">
+            <div class="mb-5 text-center">
+                <h4 style="color: var(--purple-light); font-weight: 800; letter-spacing: 2px;">LOCALDESK</h4>
+            </div>
+
+            <!-- La clase 'active' se encenderá dependiendo de en qué ruta estés -->
+            <a href="/" class="nav-link text-decoration-none {% if request.path == '/' %}active{% endif %}">
+                <i class="fa-solid fa-border-all"></i> Dashboard
+            </a>
+            <a href="/nuevo" class="nav-link text-decoration-none {% if request.path == '/nuevo' %}active{% endif %}">
+                <i class="fa-solid fa-plus"></i> Nueva Incidencia
+            </a>
+
+            <div class="mt-auto">
+                <a href="/logout" class="nav-link text-decoration-none text-danger"
+                    style="box-shadow: none; hover: background-color: rgba(220,53,69,0.1);">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                </a>
+            </div>
+        </nav>
+
+        <!-- CONTENIDO DINÁMICO -->
+        <main class="main-content">
+            {% block content %}
+            <!-- Aquí Flask inyectará index.html, detalle.html, etc. -->
+            {% endblock %}
+        </main>
+    </div>
+</body>
+
+</html>
