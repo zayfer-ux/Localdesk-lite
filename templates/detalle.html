@@ -1,99 +1,102 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle de Incidencia - LocalDesk Lite</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 style="color: var(--purple-light); font-weight: 800;">Inspección #{{ incidencia[0] }}</h2>
+    <div class="d-flex gap-3">
+        <a href="/" class="btn btn-outline-secondary text-white" style="border-color: rgba(255,255,255,0.2);">Volver</a>
 
-<body class="bg-light">
-    <div class="container mt-5" style="max-width: 800px;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Detalle de Incidencia #{{ incidencia[0] }}</h2>
-            <div class="d-flex gap-2">
-                <a href="/" class="btn btn-secondary">Volver al inicio</a>
-                <!-- Botón de Eliminar con confirmación -->
-                <form action="/eliminar/{{ incidencia[0] }}" method="POST"
-                    onsubmit="return confirm('⚠️ ¿Estás completamente seguro de eliminar esta incidencia? Esta acción no se puede deshacer.');">
-                    <button type="submit" class="btn btn-danger">🗑️ Eliminar</button>
+        <!-- Botón Delete Animation adaptado al modo oscuro -->
+        <form action="/eliminar/{{ incidencia[0] }}" method="POST"
+            onsubmit="return confirm('⚠️ ¿Deseas purgar este registro permanentemente de la base de datos?');">
+            <button type="submit" class="btn"
+                style="background: linear-gradient(135deg, #f43f5e, #be123c); color: white; border-radius: 8px; box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); font-weight: bold; transition: all 0.3s ease;">
+                <i class="fa-solid fa-trash me-2"></i>Eliminar
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card card-futuristic mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center p-4"
+        style="border-bottom: 1px solid rgba(168, 85, 247, 0.2); background-color: rgba(0,0,0,0.2);">
+        <h5 class="mb-0 text-white">{{ incidencia[1] }}</h5>
+        <!-- Badge de estado -->
+        <span class="badge px-3 py-2"
+            style="background-color: rgba(168, 85, 247, 0.2); color: var(--purple-light); border: 1px solid var(--purple-main);">{{
+            incidencia[7] }}</span>
+    </div>
+
+    <div class="card-body p-4">
+        <div class="row mb-3">
+            <div class="col-sm-4 text-muted">Equipo:</div>
+            <div class="col-sm-8 text-white fw-bold">{{ incidencia[2] }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm-4 text-muted">Área/Departamento:</div>
+            <div class="col-sm-8 text-white">{{ incidencia[3] }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm-4 text-muted">Categoría:</div>
+            <div class="col-sm-8 text-white">{{ incidencia[4] }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm-4 text-muted">Prioridad:</div>
+            <div class="col-sm-8 text-white">{{ incidencia[6] }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm-4 text-muted">Descripción:</div>
+            <div class="col-sm-8 text-white">{{ incidencia[5] }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm-4 text-muted">Reportado por:</div>
+            <div class="col-sm-8 text-white">{{ incidencia[8] }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm-4 text-muted">Fecha de reporte:</div>
+            <div class="col-sm-8 text-white">{{ incidencia[10] }}</div>
+        </div>
+
+        <!-- Si ESTÁ resuelta, mostrar la solución -->
+        {% if incidencia[9] %}
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 30px 0;">
+        <div class="row mb-3">
+            <div class="col-sm-4" style="color: #34d399; font-weight: bold;">Solución Aplicada:</div>
+            <div class="col-sm-8 text-white">{{ incidencia[9] }}</div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4 text-muted">Fecha de solución:</div>
+            <div class="col-sm-8 text-white">{{ incidencia[11] }}</div>
+        </div>
+
+        <!-- Si NO está resuelta, mostrar panel de gestión -->
+        {% else %}
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 30px 0;">
+        <h5 class="mb-4" style="color: var(--purple-light);">Panel de Gestión</h5>
+        <div class="row">
+            <!-- Cambiar Estado -->
+            <div class="col-md-5 mb-3">
+                <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
+                    <select name="nuevo_estado" class="form-select form-control-dark">
+                        <option value="Pendiente" {% if incidencia[7]=='Pendiente' %}selected{% endif %}>Pendiente
+                        </option>
+                        <option value="En revisión" {% if incidencia[7]=='En revisión' %}selected{% endif %}>En revisión
+                        </option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-warning">Actualizar</button>
+                </form>
+            </div>
+            <!-- Registrar Solución -->
+            <div class="col-md-7">
+                <form action="/resolver/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
+                    <input type="text" name="solucion" class="form-control form-control-dark"
+                        placeholder="Describa la solución..." required>
+                    <button type="submit" class="btn"
+                        style="background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981;">Resolver</button>
                 </form>
             </div>
         </div>
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{{ incidencia[1] }}</h5>
-                <span class="badge bg-light text-dark fs-6">{{ incidencia[7] }}</span>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Equipo:</div>
-                    <div class="col-sm-8 fw-bold">{{ incidencia[2] }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Área/Departamento:</div>
-                    <div class="col-sm-8">{{ incidencia[3] }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Categoría:</div>
-                    <div class="col-sm-8">{{ incidencia[4] }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Prioridad:</div>
-                    <div class="col-sm-8">{{ incidencia[6] }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Descripción:</div>
-                    <div class="col-sm-8">{{ incidencia[5] }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Reportado por:</div>
-                    <div class="col-sm-8">{{ incidencia[8] }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Fecha de reporte:</div>
-                    <div class="col-sm-8">{{ incidencia[10] }}</div>
-                </div>
-
-                {% if incidencia[9] %}
-                <hr>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-success fw-bold">Solución Aplicada:</div>
-                    <div class="col-sm-8">{{ incidencia[9] }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-sm-4 text-muted">Fecha de solución:</div>
-                    <div class="col-sm-8">{{ incidencia[11] }}</div>
-                </div>
-                {% else %}
-                <hr>
-                <h5 class="mb-3">Panel de Gestión</h5>
-                <div class="row">
-                    <div class="col-md-5 mb-3">
-                        <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
-                            <select name="nuevo_estado" class="form-select">
-                                <option value="Pendiente" {% if incidencia[7]=='Pendiente' %}selected{% endif %}>
-                                    Pendiente</option>
-                                <option value="En revisión" {% if incidencia[7]=='En revisión' %}selected{% endif %}>En
-                                    revisión</option>
-                            </select>
-                            <button type="submit" class="btn btn-warning">Actualizar</button>
-                        </form>
-                    </div>
-                    <div class="col-md-7">
-                        <form action="/resolver/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
-                            <input type="text" name="solucion" class="form-control"
-                                placeholder="Describa la solución..." required>
-                            <button type="submit" class="btn btn-success">Resolver</button>
-                        </form>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+        {% endif %}
     </div>
-</body>
-
-</html>
+</div>
+{% endblock %}

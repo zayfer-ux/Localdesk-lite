@@ -1,108 +1,101 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalDesk Lite</title>
-    <!-- Importar Bootstrap para un diseño profesional -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% block content %}
+<!-- ENCABEZADO -->
+<div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+        <h2 style="color: var(--purple-light); font-weight: 800;">Centro de Comando</h2>
+        <p class="text-muted">Sistema de gestión de incidencias técnicas</p>
+    </div>
+    <a href="/nuevo" class="btn btn-neon px-4 py-2">
+        <i class="fa-solid fa-plus me-2"></i>Nueva Incidencia
+    </a>
+</div>
 
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="row mb-4">
-            <div class="col">
-                <h2>LocalDesk Lite - Panel Principal</h2>
-                <p class="text-muted">Sistema de gestión de incidencias técnicas</p>
-                <!-- Botón de crear nuevo registro -->
-                <a href="/nuevo" class="btn btn-primary mb-3">📝 Registrar Nueva Incidencia</a>
-                <!-- PANEL DE ESTADÍSTICAS -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="card bg-primary text-white shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title">Total Histórico</h6>
-                                <h3 class="mb-0">{{ stats.total }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-danger text-white shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title">Pendientes</h6>
-                                <h3 class="mb-0">{{ stats.pendientes }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-warning text-dark shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title">En Revisión</h6>
-                                <h3 class="mb-0">{{ stats.revision }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-success text-white shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title">Resueltas</h6>
-                                <h3 class="mb-0">{{ stats.resueltas }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- FIN PANEL DE ESTADÍSTICAS -->
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Problema</th>
-                                    <th>Equipo</th>
-                                    <th>Estado</th>
-                                    <th>Prioridad</th>
-                                    <th>Acciones</th> <!-- NUEVA COLUMNA -->
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Aquí Flask insertará los datos -->
-                                {% for item in incidencias %}
-                                <tr>
-                                    <td>{{ item[0] }}</td>
-                                    <td><strong>{{ item[1] }}</strong></td>
-                                    <td>{{ item[2] }}</td>
-                                    <td>
-                                        <!-- Colores dinámicos según el estado -->
-                                        {% if item[7] == 'Resuelta' %}
-                                        <span class="badge bg-success">Resuelta</span>
-                                        {% elif item[7] == 'En revisión' %}
-                                        <span class="badge bg-warning text-dark">En revisión</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">Pendiente</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ item[6] }}</td>
-                                    <td>
-                                        <!-- NUEVO BOTÓN DE DETALLES -->
-                                        <a href="/incidencia/{{ item[0] }}" class="btn btn-sm btn-info text-white">Ver
-                                            detalles</a>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <!-- Ajustado a 6 columnas -->
-                                    <td colspan="6" class="text-center py-4">No hay incidencias registradas en este
-                                        momento.
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-</body>
+<!-- PANEL DE ESTADÍSTICAS -->
+<div class="row mb-5">
+    <div class="col-md-3">
+        <div class="card card-futuristic p-4 text-center">
+            <h6 class="text-muted mb-3">Total Histórico</h6>
+            <h2 class="mb-0">{{ stats.total }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <!-- Borde sutil rojo para pendientes -->
+        <div class="card card-futuristic p-4 text-center" style="border-bottom: 2px solid #ef4444;">
+            <h6 class="text-muted mb-3">Pendientes</h6>
+            <h2 class="mb-0 text-danger">{{ stats.pendientes }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <!-- Borde sutil amarillo para en revisión -->
+        <div class="card card-futuristic p-4 text-center" style="border-bottom: 2px solid #f59e0b;">
+            <h6 class="text-muted mb-3">En Revisión</h6>
+            <h2 class="mb-0 text-warning">{{ stats.revision }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <!-- Borde sutil verde para resueltas -->
+        <div class="card card-futuristic p-4 text-center" style="border-bottom: 2px solid #10b981;">
+            <h6 class="text-muted mb-3">Resueltas</h6>
+            <h2 class="mb-0 text-success">{{ stats.resueltas }}</h2>
+        </div>
+    </div>
+</div>
 
-</html>
+<!-- TABLA DE INCIDENCIAS -->
+<div class="card card-futuristic">
+    <div class="card-body p-0">
+        <!-- 'table-dark' adapta la tabla de bootstrap al modo oscuro -->
+        <table class="table table-dark table-hover align-middle mb-0" style="background-color: transparent;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--purple-main);">
+                    <th class="ps-4 py-3">ID</th>
+                    <th class="py-3">Problema</th>
+                    <th class="py-3">Equipo</th>
+                    <th class="py-3">Estado</th>
+                    <th class="py-3">Prioridad</th>
+                    <th class="pe-4 py-3 text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in incidencias %}
+                <tr>
+                    <td class="ps-4 text-muted">{{ item[0] }}</td>
+                    <td><strong style="color: var(--text-main);">{{ item[1] }}</strong></td>
+                    <td class="text-muted">{{ item[2] }}</td>
+                    <td>
+                        <!-- Badges con fondo translúcido y borde brillante -->
+                        {% if item[7] == 'Resuelta' %}
+                        <span class="badge"
+                            style="background-color: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Resuelta</span>
+                        {% elif item[7] == 'En revisión' %}
+                        <span class="badge"
+                            style="background-color: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">En
+                            revisión</span>
+                        {% else %}
+                        <span class="badge"
+                            style="background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ item[6] }}</td>
+                    <td class="pe-4 text-end">
+                        <a href="/incidencia/{{ item[0] }}" class="btn btn-sm"
+                            style="background-color: rgba(168, 85, 247, 0.15); color: var(--purple-light); border: 1px solid var(--purple-main);">
+                            <i class="fa-solid fa-eye"></i> Inspeccionar
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-folder-open fs-2 mb-3" style="color: var(--purple-main);"></i><br>
+                        No hay incidencias registradas en este momento.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
