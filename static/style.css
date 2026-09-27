@@ -1,43 +1,46 @@
 /* =========================================
-   SISTEMA DE DISEÑO: DARK FUTURISTIC PURPLE
+   APPLE HIG DESIGN SYSTEM (Light Mode)
    ========================================= */
 :root {
-    --bg-main: #0b0714;
-    --bg-surface: #150f24;
-    --bg-surface-hover: #1c1430;
-    --border-color: #2f2350;
+    /* Paleta de Colores Apple */
+    --apple-bg: #F5F5F7;
+    --apple-surface: #FFFFFF;
+    --apple-text-main: #1D1D1F;
+    --apple-text-secondary: #86868B;
+    --apple-accent: #0071E3;
+    --apple-border: #E5E5EA;
 
-    /* Degradados y Acentos */
-    --purple-light: #a463f2;
-    --purple-dark: #5b2a86;
-    --purple-gradient: linear-gradient(135deg, var(--purple-light), var(--purple-dark));
+    /* Colores de Estado */
+    --apple-red: #FF3B30;
+    --apple-orange: #FF9500;
+    --apple-green: #34C759;
 
-    /* Textos */
-    --text-main: #f2eefb;
-    --text-muted: #9d92b8;
+    /* Sombras y Radios */
+    --radius-widget: 18px;
+    --radius-input: 12px;
+    --radius-pill: 980px;
+    --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
 
-    /* Estados */
-    --status-danger: #ff4d6d;
-    --status-warning: #ffb020;
-    --status-success: #2ecc71;
-
-    /* Dimensiones Sidebar */
-    --sidebar-width-expanded: 240px;
-    --sidebar-width-collapsed: 76px;
+/* Tipografía y Reseteo Global */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    background-color: var(--bg-main);
-    color: var(--text-main);
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    margin: 0;
-    min-height: 100vh;
+    background-color: var(--apple-bg);
+    color: var(--apple-text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     display: flex;
-    overflow-x: hidden;
+    min-height: 100vh;
 }
 
 /* =========================================
-   LAYOUT Y SIDEBAR
+   LAYOUT: SIDEBAR (GLASSMORPHISM) & MAIN
    ========================================= */
 .layout-wrapper {
     display: flex;
@@ -45,272 +48,264 @@ body {
 }
 
 .sidebar {
-    width: var(--sidebar-width-expanded);
-    background-color: var(--bg-surface);
-    border-right: 1px solid var(--border-color);
-    transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    width: 260px;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    padding: 20px 0;
-    flex-shrink: 0;
-    height: 100vh;
+    padding: 30px 16px;
     position: sticky;
     top: 0;
-}
-
-.sidebar.collapsed {
-    width: var(--sidebar-width-collapsed);
-}
-
-.sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    margin-bottom: 40px;
+    height: 100vh;
 }
 
 .sidebar-logo {
-    color: var(--purple-light);
     font-weight: 700;
-    font-size: 1.2rem;
-    white-space: nowrap;
-    opacity: 1;
-    transition: opacity 0.3s ease;
+    font-size: 1.25rem;
+    padding: 0 12px;
+    margin-bottom: 30px;
+    letter-spacing: -0.5px;
 }
 
-.sidebar.collapsed .sidebar-logo {
-    opacity: 0;
-    pointer-events: none;
-    display: none;
-}
-
-.btn-toggle-sidebar {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 5px;
-    transition: color 0.3s;
-}
-
-.btn-toggle-sidebar:hover {
-    color: var(--purple-light);
-}
-
-.nav-link-custom {
+.nav-link {
     display: flex;
     align-items: center;
-    padding: 15px 24px;
-    color: var(--text-muted);
+    padding: 10px 12px;
+    color: var(--apple-text-secondary);
     text-decoration: none;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    border-left: 3px solid transparent;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
 }
 
-.nav-link-custom i {
-    min-width: 24px;
-    font-size: 1.2rem;
-    text-align: center;
+.nav-link i {
+    width: 24px;
+    font-size: 1.1rem;
 }
 
-.nav-text {
-    margin-left: 15px;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    opacity: 1;
+.nav-link:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+    color: var(--apple-text-main);
 }
 
-.sidebar.collapsed .nav-text {
-    opacity: 0;
-    transform: translateX(-10px);
-    pointer-events: none;
+.nav-link.active {
+    background-color: rgba(0, 113, 227, 0.1);
+    color: var(--apple-accent);
 }
 
-.nav-link-custom:hover,
-.nav-link-custom.active {
-    background-color: var(--bg-surface-hover);
-    color: var(--text-main);
-    border-left-color: var(--purple-light);
+.nav-link-danger:hover {
+    background-color: rgba(255, 59, 48, 0.1);
+    color: var(--apple-red);
 }
 
 .main-content {
     flex: 1;
-    padding: 40px;
+    padding: 40px 60px;
     overflow-y: auto;
-    min-width: 0;
-    /* Previene desbordamiento de tablas */
 }
 
 /* =========================================
-   TARJETAS Y TABLAS
+   TARJETAS (WIDGETS Y CONTENEDORES)
    ========================================= */
-.card-glass {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
+.apple-card {
+    background-color: var(--apple-surface);
+    border-radius: var(--radius-widget);
+    box-shadow: var(--shadow-soft);
+    padding: 24px;
     margin-bottom: 24px;
 }
 
-/* Bordes superiores de colores para estados */
-.border-top-danger {
-    border-top: 3px solid var(--status-danger) !important;
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
 }
 
-.border-top-warning {
-    border-top: 3px solid var(--status-warning) !important;
+.stat-widget {
+    background-color: var(--apple-surface);
+    border-radius: var(--radius-widget);
+    box-shadow: var(--shadow-soft);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
-.border-top-success {
-    border-top: 3px solid var(--status-success) !important;
+.stat-title {
+    color: var(--apple-text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
 }
 
-.border-top-purple {
-    border-top: 3px solid var(--purple-light) !important;
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -1px;
 }
 
-/* Tabla limpia */
-.table-custom {
+/* =========================================
+   TABLA (ESTILO FINDER / MAIL)
+   ========================================= */
+.apple-table-container {
+    background-color: var(--apple-surface);
+    border-radius: var(--radius-widget);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+
+.apple-table {
     width: 100%;
     border-collapse: collapse;
-    color: var(--text-main);
-}
-
-.table-custom th {
-    background-color: rgba(0, 0, 0, 0.2);
-    color: var(--text-muted);
-    padding: 16px;
-    font-weight: 600;
     text-align: left;
-    border-bottom: 1px solid var(--border-color);
 }
 
-.table-custom td {
-    padding: 16px;
-    border-bottom: 1px solid rgba(47, 35, 80, 0.5);
-    vertical-align: middle;
+.apple-table th {
+    color: var(--apple-text-secondary);
+    font-weight: 500;
+    font-size: 0.85rem;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--apple-border);
 }
 
-.table-custom tbody tr:hover {
-    background-color: var(--bg-surface-hover);
+.apple-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--apple-border);
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease;
+}
+
+.apple-table tbody tr:hover td {
+    background-color: #F9F9FB;
+}
+
+.apple-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 /* =========================================
-   FORMULARIOS Y BOTONES
+   BOTONES E INPUTS (HIG COMPLIANT)
    ========================================= */
-.form-control-glass {
-    background-color: var(--bg-surface-hover);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    border-radius: 8px;
-    padding: 12px;
+.btn-apple {
+    display: inline-block;
+    background-color: var(--apple-accent);
+    color: white;
+    padding: 8px 20px;
+    border-radius: var(--radius-pill);
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.btn-apple:hover {
+    background-color: #005BB5;
+    transform: scale(0.98);
+}
+
+.btn-apple-secondary {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--apple-text-main);
+}
+
+.btn-apple-secondary:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.btn-apple-danger {
+    background-color: rgba(255, 59, 48, 0.1);
+    color: var(--apple-red);
+}
+
+.btn-apple-danger:hover {
+    background-color: var(--apple-red);
+    color: white;
+}
+
+.apple-input {
     width: 100%;
-    transition: all 0.3s ease;
+    background-color: var(--apple-bg);
+    border: 1px solid transparent;
+    border-radius: var(--radius-input);
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    color: var(--apple-text-main);
+    font-family: inherit;
+    transition: all 0.2s ease;
 }
 
-.form-control-glass:focus {
+.apple-input:focus {
     outline: none;
-    border-color: var(--purple-light);
-    box-shadow: 0 0 0 3px rgba(164, 99, 242, 0.2);
+    background-color: var(--apple-surface);
+    border-color: var(--apple-accent);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.2);
 }
 
-.btn-primary-glass {
-    background: var(--purple-gradient);
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.btn-primary-glass:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(164, 99, 242, 0.4);
+label.apple-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--apple-text-secondary);
+    margin-bottom: 8px;
 }
 
 /* =========================================
-   ANIMACIÓN BOTÓN ELIMINAR (Solo para Detalle)
+   BADGES (ESTADOS)
    ========================================= */
-.btn-delete-animated {
-    background: linear-gradient(135deg, #ff4d6d, #b3223f);
-    color: white;
-    border: none;
-    border-radius: 50px;
-    padding: 10px 24px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
+.badge {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
 }
 
-.btn-delete-animated:hover {
-    box-shadow: 0 0 20px rgba(255, 77, 109, 0.5);
+.badge-red {
+    background-color: rgba(255, 59, 48, 0.1);
+    color: var(--apple-red);
 }
 
-/* Animación del ícono SVG (Tapa) */
-.btn-delete-animated svg .trash-lid {
-    transform-origin: right bottom;
-    transition: transform 0.3s ease;
+.badge-orange {
+    background-color: rgba(255, 149, 0, 0.1);
+    color: var(--apple-orange);
 }
 
-.btn-delete-animated:hover svg .trash-lid {
-    transform: rotate(15deg) translateY(-2px);
+.badge-green {
+    background-color: rgba(52, 199, 89, 0.1);
+    color: var(--apple-green);
 }
 
-/* Clases de JS para la animación al hacer clic */
-.shaking {
-    animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+/* Grid para formularios */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
 }
 
-.fading {
-    opacity: 0;
-    transform: scale(0.9);
-    filter: blur(4px);
-    pointer-events: none;
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
 }
 
-@keyframes shake {
-
-    10%,
-    90% {
-        transform: translate3d(-1px, 0, 0);
-    }
-
-    20%,
-    80% {
-        transform: translate3d(2px, 0, 0);
-    }
-
-    30%,
-    50%,
-    70% {
-        transform: translate3d(-4px, 0, 0);
-    }
-
-    40%,
-    60% {
-        transform: translate3d(4px, 0, 0);
-    }
+.mb-4 {
+    margin-bottom: 24px;
 }
 
-/* Responsive básico */
-@media (max-width: 768px) {
-    .sidebar {
-        width: var(--sidebar-width-collapsed);
-    }
-
-    .nav-text {
-        display: none;
-    }
-
-    .sidebar-logo {
-        display: none;
-    }
+.d-flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }

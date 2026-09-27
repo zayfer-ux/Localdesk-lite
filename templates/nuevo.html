@@ -1,41 +1,42 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="mb-4">
-    <h2 style="font-weight: 700; margin-bottom: 5px;">Registrar Incidencia</h2>
-    <p style="color: var(--text-muted);">Abre un nuevo reporte técnico</p>
+<div class="d-flex-between mb-4">
+    <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Nueva Incidencia</h1>
+    <a href="/" class="btn-apple btn-apple-secondary">Cancelar</a>
 </div>
 
-<div class="card-glass p-4 p-md-5">
+<div class="apple-card" style="max-width: 800px; padding: 40px;">
     <form action="/nuevo" method="POST">
-        <div class="row mb-4">
-            <div class="col-md-6 mb-3 mb-md-0">
-                <label class="form-label" style="color: var(--text-muted);">Título breve del problema</label>
-                <input type="text" name="titulo" class="form-control-glass" required>
+
+        <div class="form-grid-2">
+            <div>
+                <label class="apple-label">Título del problema</label>
+                <input type="text" name="titulo" class="apple-input" placeholder="Ej: Fallo en red Wi-Fi" required>
             </div>
-            <div class="col-md-6">
-                <label class="form-label" style="color: var(--text-muted);">Identificador del Equipo</label>
-                <input type="text" name="equipo" class="form-control-glass" required>
+            <div>
+                <label class="apple-label">Identificador del Equipo</label>
+                <input type="text" name="equipo" class="apple-input" placeholder="Ej: MAC-ADMIN-01" required>
             </div>
         </div>
 
-        <div class="row mb-4">
-            <div class="col-md-4 mb-3 mb-md-0">
-                <label class="form-label" style="color: var(--text-muted);">Área o Departamento</label>
-                <input type="text" name="area" class="form-control-glass" required>
+        <div class="form-grid-3">
+            <div>
+                <label class="apple-label">Departamento</label>
+                <input type="text" name="area" class="apple-input" placeholder="Ej: Diseño" required>
             </div>
-            <div class="col-md-4 mb-3 mb-md-0">
-                <label class="form-label" style="color: var(--text-muted);">Categoría</label>
-                <select name="categoria" class="form-control-glass">
+            <div>
+                <label class="apple-label">Categoría</label>
+                <select name="categoria" class="apple-input">
                     <option value="Hardware">Hardware</option>
                     <option value="Software">Software</option>
                     <option value="Red">Red</option>
                     <option value="Otro">Otro</option>
                 </select>
             </div>
-            <div class="col-md-4">
-                <label class="form-label" style="color: var(--text-muted);">Prioridad</label>
-                <select name="prioridad" class="form-control-glass">
+            <div>
+                <label class="apple-label">Prioridad</label>
+                <select name="prioridad" class="apple-input">
                     <option value="Baja">Baja</option>
                     <option value="Media" selected>Media</option>
                     <option value="Alta">Alta</option>
@@ -44,19 +45,18 @@
         </div>
 
         <div class="mb-4">
-            <label class="form-label" style="color: var(--text-muted);">Descripción detallada</label>
-            <textarea name="descripcion" class="form-control-glass" rows="4" required></textarea>
+            <label class="apple-label">Descripción detallada</label>
+            <textarea name="descripcion" class="apple-input" rows="4" placeholder="Describe los síntomas en detalle..."
+                required></textarea>
         </div>
 
-        <div class="mb-5">
-            <label class="form-label" style="color: var(--text-muted);">Reportado por (Nombre)</label>
-            <input type="text" name="reportado_por" class="form-control-glass" required>
+        <div class="mb-4">
+            <label class="apple-label">Reportado por</label>
+            <input type="text" name="reportado_por" class="apple-input" placeholder="Nombre completo" required>
         </div>
 
-        <div class="d-flex gap-3">
-            <a href="/" class="btn-primary-glass"
-                style="background: transparent; border: 1px solid var(--border-color); text-decoration: none;">Cancelar</a>
-            <button type="submit" class="btn-primary-glass w-100">Guardar Incidencia</button>
+        <div style="text-align: right; margin-top: 30px;">
+            <button type="submit" class="btn-apple" style="padding: 12px 30px;">Crear Incidencia</button>
         </div>
     </form>
 </div>

@@ -1,116 +1,87 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 style="font-weight: 700; margin-bottom: 5px;">Inspección #{{ incidencia[0] }}</h2>
-        <a href="/" style="color: var(--purple-light); text-decoration: none;"><i
-                class="fa-solid fa-arrow-left me-2"></i>Volver al Dashboard</a>
+<div class="d-flex-between mb-4">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <a href="/" style="color: var(--apple-accent); text-decoration: none; font-size: 1.1rem;">
+            <i class="fa-solid fa-chevron-left"></i> Atrás
+        </a>
+        <h1 style="font-size: 1.5rem; font-weight: 600; margin: 0;">Detalles de la Incidencia</h1>
     </div>
 
-    <!-- BOTÓN DE ELIMINAR ANIMADO -->
-    <form id="formEliminar" action="/eliminar/{{ incidencia[0] }}" method="POST">
-        <button type="button" class="btn-delete-animated" onclick="procesarEliminacion()">
-            <!-- SVG del bote de basura -->
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path class="trash-lid" d="M3 6h18M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            Eliminar
+    <!-- Botón de eliminación estándar de Apple -->
+    <form action="/eliminar/{{ incidencia[0] }}" method="POST"
+        onsubmit="return confirm('¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.');">
+        <button type="submit" class="btn-apple btn-apple-danger">
+            Eliminar Registro
         </button>
     </form>
 </div>
 
-<div class="card-glass mb-4">
-    <div class="p-4" style="border-bottom: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2);">
-        <h4 class="mb-0 text-white">{{ incidencia[1] }}</h4>
+<div class="apple-card" style="max-width: 800px; padding: 0;">
+    <!-- Cabecera del detalle -->
+    <div
+        style="padding: 30px; border-bottom: 1px solid var(--apple-border); background-color: #FAFAFC; border-radius: var(--radius-widget) var(--radius-widget) 0 0;">
+        <h2 style="font-weight: 600; margin-bottom: 8px;">{{ incidencia[1] }}</h2>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <span style="color: var(--apple-text-secondary); font-size: 0.9rem;">ID: {{ incidencia[0] }}</span>
+            <span
+                class="badge {% if incidencia[7] == 'Resuelta' %}badge-green{% elif incidencia[7] == 'En revisión' %}badge-orange{% else %}badge-red{% endif %}">
+                {{ incidencia[7] }}
+            </span>
+        </div>
     </div>
 
-    <div class="p-4">
-        <!-- Detalles Generales (CORREGIDOS A TONO BLANCO) -->
-        <div class="row mb-3">
-            <div class="col-md-3" style="color: #e2e8f0;">Equipo:</div>
-            <div class="col-md-9 fw-bold text-white">{{ incidencia[2] }}</div>
+    <!-- Lista de detalles estilo iOS Settings -->
+    <div style="padding: 10px 30px;">
+        <div style="display: flex; padding: 16px 0; border-bottom: 1px solid var(--apple-border);">
+            <div style="width: 150px; color: var(--apple-text-secondary); font-weight: 500;">Equipo</div>
+            <div style="flex: 1; font-weight: 500;">{{ incidencia[2] }}</div>
         </div>
-        <div class="row mb-3">
-            <div class="col-md-3" style="color: #e2e8f0;">Área:</div>
-            <div class="col-md-9 text-white">{{ incidencia[3] }}</div>
+        <div style="display: flex; padding: 16px 0; border-bottom: 1px solid var(--apple-border);">
+            <div style="width: 150px; color: var(--apple-text-secondary); font-weight: 500;">Departamento</div>
+            <div style="flex: 1;">{{ incidencia[3] }}</div>
         </div>
-        <div class="row mb-3">
-            <div class="col-md-3" style="color: #e2e8f0;">Categoría:</div>
-            <div class="col-md-9 text-white">{{ incidencia[4] }}</div>
+        <div style="display: flex; padding: 16px 0; border-bottom: 1px solid var(--apple-border);">
+            <div style="width: 150px; color: var(--apple-text-secondary); font-weight: 500;">Categoría</div>
+            <div style="flex: 1;">{{ incidencia[4] }}</div>
         </div>
-        <div class="row mb-3">
-            <div class="col-md-3" style="color: #e2e8f0;">Estado actual:</div>
-            <div class="col-md-9 text-white">{{ incidencia[7] }}</div>
+        <div style="display: flex; padding: 16px 0; border-bottom: 1px solid var(--apple-border);">
+            <div style="width: 150px; color: var(--apple-text-secondary); font-weight: 500;">Reportado por</div>
+            <div style="flex: 1;">{{ incidencia[8] }} <span
+                    style="color: var(--apple-text-secondary); font-size: 0.9rem;">el {{ incidencia[10] }}</span></div>
         </div>
-        <div class="row mb-4">
-            <div class="col-md-3" style="color: #e2e8f0;">Descripción:</div>
-            <div class="col-md-9 text-white">{{ incidencia[5] }}</div>
+        <div style="display: flex; padding: 16px 0; border-bottom: 1px solid var(--apple-border);">
+            <div style="width: 150px; color: var(--apple-text-secondary); font-weight: 500;">Descripción</div>
+            <div style="flex: 1; line-height: 1.5;">{{ incidencia[5] }}</div>
         </div>
+    </div>
 
-        <!-- Lógica Jinja2 para Solución o Panel de Gestión -->
+    <!-- Gestión o Solución -->
+    <div
+        style="padding: 30px; background-color: #FAFAFC; border-radius: 0 0 var(--radius-widget) var(--radius-widget);">
         {% if incidencia[9] %}
-        <div class="p-4"
-            style="background-color: rgba(46, 204, 113, 0.1); border-radius: 8px; border-left: 4px solid var(--status-success);">
-            <h6 style="color: var(--status-success);">Solución Aplicada</h6>
-            <p class="mb-1 text-white">{{ incidencia[9] }}</p>
-            <small style="color: #e2e8f0;">Resuelto el: {{ incidencia[11] }}</small>
-        </div>
+        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 10px;">Solución Aplicada</h4>
+        <p style="margin-bottom: 6px; line-height: 1.5;">{{ incidencia[9] }}</p>
+        <small style="color: var(--apple-text-secondary);">Fecha de resolución: {{ incidencia[11] }}</small>
         {% else %}
-        <div class="p-4 mt-4" style="background-color: var(--bg-surface-hover); border-radius: 8px;">
-            <h5 style="color: var(--purple-light); margin-bottom: 20px;">Panel de Gestión</h5>
-            <div class="row">
-                <div class="col-md-5 mb-3">
-                    <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
-                        <select name="nuevo_estado" class="form-control-glass text-white">
-                            <option value="Pendiente" {% if incidencia[7]=='Pendiente' %}selected{% endif %}>Pendiente
-                            </option>
-                            <option value="En revisión" {% if incidencia[7]=='En revisión' %}selected{% endif %}>En
-                                revisión</option>
-                        </select>
-                        <button type="submit" class="btn-primary-glass"
-                            style="background: transparent; border: 1px solid var(--status-warning); color: var(--status-warning);">Actualizar</button>
-                    </form>
-                </div>
-                <div class="col-md-7">
-                    <form action="/resolver/{{ incidencia[0] }}" method="POST" class="d-flex gap-2">
-                        <input type="text" name="solucion" class="form-control-glass text-white"
-                            placeholder="Describa la solución..." required>
-                        <button type="submit" class="btn-primary-glass"
-                            style="background: var(--status-success);">Resolver</button>
-                    </form>
-                </div>
-            </div>
+        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 20px;">Gestión de Incidencia</h4>
+        <div class="form-grid-2">
+            <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" style="display: flex; gap: 10px;">
+                <select name="nuevo_estado" class="apple-input">
+                    <option value="Pendiente" {% if incidencia[7]=='Pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="En revisión" {% if incidencia[7]=='En revisión' %}selected{% endif %}>En revisión
+                    </option>
+                </select>
+                <button type="submit" class="btn-apple btn-apple-secondary">Actualizar</button>
+            </form>
+
+            <form action="/resolver/{{ incidencia[0] }}" method="POST" style="display: flex; gap: 10px;">
+                <input type="text" name="solucion" class="apple-input" placeholder="Describa la solución..." required>
+                <button type="submit" class="btn-apple" style="background-color: var(--apple-green);">Resolver</button>
+            </form>
         </div>
         {% endif %}
     </div>
 </div>
-
-<!-- SCRIPT DE ANIMACIÓN Y SEGURIDAD -->
-<script>
-    function procesarEliminacion() {
-        if (confirm('⚠️ ¿Estás completamente seguro de eliminar esta incidencia? No hay vuelta atrás.')) {
-
-            const form = document.getElementById('formEliminar');
-            const btn = form.querySelector('.btn-delete-animated');
-
-            btn.classList.add('shaking');
-
-            setTimeout(() => {
-                btn.classList.remove('shaking');
-                btn.classList.add('fading');
-
-                document.querySelector('.card-glass').style.transition = 'opacity 0.3s';
-                document.querySelector('.card-glass').style.opacity = '0.5';
-
-                setTimeout(() => {
-                    form.submit();
-                }, 300);
-
-            }, 400);
-        }
-    }
-</script>
 {% endblock %}

@@ -1,94 +1,82 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex-between mb-4">
     <div>
-        <h2 style="font-weight: 700; margin-bottom: 5px;">Centro de Comando</h2>
-        <p style="color: var(--text-muted);">Resumen de incidencias técnicas</p>
+        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Dashboard</h1>
+        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Gestión de incidencias técnicas</p>
     </div>
-    <a href="/nuevo" class="btn-primary-glass text-decoration-none">
-        <i class="fa-solid fa-plus me-2"></i>Nueva Incidencia
+    <a href="/nuevo" class="btn-apple">
+        <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nueva Incidencia
     </a>
 </div>
 
-<!-- TARJETAS DE ESTADÍSTICAS -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card-glass border-top-purple p-4 text-center">
-            <h6 style="color: var(--text-muted); margin-bottom: 10px;">Total Histórico</h6>
-            <h2 class="mb-0">{{ stats.total }}</h2>
-        </div>
+<!-- Widgets de iOS Style -->
+<div class="stats-grid">
+    <div class="stat-widget">
+        <span class="stat-title">Total Histórico</span>
+        <span class="stat-value">{{ stats.total }}</span>
     </div>
-    <div class="col-md-3">
-        <div class="card-glass border-top-danger p-4 text-center">
-            <h6 style="color: var(--text-muted); margin-bottom: 10px;">Pendientes</h6>
-            <h2 class="mb-0" style="color: var(--status-danger);">{{ stats.pendientes }}</h2>
-        </div>
+    <div class="stat-widget">
+        <span class="stat-title" style="color: var(--apple-red);">Pendientes</span>
+        <span class="stat-value">{{ stats.pendientes }}</span>
     </div>
-    <div class="col-md-3">
-        <div class="card-glass border-top-warning p-4 text-center">
-            <h6 style="color: var(--text-muted); margin-bottom: 10px;">En Revisión</h6>
-            <h2 class="mb-0" style="color: var(--status-warning);">{{ stats.revision }}</h2>
-        </div>
+    <div class="stat-widget">
+        <span class="stat-title" style="color: var(--apple-orange);">En Revisión</span>
+        <span class="stat-value">{{ stats.revision }}</span>
     </div>
-    <div class="col-md-3">
-        <div class="card-glass border-top-success p-4 text-center">
-            <h6 style="color: var(--text-muted); margin-bottom: 10px;">Resueltas</h6>
-            <h2 class="mb-0" style="color: var(--status-success);">{{ stats.resueltas }}</h2>
-        </div>
+    <div class="stat-widget">
+        <span class="stat-title" style="color: var(--apple-green);">Resueltas</span>
+        <span class="stat-value">{{ stats.resueltas }}</span>
     </div>
 </div>
 
-<!-- TABLA -->
-<div class="card-glass">
-    <div class="table-responsive">
-        <table class="table-custom">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Problema</th>
-                    <th>Equipo</th>
-                    <th>Estado</th>
-                    <th>Prioridad</th>
-                    <th class="text-end">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in incidencias %}
-                <tr>
-                    <td style="color: var(--text-muted);">#{{ item[0] }}</td>
-                    <td style="font-weight: 600;">{{ item[1] }}</td>
-                    <td style="color: var(--text-muted);">{{ item[2] }}</td>
-                    <td>
-                        {% if item[7] == 'Resuelta' %}
-                        <span style="color: var(--status-success);"><i
-                                class="fa-solid fa-circle-check me-1"></i>Resuelta</span>
-                        {% elif item[7] == 'En revisión' %}
-                        <span style="color: var(--status-warning);"><i class="fa-solid fa-circle-dot me-1"></i>En
-                            revisión</span>
-                        {% else %}
-                        <span style="color: var(--status-danger);"><i
-                                class="fa-solid fa-circle-exclamation me-1"></i>Pendiente</span>
-                        {% endif %}
-                    </td>
-                    <td style="color: var(--text-muted);">{{ item[6] }}</td>
-                    <td class="text-end">
-                        <a href="/incidencia/{{ item[0] }}" class="btn-primary-glass"
-                            style="padding: 6px 15px; font-size: 0.9rem; text-decoration: none;">
-                            Inspeccionar
-                        </a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" class="text-center py-5" style="color: var(--text-muted);">
-                        <i class="fa-solid fa-inbox fs-2 mb-3"></i><br>
-                        No hay incidencias registradas.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<!-- Tabla tipo Apple Mail / Finder -->
+<div class="apple-table-container">
+    <table class="apple-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Problema</th>
+                <th>Equipo</th>
+                <th>Estado</th>
+                <th>Prioridad</th>
+                <th style="text-align: right;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in incidencias %}
+            <tr>
+                <td style="color: var(--apple-text-secondary);">{{ item[0] }}</td>
+                <td style="font-weight: 600;">{{ item[1] }}</td>
+                <td>{{ item[2] }}</td>
+                <td>
+                    {% if item[7] == 'Resuelta' %}
+                    <span class="badge badge-green">Resuelta</span>
+                    {% elif item[7] == 'En revisión' %}
+                    <span class="badge badge-orange">En revisión</span>
+                    {% else %}
+                    <span class="badge badge-red">Pendiente</span>
+                    {% endif %}
+                </td>
+                <td style="color: var(--apple-text-secondary);">{{ item[6] }}</td>
+                <td style="text-align: right;">
+                    <a href="/incidencia/{{ item[0] }}" class="btn-apple btn-apple-secondary"
+                        style="padding: 6px 14px; font-size: 0.85rem;">
+                        Inspeccionar
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 60px 20px; color: var(--apple-text-secondary);">
+                    <i class="fa-regular fa-folder-open"
+                        style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
+                    Ninguna incidencia registrada.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
