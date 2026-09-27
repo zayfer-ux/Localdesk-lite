@@ -309,3 +309,73 @@ label.apple-label {
     justify-content: space-between;
     align-items: center;
 }
+
+/* =========================================
+   ANIMACIÓN BOTÓN ELIMINAR (APPLE ADAPTADO)
+   ========================================= */
+.btn-delete-animated {
+    background-color: rgba(255, 59, 48, 0.1);
+    color: var(--apple-red);
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-animated:hover {
+    background-color: var(--apple-red);
+    color: white;
+    transform: scale(0.98);
+}
+
+/* Animación de la tapa del SVG */
+.btn-delete-animated svg .trash-lid {
+    transform-origin: right bottom;
+    transition: transform 0.3s ease;
+}
+
+.btn-delete-animated:hover svg .trash-lid {
+    transform: rotate(15deg) translateY(-2px);
+}
+
+/* Clases JS para Shake y Fade */
+.shaking {
+    animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+.fading {
+    opacity: 0;
+    transform: scale(0.9);
+    filter: blur(4px);
+    pointer-events: none;
+}
+
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
