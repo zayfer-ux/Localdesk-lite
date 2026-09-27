@@ -1,96 +1,89 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- ENCABEZADO -->
-<div class="d-flex justify-content-between align-items-center mb-5">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 style="color: var(--purple-light); font-weight: 800;">Centro de Comando</h2>
-        <p class="text-muted">Sistema de gestión de incidencias técnicas</p>
+        <h2 style="font-weight: 700; margin-bottom: 5px;">Centro de Comando</h2>
+        <p style="color: var(--text-muted);">Resumen de incidencias técnicas</p>
     </div>
-    <a href="/nuevo" class="btn btn-neon px-4 py-2">
+    <a href="/nuevo" class="btn-primary-glass text-decoration-none">
         <i class="fa-solid fa-plus me-2"></i>Nueva Incidencia
     </a>
 </div>
 
-<!-- PANEL DE ESTADÍSTICAS -->
-<div class="row mb-5">
+<!-- TARJETAS DE ESTADÍSTICAS -->
+<div class="row mb-4">
     <div class="col-md-3">
-        <div class="card card-futuristic p-4 text-center">
-            <h6 class="text-muted mb-3">Total Histórico</h6>
+        <div class="card-glass border-top-purple p-4 text-center">
+            <h6 style="color: var(--text-muted); margin-bottom: 10px;">Total Histórico</h6>
             <h2 class="mb-0">{{ stats.total }}</h2>
         </div>
     </div>
     <div class="col-md-3">
-        <!-- Borde sutil rojo para pendientes -->
-        <div class="card card-futuristic p-4 text-center" style="border-bottom: 2px solid #ef4444;">
-            <h6 class="text-muted mb-3">Pendientes</h6>
-            <h2 class="mb-0 text-danger">{{ stats.pendientes }}</h2>
+        <div class="card-glass border-top-danger p-4 text-center">
+            <h6 style="color: var(--text-muted); margin-bottom: 10px;">Pendientes</h6>
+            <h2 class="mb-0" style="color: var(--status-danger);">{{ stats.pendientes }}</h2>
         </div>
     </div>
     <div class="col-md-3">
-        <!-- Borde sutil amarillo para en revisión -->
-        <div class="card card-futuristic p-4 text-center" style="border-bottom: 2px solid #f59e0b;">
-            <h6 class="text-muted mb-3">En Revisión</h6>
-            <h2 class="mb-0 text-warning">{{ stats.revision }}</h2>
+        <div class="card-glass border-top-warning p-4 text-center">
+            <h6 style="color: var(--text-muted); margin-bottom: 10px;">En Revisión</h6>
+            <h2 class="mb-0" style="color: var(--status-warning);">{{ stats.revision }}</h2>
         </div>
     </div>
     <div class="col-md-3">
-        <!-- Borde sutil verde para resueltas -->
-        <div class="card card-futuristic p-4 text-center" style="border-bottom: 2px solid #10b981;">
-            <h6 class="text-muted mb-3">Resueltas</h6>
-            <h2 class="mb-0 text-success">{{ stats.resueltas }}</h2>
+        <div class="card-glass border-top-success p-4 text-center">
+            <h6 style="color: var(--text-muted); margin-bottom: 10px;">Resueltas</h6>
+            <h2 class="mb-0" style="color: var(--status-success);">{{ stats.resueltas }}</h2>
         </div>
     </div>
 </div>
 
-<!-- TABLA DE INCIDENCIAS -->
-<div class="card card-futuristic">
-    <div class="card-body p-0">
-        <!-- 'table-dark' adapta la tabla de bootstrap al modo oscuro -->
-        <table class="table table-dark table-hover align-middle mb-0" style="background-color: transparent;">
+<!-- TABLA -->
+<div class="card-glass">
+    <div class="table-responsive">
+        <table class="table-custom">
             <thead>
-                <tr style="border-bottom: 2px solid var(--purple-main);">
-                    <th class="ps-4 py-3">ID</th>
-                    <th class="py-3">Problema</th>
-                    <th class="py-3">Equipo</th>
-                    <th class="py-3">Estado</th>
-                    <th class="py-3">Prioridad</th>
-                    <th class="pe-4 py-3 text-end">Acciones</th>
+                <tr>
+                    <th>ID</th>
+                    <th>Problema</th>
+                    <th>Equipo</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th class="text-end">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in incidencias %}
                 <tr>
-                    <td class="ps-4 text-muted">{{ item[0] }}</td>
-                    <td><strong style="color: var(--text-main);">{{ item[1] }}</strong></td>
-                    <td class="text-muted">{{ item[2] }}</td>
+                    <td style="color: var(--text-muted);">#{{ item[0] }}</td>
+                    <td style="font-weight: 600;">{{ item[1] }}</td>
+                    <td style="color: var(--text-muted);">{{ item[2] }}</td>
                     <td>
-                        <!-- Badges con fondo translúcido y borde brillante -->
                         {% if item[7] == 'Resuelta' %}
-                        <span class="badge"
-                            style="background-color: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Resuelta</span>
+                        <span style="color: var(--status-success);"><i
+                                class="fa-solid fa-circle-check me-1"></i>Resuelta</span>
                         {% elif item[7] == 'En revisión' %}
-                        <span class="badge"
-                            style="background-color: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">En
+                        <span style="color: var(--status-warning);"><i class="fa-solid fa-circle-dot me-1"></i>En
                             revisión</span>
                         {% else %}
-                        <span class="badge"
-                            style="background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">Pendiente</span>
+                        <span style="color: var(--status-danger);"><i
+                                class="fa-solid fa-circle-exclamation me-1"></i>Pendiente</span>
                         {% endif %}
                     </td>
-                    <td class="text-muted">{{ item[6] }}</td>
-                    <td class="pe-4 text-end">
-                        <a href="/incidencia/{{ item[0] }}" class="btn btn-sm"
-                            style="background-color: rgba(168, 85, 247, 0.15); color: var(--purple-light); border: 1px solid var(--purple-main);">
-                            <i class="fa-solid fa-eye"></i> Inspeccionar
+                    <td style="color: var(--text-muted);">{{ item[6] }}</td>
+                    <td class="text-end">
+                        <a href="/incidencia/{{ item[0] }}" class="btn-primary-glass"
+                            style="padding: 6px 15px; font-size: 0.9rem; text-decoration: none;">
+                            Inspeccionar
                         </a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">
-                        <i class="fa-solid fa-folder-open fs-2 mb-3" style="color: var(--purple-main);"></i><br>
-                        No hay incidencias registradas en este momento.
+                    <td colspan="6" class="text-center py-5" style="color: var(--text-muted);">
+                        <i class="fa-solid fa-inbox fs-2 mb-3"></i><br>
+                        No hay incidencias registradas.
                     </td>
                 </tr>
                 {% endfor %}

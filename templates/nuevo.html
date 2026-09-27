@@ -1,69 +1,63 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 style="color: var(--purple-light); font-weight: 800;">Registrar Nueva Incidencia</h2>
-    <a href="/" class="btn btn-outline-secondary text-white" style="border-color: rgba(255,255,255,0.2);">Cancelar y
-        Volver</a>
+<div class="mb-4">
+    <h2 style="font-weight: 700; margin-bottom: 5px;">Registrar Incidencia</h2>
+    <p style="color: var(--text-muted);">Abre un nuevo reporte técnico</p>
 </div>
 
-<div class="card card-futuristic">
-    <div class="card-body p-5">
-        <form action="/nuevo" method="POST">
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <label class="form-label text-muted">Título breve del problema</label>
-                    <input type="text" name="titulo" class="form-control form-control-dark"
-                        placeholder="Ej: Falla en conexión a internet" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label text-muted">Identificador del Equipo</label>
-                    <input type="text" name="equipo" class="form-control form-control-dark"
-                        placeholder="Ej: PC-VENTAS-01" required>
-                </div>
+<div class="card-glass p-4 p-md-5">
+    <form action="/nuevo" method="POST">
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <label class="form-label" style="color: var(--text-muted);">Título breve del problema</label>
+                <input type="text" name="titulo" class="form-control-glass" required>
             </div>
-
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <label class="form-label text-muted">Área o Departamento</label>
-                    <input type="text" name="area" class="form-control form-control-dark" placeholder="Ej: Contabilidad"
-                        required>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label text-muted">Categoría</label>
-                    <select name="categoria" class="form-select form-control-dark">
-                        <option value="Hardware">Hardware</option>
-                        <option value="Software">Software</option>
-                        <option value="Red">Red</option>
-                        <option value="Otro">Otro</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label text-muted">Prioridad</label>
-                    <select name="prioridad" class="form-select form-control-dark">
-                        <option value="Baja">Baja</option>
-                        <option value="Media" selected>Media</option>
-                        <option value="Alta">Alta</option>
-                    </select>
-                </div>
+            <div class="col-md-6">
+                <label class="form-label" style="color: var(--text-muted);">Identificador del Equipo</label>
+                <input type="text" name="equipo" class="form-control-glass" required>
             </div>
+        </div>
 
-            <div class="mb-4">
-                <label class="form-label text-muted">Descripción detallada</label>
-                <textarea name="descripcion" class="form-control form-control-dark" rows="4"
-                    placeholder="Describe los síntomas o el error exacto que aparece..." required></textarea>
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <label class="form-label" style="color: var(--text-muted);">Área o Departamento</label>
+                <input type="text" name="area" class="form-control-glass" required>
             </div>
-
-            <div class="mb-5">
-                <label class="form-label text-muted">Reportado por (Nombre)</label>
-                <input type="text" name="reportado_por" class="form-control form-control-dark"
-                    placeholder="Nombre de quien reporta el fallo" required>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <label class="form-label" style="color: var(--text-muted);">Categoría</label>
+                <select name="categoria" class="form-control-glass">
+                    <option value="Hardware">Hardware</option>
+                    <option value="Software">Software</option>
+                    <option value="Red">Red</option>
+                    <option value="Otro">Otro</option>
+                </select>
             </div>
+            <div class="col-md-4">
+                <label class="form-label" style="color: var(--text-muted);">Prioridad</label>
+                <select name="prioridad" class="form-control-glass">
+                    <option value="Baja">Baja</option>
+                    <option value="Media" selected>Media</option>
+                    <option value="Alta">Alta</option>
+                </select>
+            </div>
+        </div>
 
-            <button type="submit" class="btn btn-neon w-100 py-3 fs-5">
-                <i class="fa-solid fa-satellite-dish me-2"></i> Transmitir Reporte
-            </button>
-        </form>
-    </div>
+        <div class="mb-4">
+            <label class="form-label" style="color: var(--text-muted);">Descripción detallada</label>
+            <textarea name="descripcion" class="form-control-glass" rows="4" required></textarea>
+        </div>
+
+        <div class="mb-5">
+            <label class="form-label" style="color: var(--text-muted);">Reportado por (Nombre)</label>
+            <input type="text" name="reportado_por" class="form-control-glass" required>
+        </div>
+
+        <div class="d-flex gap-3">
+            <a href="/" class="btn-primary-glass"
+                style="background: transparent; border: 1px solid var(--border-color); text-decoration: none;">Cancelar</a>
+            <button type="submit" class="btn-primary-glass w-100">Guardar Incidencia</button>
+        </div>
+    </form>
 </div>
 {% endblock %}

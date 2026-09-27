@@ -1,102 +1,316 @@
+/* =========================================
+   SISTEMA DE DISEÑO: DARK FUTURISTIC PURPLE
+   ========================================= */
 :root {
-    --bg-dark: #09090b;
-    --surface-dark: #18181b;
-    --purple-light: #d8b4fe;
-    --purple-main: #a855f7;
-    --purple-dark: #3b0764;
+    --bg-main: #0b0714;
+    --bg-surface: #150f24;
+    --bg-surface-hover: #1c1430;
+    --border-color: #2f2350;
+
+    /* Degradados y Acentos */
+    --purple-light: #a463f2;
+    --purple-dark: #5b2a86;
+    --purple-gradient: linear-gradient(135deg, var(--purple-light), var(--purple-dark));
+
+    /* Textos */
+    --text-main: #f2eefb;
+    --text-muted: #9d92b8;
+
+    /* Estados */
+    --status-danger: #ff4d6d;
+    --status-warning: #ffb020;
+    --status-success: #2ecc71;
+
+    /* Dimensiones Sidebar */
+    --sidebar-width-expanded: 240px;
+    --sidebar-width-collapsed: 76px;
 }
 
 body {
-    background-color: var(--bg-dark);
-    color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
 }
 
-/* Tarjeta oscura con borde púrpura sutil */
-.card-futuristic {
-    background-color: var(--surface-dark);
-    border: 1px solid rgba(90, 8, 167, 0.514);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-/* Cajas de texto oscuras */
-.form-control-dark {
-    background-color: #09090b;
-    border: 1px solid rgb(255, 255, 255);
-    color: white;
-}
-
-.form-control-dark:focus {
-    background-color: #09090b;
-    border-color: var(--purple-main);
-    box-shadow: 0 0 0 0.25rem rgba(90, 8, 167, 0.514);
-    color: white;
-}
-
-/* Botón con efecto neón */
-.btn-neon {
-    background: linear-gradient(135deg, var(--purple-main), var(--purple-dark));
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    box-shadow: 0 0 15px rgba(90, 8, 167, 0.514);
-    transition: all 0.3s ease;
-}
-
-.btn-neon:hover {
-    box-shadow: 0 0 25px rgba(168, 85, 247, 0.8);
-    transform: translateY(-2px);
-    color: white;
-}
-
-/* --- ESTRUCTURA PRINCIPAL --- */
+/* =========================================
+   LAYOUT Y SIDEBAR
+   ========================================= */
 .layout-wrapper {
     display: flex;
-    min-height: 100vh;
     width: 100%;
 }
 
-/* --- MENÚ LATERAL (SIDEBAR) --- */
 .sidebar {
-    width: 260px;
-    background-color: var(--surface-dark);
-    padding: 30px 20px;
-    border-right: 1px solid rgba(168, 85, 247, 0.1);
+    width: var(--sidebar-width-expanded);
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border-color);
+    transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     display: flex;
     flex-direction: column;
+    padding: 20px 0;
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
 }
 
-.sidebar .nav-link {
-    color: #94a3b8;
-    /* text-muted */
-    padding: 12px 20px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    transition: all 0.3s ease;
+.sidebar.collapsed {
+    width: var(--sidebar-width-collapsed);
+}
+
+.sidebar-header {
     display: flex;
     align-items: center;
-    gap: 15px;
-    font-weight: 500;
+    justify-content: space-between;
+    padding: 0 20px;
+    margin-bottom: 40px;
 }
 
-/* Efecto al pasar el mouse o estar activo */
-.sidebar .nav-link:hover,
-.sidebar .nav-link.active {
-    background-color: rgba(168, 85, 247, 0.1);
+.sidebar-logo {
     color: var(--purple-light);
-    box-shadow: inset 4px 0 0 var(--purple-main);
-}
-
-.sidebar .nav-link i {
+    font-weight: 700;
     font-size: 1.2rem;
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
-/* --- ÁREA DE TRABAJO --- */
+.sidebar.collapsed .sidebar-logo {
+    opacity: 0;
+    pointer-events: none;
+    display: none;
+}
+
+.btn-toggle-sidebar {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.btn-toggle-sidebar:hover {
+    color: var(--purple-light);
+}
+
+.nav-link-custom {
+    display: flex;
+    align-items: center;
+    padding: 15px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    border-left: 3px solid transparent;
+}
+
+.nav-link-custom i {
+    min-width: 24px;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.nav-text {
+    margin-left: 15px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 1;
+}
+
+.sidebar.collapsed .nav-text {
+    opacity: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+}
+
+.nav-link-custom:hover,
+.nav-link-custom.active {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-main);
+    border-left-color: var(--purple-light);
+}
+
 .main-content {
     flex: 1;
     padding: 40px;
-    background-color: var(--bg-dark);
     overflow-y: auto;
+    min-width: 0;
+    /* Previene desbordamiento de tablas */
+}
+
+/* =========================================
+   TARJETAS Y TABLAS
+   ========================================= */
+.card-glass {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+/* Bordes superiores de colores para estados */
+.border-top-danger {
+    border-top: 3px solid var(--status-danger) !important;
+}
+
+.border-top-warning {
+    border-top: 3px solid var(--status-warning) !important;
+}
+
+.border-top-success {
+    border-top: 3px solid var(--status-success) !important;
+}
+
+.border-top-purple {
+    border-top: 3px solid var(--purple-light) !important;
+}
+
+/* Tabla limpia */
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-main);
+}
+
+.table-custom th {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: var(--text-muted);
+    padding: 16px;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table-custom td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(47, 35, 80, 0.5);
+    vertical-align: middle;
+}
+
+.table-custom tbody tr:hover {
+    background-color: var(--bg-surface-hover);
+}
+
+/* =========================================
+   FORMULARIOS Y BOTONES
+   ========================================= */
+.form-control-glass {
+    background-color: var(--bg-surface-hover);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    border-radius: 8px;
+    padding: 12px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.form-control-glass:focus {
+    outline: none;
+    border-color: var(--purple-light);
+    box-shadow: 0 0 0 3px rgba(164, 99, 242, 0.2);
+}
+
+.btn-primary-glass {
+    background: var(--purple-gradient);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary-glass:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(164, 99, 242, 0.4);
+}
+
+/* =========================================
+   ANIMACIÓN BOTÓN ELIMINAR (Solo para Detalle)
+   ========================================= */
+.btn-delete-animated {
+    background: linear-gradient(135deg, #ff4d6d, #b3223f);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-delete-animated:hover {
+    box-shadow: 0 0 20px rgba(255, 77, 109, 0.5);
+}
+
+/* Animación del ícono SVG (Tapa) */
+.btn-delete-animated svg .trash-lid {
+    transform-origin: right bottom;
+    transition: transform 0.3s ease;
+}
+
+.btn-delete-animated:hover svg .trash-lid {
+    transform: rotate(15deg) translateY(-2px);
+}
+
+/* Clases de JS para la animación al hacer clic */
+.shaking {
+    animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+.fading {
+    opacity: 0;
+    transform: scale(0.9);
+    filter: blur(4px);
+    pointer-events: none;
+}
+
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
+
+/* Responsive básico */
+@media (max-width: 768px) {
+    .sidebar {
+        width: var(--sidebar-width-collapsed);
+    }
+
+    .nav-text {
+        display: none;
+    }
+
+    .sidebar-logo {
+        display: none;
+    }
 }
