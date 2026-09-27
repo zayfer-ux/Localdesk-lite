@@ -62,11 +62,28 @@ body {
 }
 
 .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     font-weight: 700;
     font-size: 1.25rem;
     padding: 0 12px;
     margin-bottom: 30px;
+    color: var(--apple-text-main);
     letter-spacing: -0.5px;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar-logo:hover {
+    opacity: 0.8;
+}
+
+/* Estilo nativo para el icono SVG */
+.sidebar-logo svg {
+    color: var(--apple-accent);
+    /* Toma el Azul Apple para destacar */
+    flex-shrink: 0;
 }
 
 .nav-link {

@@ -14,8 +14,25 @@
     <div class="layout-wrapper">
         <!-- Sidebar Finder Style (Glassmorphism) -->
         <nav class="sidebar">
-            <div class="sidebar-logo">LocalDesk</div>
 
+            <!-- LOGO NATIVO SVG + TEXTO -->
+            <a href="/" class="sidebar-logo">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Conexiones (Líneas de la red) -->
+                    <path d="M5 5v14h7 M5 19l7-7v-7 M12 5q8 0 8 7t-8 7" />
+                    <!-- Nodos (Círculos) -->
+                    <circle cx="5" cy="5" r="2.5" fill="#FFFFFF" />
+                    <circle cx="5" cy="19" r="2.5" fill="#FFFFFF" />
+                    <circle cx="12" cy="12" r="2.5" fill="#FFFFFF" />
+                    <circle cx="12" cy="5" r="2.5" fill="#FFFFFF" />
+                    <circle cx="12" cy="19" r="2.5" fill="#FFFFFF" />
+                    <circle cx="20" cy="12" r="2.5" fill="#FFFFFF" />
+                </svg>
+                LocalDesk
+            </a>
+
+            <!-- ENLACES DE NAVEGACIÓN -->
             <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
                 <i class="fa-solid fa-layer-group"></i> Dashboard
             </a>
@@ -30,7 +47,7 @@
             </div>
         </nav>
 
-        <!-- Dynamic Content -->
+        <!-- CONTENIDO DINÁMICO (Aquí se inyectan las demás vistas) -->
         <main class="main-content">
             {% block content %}{% endblock %}
         </main>
