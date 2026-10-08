@@ -1,6 +1,8 @@
 import os
+import io
+import csv
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response
 import libsql_client
 from dotenv import load_dotenv
 from datetime import datetime
@@ -58,11 +60,9 @@ def inicio():
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
         
-        # Obtener TODAS las incidencias para analíticas globales
         res_total = cliente.execute("SELECT * FROM incidencias")
         todas = res_total.rows
         
-        # Estadísticas de Estado
         stats = {
             'total': len(todas),
             'pendientes': sum(1 for i in todas if i[7] == 'Pendiente'),
@@ -70,7 +70,6 @@ def inicio():
             'resueltas': sum(1 for i in todas if i[7] == 'Resuelta')
         }
 
-        # NUEVO: Estadísticas de Categoría para la gráfica de barras
         categorias = {
             'Hardware': sum(1 for i in todas if i[4] == 'Hardware'),
             'Software': sum(1 for i in todas if i[4] == 'Software'),
@@ -78,7 +77,6 @@ def inicio():
             'Otro': sum(1 for i in todas if i[4] == 'Otro')
         }
 
-        # Búsqueda
         if busqueda:
             param = f"%{busqueda}%"
             sql = """
@@ -102,8 +100,8 @@ def inicio():
         categorias = {'Hardware': 0, 'Software': 0, 'Red': 0, 'Otro': 0}
         print(f"Error base de datos: {e}")
 
-    # Convertimos los datos a JSON para que JavaScript (Chart.js) los pueda leer
     return render_template('index.html', incidencias=lista_incidencias, stats=stats, categorias=json.dumps(categorias), busqueda=busqueda)
+
 
 @app.route('/nuevo', methods=['GET', 'POST'])
 @login_required
@@ -134,6 +132,7 @@ def nuevo_registro():
 
     return render_template('nuevo.html')
 
+
 @app.route('/incidencia/<int:id>')
 @login_required
 def ver_detalle(id):
@@ -149,6 +148,7 @@ def ver_detalle(id):
     except Exception as e:
         return f"<h1>Error al conectar con la base de datos: {e}</h1>"
 
+
 @app.route('/actualizar_estado/<int:id>', methods=['POST'])
 @login_required
 def actualizar_estado(id):
@@ -160,6 +160,7 @@ def actualizar_estado(id):
     except Exception as e:
         print(f"Error al actualizar estado: {e}")
     return redirect(url_for('ver_detalle', id=id))
+
 
 @app.route('/resolver/<int:id>', methods=['POST'])
 @login_required
@@ -175,6 +176,7 @@ def resolver_incidencia(id):
         print(f"Error al resolver incidencia: {e}")
     return redirect(url_for('ver_detalle', id=id))
 
+
 @app.route('/eliminar/<int:id>', methods=['POST'])
 @login_required
 def eliminar_incidencia(id):
@@ -185,6 +187,43 @@ def eliminar_incidencia(id):
     except Exception as e:
         print(f"Error al eliminar incidencia: {e}")
     return redirect(url_for('inicio'))
+
+
+# ==========================================
+# NUEVA RUTA: EXPORTAR A EXCEL (CSV)
+# ==========================================
+@app.route('/exportar')
+@login_required
+def exportar_csv():
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        resultado = cliente.execute("SELECT * FROM incidencias ORDER BY id DESC")
+        incidencias = resultado.rows
+        cliente.close()
+
+        # Crear archivo en memoria
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Escribir la cabecera del Excel
+        writer.writerow(['ID', 'Problema', 'Equipo', 'Area', 'Categoria', 'Descripcion', 'Prioridad', 'Estado', 'Reportado Por', 'Solucion', 'Fecha Reporte', 'Fecha Solucion'])
+        
+        # Escribir los datos
+        for item in incidencias:
+            writer.writerow([item[0], item[1], item[2], item[3], item[4], item[5], item[6], item[7], item[8], item[9], item[10], item[11]])
+        
+        output.seek(0)
+        
+        # Preparar la descarga
+        return Response(
+            output,
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment;filename=Reporte_LocalDesk_{datetime.now().strftime('%Y%m%d')}.csv"}
+        )
+    except Exception as e:
+        print(f"Error al exportar: {e}")
+        return redirect(url_for('inicio'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -6,9 +6,15 @@
         <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Dashboard</h1>
         <p style="color: var(--apple-text-secondary); margin-top: 4px;">Gestión de incidencias técnicas</p>
     </div>
-    <a href="/nuevo" class="btn-apple">
-        <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nueva Incidencia
-    </a>
+    <div style="display: flex; gap: 12px;">
+        <!-- NUEVO BOTÓN DE EXPORTAR -->
+        <a href="/exportar" class="btn-apple btn-apple-secondary">
+            <i class="fa-solid fa-file-arrow-down" style="margin-right: 6px;"></i> Exportar
+        </a>
+        <a href="/nuevo" class="btn-apple">
+            <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nueva Incidencia
+        </a>
+    </div>
 </div>
 
 <!-- WIDGETS ESTADÍSTICAS -->
@@ -47,7 +53,7 @@
     </div>
 </div>
 
-<!-- NUEVO: PANEL DE ANALÍTICAS (GRÁFICAS) -->
+<!-- PANEL DE ANALÍTICAS (GRÁFICAS) -->
 <div
     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px;">
     <!-- Gráfica 1: Estados -->
@@ -138,13 +144,11 @@
 <!-- SCRIPT PARA CHART.JS (Renderizar las gráficas) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Obtener variables de Jinja2
     const pendientes = {{ stats.pendientes }};
     const revision = {{ stats.revision }};
     const resueltas = {{ stats.resueltas }};
-    const datosCategorias = {{ categorias | safe }}; // Viene de Python en formato JSON
+    const datosCategorias = {{ categorias | safe }};
 
-    // Colores Oficiales Apple HIG
     const colorRed = '#FF3B30';
     const colorOrange = '#FF9500';
     const colorGreen = '#34C759';
@@ -152,7 +156,6 @@
     const colorPurple = '#AF52DE';
     const colorTeal = '#5AC8FA';
 
-    // 1. Gráfica de Dona (Estados)
     const ctxEstados = document.getElementById('chartEstados').getContext('2d');
     new Chart(ctxEstados, {
         type: 'doughnut',
@@ -168,14 +171,13 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '75%', // Grosor de la dona (estilo Apple Screen Time)
+            cutout: '75%',
             plugins: {
                 legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { family: '-apple-system', size: 12 } } }
             }
         }
     });
 
-    // 2. Gráfica de Barras (Categorías)
     const ctxCategorias = document.getElementById('chartCategorias').getContext('2d');
     new Chart(ctxCategorias, {
         type: 'bar',
@@ -185,7 +187,7 @@
                 label: 'Fallas Reportadas',
                 data: [datosCategorias['Hardware'], datosCategorias['Software'], datosCategorias['Red'], datosCategorias['Otro']],
                 backgroundColor: [colorBlue, colorPurple, colorTeal, '#8E8E93'],
-                borderRadius: 6, // Barras redondeadas
+                borderRadius: 6,
                 borderSkipped: false
             }]
         },
@@ -193,7 +195,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false } // Ocultamos la leyenda porque las etiquetas ya están abajo
+                legend: { display: false }
             },
             scales: {
                 y: { beginAtZero: true, grid: { display: false }, ticks: { stepSize: 1, font: { family: '-apple-system' } } },
