@@ -11,23 +11,47 @@
     </a>
 </div>
 
-<!-- Widgets de iOS Style -->
+<!-- Widgets de iOS Style con Left-Border -->
 <div class="stats-grid">
-    <div class="stat-widget">
-        <span class="stat-title">Total Histórico</span>
-        <span class="stat-value">{{ stats.total }}</span>
+
+    <!-- Widget 1: Total -->
+    <div class="stat-widget widget-blue">
+        <div class="stat-header">
+            <span class="stat-title">Proyecto LocalDesk</span>
+            <i class="fa-solid fa-folder-open stat-icon text-blue"></i>
+        </div>
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-subtitle text-blue"><i class="fa-solid fa-plus me-1"></i>Total histórico</div>
     </div>
-    <div class="stat-widget">
-        <span class="stat-title" style="color: var(--apple-red);">Pendientes</span>
-        <span class="stat-value">{{ stats.pendientes }}</span>
+
+    <!-- Widget 2: Pendientes -->
+    <div class="stat-widget widget-red">
+        <div class="stat-header">
+            <span class="stat-title">Pendientes</span>
+            <i class="fa-solid fa-triangle-exclamation stat-icon text-red"></i>
+        </div>
+        <div class="stat-value">{{ stats.pendientes }}</div>
+        <div class="stat-subtitle text-red"><i class="fa-solid fa-arrow-trend-up me-1"></i>Requieren atención</div>
     </div>
-    <div class="stat-widget">
-        <span class="stat-title" style="color: var(--apple-orange);">En Revisión</span>
-        <span class="stat-value">{{ stats.revision }}</span>
+
+    <!-- Widget 3: En Revisión -->
+    <div class="stat-widget widget-orange">
+        <div class="stat-header">
+            <span class="stat-title">En Revisión</span>
+            <i class="fa-solid fa-spinner stat-icon text-orange"></i>
+        </div>
+        <div class="stat-value">{{ stats.revision }}</div>
+        <div class="stat-subtitle text-orange"><i class="fa-solid fa-bolt me-1"></i>Proceso activo</div>
     </div>
-    <div class="stat-widget">
-        <span class="stat-title" style="color: var(--apple-green);">Resueltas</span>
-        <span class="stat-value">{{ stats.resueltas }}</span>
+
+    <!-- Widget 4: Resueltas -->
+    <div class="stat-widget widget-green">
+        <div class="stat-header">
+            <span class="stat-title">Resueltas</span>
+            <i class="fa-solid fa-check-double stat-icon text-green"></i>
+        </div>
+        <div class="stat-value">{{ stats.resueltas }}</div>
+        <div class="stat-subtitle text-green"><i class="fa-solid fa-check me-1"></i>Casos cerrados</div>
     </div>
 </div>
 

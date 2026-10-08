@@ -126,7 +126,7 @@ body {
 }
 
 /* =========================================
-   TARJETAS (WIDGETS Y CONTENEDORES)
+   TARJETAS (WIDGETS DE ESTADÍSTICAS)
    ========================================= */
 .apple-card {
     background-color: var(--apple-surface);
@@ -138,33 +138,96 @@ body {
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
     margin-bottom: 32px;
 }
 
+/* Nuevo diseño inspirado en */
 .stat-widget {
     background-color: var(--apple-surface);
-    border-radius: var(--radius-widget);
+    border-radius: 16px;
     box-shadow: var(--shadow-soft);
-    padding: 20px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
+    border-left: 6px solid transparent;
+    /* Borde izquierdo base */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* Colores de los bordes laterales y textos */
+.widget-blue {
+    border-left-color: var(--apple-accent);
+}
+
+.widget-red {
+    border-left-color: var(--apple-red);
+}
+
+.widget-orange {
+    border-left-color: var(--apple-orange);
+}
+
+.widget-green {
+    border-left-color: var(--apple-green);
+}
+
+.text-blue {
+    color: var(--apple-accent);
+}
+
+.text-red {
+    color: var(--apple-red);
+}
+
+.text-orange {
+    color: var(--apple-orange);
+}
+
+.text-green {
+    color: var(--apple-green);
+}
+
+/* Estructura interna del widget */
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
 }
 
 .stat-title {
     color: var(--apple-text-secondary);
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
+    letter-spacing: 0.8px;
+}
+
+.stat-icon {
+    font-size: 1.2rem;
+    opacity: 0.8;
 }
 
 .stat-value {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 700;
     letter-spacing: -1px;
+    color: var(--apple-text-main);
+    margin-bottom: 6px;
+    line-height: 1;
+}
+
+.stat-subtitle {
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.9;
 }
 
 /* =========================================
