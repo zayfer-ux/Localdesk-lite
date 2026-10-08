@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import libsql_client
 from dotenv import load_dotenv
 from datetime import datetime
+import json
 
 # Cargar credenciales de Turso
 load_dotenv()
@@ -11,7 +12,7 @@ url = os.getenv("TURSO_DATABASE_URL")
 token = os.getenv("TURSO_AUTH_TOKEN")
 
 app = Flask(__name__)
-# OBLIGATORIO para el login: una llave secreta para encriptar las sesiones
+# OBLIGATORIO para el login
 app.secret_key = os.getenv("SECRET_KEY", "super_secreto_futurista_123")
 
 # --- CANDADO DE SEGURIDAD ---
@@ -32,7 +33,6 @@ def login():
         usuario = request.form.get('usuario')
         password = request.form.get('password')
         
-        # Credenciales maestras
         if usuario == 'admin' and password == 'admin123':
             session['logeado'] = True
             session['usuario'] = usuario
@@ -53,15 +53,16 @@ def logout():
 @app.route('/')
 @login_required
 def inicio():
-    # 1. Leer si el usuario escribió algo en la barra de búsqueda
     busqueda = request.args.get('q', '')
     
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
         
-        # 2. Obtener TODAS las incidencias para que las tarjetas de estadísticas no se alteren
+        # Obtener TODAS las incidencias para analíticas globales
         res_total = cliente.execute("SELECT * FROM incidencias")
         todas = res_total.rows
+        
+        # Estadísticas de Estado
         stats = {
             'total': len(todas),
             'pendientes': sum(1 for i in todas if i[7] == 'Pendiente'),
@@ -69,10 +70,17 @@ def inicio():
             'resueltas': sum(1 for i in todas if i[7] == 'Resuelta')
         }
 
-        # 3. Filtrar la tabla dependiendo de la búsqueda
+        # NUEVO: Estadísticas de Categoría para la gráfica de barras
+        categorias = {
+            'Hardware': sum(1 for i in todas if i[4] == 'Hardware'),
+            'Software': sum(1 for i in todas if i[4] == 'Software'),
+            'Red': sum(1 for i in todas if i[4] == 'Red'),
+            'Otro': sum(1 for i in todas if i[4] == 'Otro')
+        }
+
+        # Búsqueda
         if busqueda:
             param = f"%{busqueda}%"
-            # Busca coincidencias en ID, título, equipo o nombre
             sql = """
                 SELECT * FROM incidencias 
                 WHERE CAST(id AS TEXT) LIKE ? 
@@ -83,7 +91,6 @@ def inicio():
             """
             resultado = cliente.execute(sql, (param, param, param, param))
         else:
-            # Si no hay búsqueda, trae todo el historial
             resultado = cliente.execute("SELECT * FROM incidencias ORDER BY id DESC")
             
         lista_incidencias = resultado.rows
@@ -92,10 +99,11 @@ def inicio():
     except Exception as e:
         lista_incidencias = []
         stats = {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}
+        categorias = {'Hardware': 0, 'Software': 0, 'Red': 0, 'Otro': 0}
         print(f"Error base de datos: {e}")
 
-    # Enviamos los datos, estadísticas y la palabra buscada al HTML
-    return render_template('index.html', incidencias=lista_incidencias, stats=stats, busqueda=busqueda)
+    # Convertimos los datos a JSON para que JavaScript (Chart.js) los pueda leer
+    return render_template('index.html', incidencias=lista_incidencias, stats=stats, categorias=json.dumps(categorias), busqueda=busqueda)
 
 @app.route('/nuevo', methods=['GET', 'POST'])
 @login_required

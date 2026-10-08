@@ -11,10 +11,8 @@
     </a>
 </div>
 
-<!-- Widgets de iOS Style con Left-Border -->
+<!-- WIDGETS ESTADÍSTICAS -->
 <div class="stats-grid">
-
-    <!-- Widget 1: Total -->
     <div class="stat-widget widget-blue">
         <div class="stat-header">
             <span class="stat-title">Proyecto LocalDesk</span>
@@ -23,8 +21,6 @@
         <div class="stat-value">{{ stats.total }}</div>
         <div class="stat-subtitle text-blue"><i class="fa-solid fa-plus me-1"></i>Total histórico</div>
     </div>
-
-    <!-- Widget 2: Pendientes -->
     <div class="stat-widget widget-red">
         <div class="stat-header">
             <span class="stat-title">Pendientes</span>
@@ -33,8 +29,6 @@
         <div class="stat-value">{{ stats.pendientes }}</div>
         <div class="stat-subtitle text-red"><i class="fa-solid fa-arrow-trend-up me-1"></i>Requieren atención</div>
     </div>
-
-    <!-- Widget 3: En Revisión -->
     <div class="stat-widget widget-orange">
         <div class="stat-header">
             <span class="stat-title">En Revisión</span>
@@ -43,8 +37,6 @@
         <div class="stat-value">{{ stats.revision }}</div>
         <div class="stat-subtitle text-orange"><i class="fa-solid fa-bolt me-1"></i>Proceso activo</div>
     </div>
-
-    <!-- Widget 4: Resueltas -->
     <div class="stat-widget widget-green">
         <div class="stat-header">
             <span class="stat-title">Resueltas</span>
@@ -55,16 +47,35 @@
     </div>
 </div>
 
-<!-- BARRA DE BÚSQUEDA (Estilo Apple Spotlight) -->
+<!-- NUEVO: PANEL DE ANALÍTICAS (GRÁFICAS) -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px;">
+    <!-- Gráfica 1: Estados -->
+    <div class="apple-card" style="margin-bottom: 0;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: var(--apple-text-main);">Proporción de
+            Resolución</h3>
+        <div style="height: 220px; display: flex; justify-content: center;">
+            <canvas id="chartEstados"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 2: Categorías -->
+    <div class="apple-card" style="margin-bottom: 0;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: var(--apple-text-main);">Fallas por
+            Categoría</h3>
+        <div style="height: 220px;">
+            <canvas id="chartCategorias"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- BARRA DE BÚSQUEDA -->
 <form action="/" method="GET" style="margin-bottom: 24px; position: relative;">
     <i class="fa-solid fa-magnifying-glass"
         style="position: absolute; left: 20px; top: 16px; color: var(--apple-text-secondary); font-size: 1.1rem;"></i>
-
     <input type="text" name="q" class="apple-input"
         style="padding-left: 54px; border-radius: var(--radius-pill); font-size: 1.05rem; padding-top: 14px; padding-bottom: 14px; background-color: var(--apple-surface); box-shadow: var(--shadow-soft);"
         placeholder="Buscar por ID, equipo, problema o técnico..." value="{{ busqueda }}">
-
-    <!-- Botón para limpiar la búsqueda si hay algo escrito -->
     {% if busqueda %}
     <a href="/"
         style="position: absolute; right: 20px; top: 16px; color: var(--apple-text-secondary); text-decoration: none;">
@@ -73,7 +84,7 @@
     {% endif %}
 </form>
 
-<!-- Tabla tipo Apple Mail / Finder -->
+<!-- TABLA DE INCIDENCIAS -->
 <div class="apple-table-container">
     <table class="apple-table">
         <thead>
@@ -104,9 +115,7 @@
                 <td style="color: var(--apple-text-secondary);">{{ item[6] }}</td>
                 <td style="text-align: right;">
                     <a href="/incidencia/{{ item[0] }}" class="btn-apple btn-apple-secondary"
-                        style="padding: 6px 14px; font-size: 0.85rem;">
-                        Inspeccionar
-                    </a>
+                        style="padding: 6px 14px; font-size: 0.85rem;">Inspeccionar</a>
                 </td>
             </tr>
             {% else %}
@@ -115,9 +124,9 @@
                     <i class="fa-regular fa-folder-open"
                         style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
                     {% if busqueda %}
-                    No se encontraron incidencias para la búsqueda "{{ busqueda }}".
+                    No se encontraron incidencias para "{{ busqueda }}".
                     {% else %}
-                    Ninguna incidencia registrada en el sistema.
+                    Ninguna incidencia registrada.
                     {% endif %}
                 </td>
             </tr>
@@ -125,4 +134,72 @@
         </tbody>
     </table>
 </div>
+
+<!-- SCRIPT PARA CHART.JS (Renderizar las gráficas) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Obtener variables de Jinja2
+    const pendientes = {{ stats.pendientes }};
+    const revision = {{ stats.revision }};
+    const resueltas = {{ stats.resueltas }};
+    const datosCategorias = {{ categorias | safe }}; // Viene de Python en formato JSON
+
+    // Colores Oficiales Apple HIG
+    const colorRed = '#FF3B30';
+    const colorOrange = '#FF9500';
+    const colorGreen = '#34C759';
+    const colorBlue = '#0071E3';
+    const colorPurple = '#AF52DE';
+    const colorTeal = '#5AC8FA';
+
+    // 1. Gráfica de Dona (Estados)
+    const ctxEstados = document.getElementById('chartEstados').getContext('2d');
+    new Chart(ctxEstados, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pendientes', 'En Revisión', 'Resueltas'],
+            datasets: [{
+                data: [pendientes, revision, resueltas],
+                backgroundColor: [colorRed, colorOrange, colorGreen],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%', // Grosor de la dona (estilo Apple Screen Time)
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { family: '-apple-system', size: 12 } } }
+            }
+        }
+    });
+
+    // 2. Gráfica de Barras (Categorías)
+    const ctxCategorias = document.getElementById('chartCategorias').getContext('2d');
+    new Chart(ctxCategorias, {
+        type: 'bar',
+        data: {
+            labels: ['Hardware', 'Software', 'Red', 'Otro'],
+            datasets: [{
+                label: 'Fallas Reportadas',
+                data: [datosCategorias['Hardware'], datosCategorias['Software'], datosCategorias['Red'], datosCategorias['Otro']],
+                backgroundColor: [colorBlue, colorPurple, colorTeal, '#8E8E93'],
+                borderRadius: 6, // Barras redondeadas
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false } // Ocultamos la leyenda porque las etiquetas ya están abajo
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { display: false }, ticks: { stepSize: 1, font: { family: '-apple-system' } } },
+                x: { grid: { display: false }, ticks: { font: { family: '-apple-system' } } }
+            }
+        }
+    });
+</script>
 {% endblock %}
