@@ -55,6 +55,24 @@
     </div>
 </div>
 
+<!-- BARRA DE BÚSQUEDA (Estilo Apple Spotlight) -->
+<form action="/" method="GET" style="margin-bottom: 24px; position: relative;">
+    <i class="fa-solid fa-magnifying-glass"
+        style="position: absolute; left: 20px; top: 16px; color: var(--apple-text-secondary); font-size: 1.1rem;"></i>
+
+    <input type="text" name="q" class="apple-input"
+        style="padding-left: 54px; border-radius: var(--radius-pill); font-size: 1.05rem; padding-top: 14px; padding-bottom: 14px; background-color: var(--apple-surface); box-shadow: var(--shadow-soft);"
+        placeholder="Buscar por ID, equipo, problema o técnico..." value="{{ busqueda }}">
+
+    <!-- Botón para limpiar la búsqueda si hay algo escrito -->
+    {% if busqueda %}
+    <a href="/"
+        style="position: absolute; right: 20px; top: 16px; color: var(--apple-text-secondary); text-decoration: none;">
+        <i class="fa-solid fa-circle-xmark"></i> Limpiar
+    </a>
+    {% endif %}
+</form>
+
 <!-- Tabla tipo Apple Mail / Finder -->
 <div class="apple-table-container">
     <table class="apple-table">
@@ -96,7 +114,11 @@
                 <td colspan="6" style="text-align: center; padding: 60px 20px; color: var(--apple-text-secondary);">
                     <i class="fa-regular fa-folder-open"
                         style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
-                    Ninguna incidencia registrada.
+                    {% if busqueda %}
+                    No se encontraron incidencias para la búsqueda "{{ busqueda }}".
+                    {% else %}
+                    Ninguna incidencia registrada en el sistema.
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

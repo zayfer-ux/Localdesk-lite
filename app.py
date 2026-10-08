@@ -11,11 +11,10 @@ url = os.getenv("TURSO_DATABASE_URL")
 token = os.getenv("TURSO_AUTH_TOKEN")
 
 app = Flask(__name__)
-# OBLIGATORIO para el login: una llave secreta para encriptar las sesiones del usuario
+# OBLIGATORIO para el login: una llave secreta para encriptar las sesiones
 app.secret_key = os.getenv("SECRET_KEY", "super_secreto_futurista_123")
 
 # --- CANDADO DE SEGURIDAD ---
-# Si intentas entrar a una ruta sin estar logeado, te enviará a la pantalla de login
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -25,7 +24,7 @@ def login_required(f):
     return decorated_function
 
 # ==========================================
-# RUTAS DE AUTENTICACIÓN (NUEVAS)
+# RUTAS DE AUTENTICACIÓN
 # ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -33,8 +32,7 @@ def login():
         usuario = request.form.get('usuario')
         password = request.form.get('password')
         
-        # Para empezar, usaremos estas credenciales fijas. 
-        # (Usuario: admin | Contraseña: admin123)
+        # Credenciales maestras
         if usuario == 'admin' and password == 'admin123':
             session['logeado'] = True
             session['usuario'] = usuario
@@ -46,35 +44,58 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.clear() # Destruye la sesión de Flask
+    session.clear()
     return redirect(url_for('login'))
 
-
 # ==========================================
-# TUS RUTAS ORIGINALES (AHORA PROTEGIDAS)
+# RUTAS DE LA APLICACIÓN
 # ==========================================
 @app.route('/')
 @login_required
 def inicio():
+    # 1. Leer si el usuario escribió algo en la barra de búsqueda
+    busqueda = request.args.get('q', '')
+    
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-        resultado = cliente.execute("SELECT * FROM incidencias ORDER BY id DESC")
+        
+        # 2. Obtener TODAS las incidencias para que las tarjetas de estadísticas no se alteren
+        res_total = cliente.execute("SELECT * FROM incidencias")
+        todas = res_total.rows
+        stats = {
+            'total': len(todas),
+            'pendientes': sum(1 for i in todas if i[7] == 'Pendiente'),
+            'revision': sum(1 for i in todas if i[7] == 'En revisión'),
+            'resueltas': sum(1 for i in todas if i[7] == 'Resuelta')
+        }
+
+        # 3. Filtrar la tabla dependiendo de la búsqueda
+        if busqueda:
+            param = f"%{busqueda}%"
+            # Busca coincidencias en ID, título, equipo o nombre
+            sql = """
+                SELECT * FROM incidencias 
+                WHERE CAST(id AS TEXT) LIKE ? 
+                OR titulo LIKE ? 
+                OR equipo LIKE ? 
+                OR reportado_por LIKE ?
+                ORDER BY id DESC
+            """
+            resultado = cliente.execute(sql, (param, param, param, param))
+        else:
+            # Si no hay búsqueda, trae todo el historial
+            resultado = cliente.execute("SELECT * FROM incidencias ORDER BY id DESC")
+            
         lista_incidencias = resultado.rows
         cliente.close()
         
-        stats = {
-            'total': len(lista_incidencias),
-            'pendientes': sum(1 for i in lista_incidencias if i[7] == 'Pendiente'),
-            'revision': sum(1 for i in lista_incidencias if i[7] == 'En revisión'),
-            'resueltas': sum(1 for i in lista_incidencias if i[7] == 'Resuelta')
-        }
     except Exception as e:
         lista_incidencias = []
         stats = {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}
         print(f"Error base de datos: {e}")
 
-    return render_template('index.html', incidencias=lista_incidencias, stats=stats)
-
+    # Enviamos los datos, estadísticas y la palabra buscada al HTML
+    return render_template('index.html', incidencias=lista_incidencias, stats=stats, busqueda=busqueda)
 
 @app.route('/nuevo', methods=['GET', 'POST'])
 @login_required
@@ -105,7 +126,6 @@ def nuevo_registro():
 
     return render_template('nuevo.html')
 
-
 @app.route('/incidencia/<int:id>')
 @login_required
 def ver_detalle(id):
@@ -121,7 +141,6 @@ def ver_detalle(id):
     except Exception as e:
         return f"<h1>Error al conectar con la base de datos: {e}</h1>"
 
-
 @app.route('/actualizar_estado/<int:id>', methods=['POST'])
 @login_required
 def actualizar_estado(id):
@@ -133,7 +152,6 @@ def actualizar_estado(id):
     except Exception as e:
         print(f"Error al actualizar estado: {e}")
     return redirect(url_for('ver_detalle', id=id))
-
 
 @app.route('/resolver/<int:id>', methods=['POST'])
 @login_required
@@ -148,7 +166,6 @@ def resolver_incidencia(id):
     except Exception as e:
         print(f"Error al resolver incidencia: {e}")
     return redirect(url_for('ver_detalle', id=id))
-
 
 @app.route('/eliminar/<int:id>', methods=['POST'])
 @login_required
