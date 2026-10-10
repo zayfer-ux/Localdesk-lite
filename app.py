@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 import json
 
+from werkzeug.security import check_password_hash
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -36,12 +37,27 @@ def login():
         usuario = request.form.get('usuario')
         password = request.form.get('password')
         
-        if usuario == 'admin' and password == 'admin123':
-            session['logeado'] = True
-            session['usuario'] = usuario
-            return redirect(url_for('inicio'))
-        else:
-            flash('Credenciales incorrectas. Intenta de nuevo.', 'danger')
+        try:
+            cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+            # Buscamos al usuario en la base de datos
+            resultado = cliente.execute("SELECT * FROM usuarios WHERE usuario = ?", (usuario,))
+            user_data = resultado.rows
+            cliente.close()
+
+            # user_data[0] contiene: (id, nombre, usuario, password_hash, rol)
+            # Verificamos que el usuario exista y que el hash de la BD coincida con la contraseña escrita
+            if user_data and check_password_hash(user_data[0][3], password):
+                session['logeado'] = True
+                session['usuario'] = user_data[0][2]     # Guardamos el 'admin'
+                session['nombre'] = user_data[0][1]      # Guardamos 'Administrador Principal'
+                session['rol'] = user_data[0][4]         # Guardamos su rol
+                return redirect(url_for('inicio'))
+            else:
+                flash('Credenciales incorrectas o usuario no encontrado.', 'danger')
+                
+        except Exception as e:
+            print(f"Error en login: {e}")
+            flash('Error al conectar con la base de datos.', 'danger')
             
     return render_template('login.html')
 
