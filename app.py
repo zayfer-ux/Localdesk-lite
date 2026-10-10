@@ -8,6 +8,12 @@ from dotenv import load_dotenv
 from datetime import datetime
 import json
 
+# Importaciones para generar PDF profesional (Estilo Apple/ReportLab)
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+
 # Cargar credenciales de Turso
 load_dotenv()
 url = os.getenv("TURSO_DATABASE_URL")
@@ -190,7 +196,7 @@ def eliminar_incidencia(id):
 
 
 # ==========================================
-# NUEVA RUTA: EXPORTAR A EXCEL (CSV)
+# EXPORTAR A EXCEL (CSV)
 # ==========================================
 @app.route('/exportar')
 @login_required
@@ -201,27 +207,96 @@ def exportar_csv():
         incidencias = resultado.rows
         cliente.close()
 
-        # Crear archivo en memoria
         output = io.StringIO()
         writer = csv.writer(output)
-        
-        # Escribir la cabecera del Excel
         writer.writerow(['ID', 'Problema', 'Equipo', 'Area', 'Categoria', 'Descripcion', 'Prioridad', 'Estado', 'Reportado Por', 'Solucion', 'Fecha Reporte', 'Fecha Solucion'])
         
-        # Escribir los datos
         for item in incidencias:
             writer.writerow([item[0], item[1], item[2], item[3], item[4], item[5], item[6], item[7], item[8], item[9], item[10], item[11]])
         
         output.seek(0)
-        
-        # Preparar la descarga
         return Response(
             output,
             mimetype="text/csv",
             headers={"Content-Disposition": f"attachment;filename=Reporte_LocalDesk_{datetime.now().strftime('%Y%m%d')}.csv"}
         )
     except Exception as e:
-        print(f"Error al exportar: {e}")
+        print(f"Error al exportar CSV: {e}")
+        return redirect(url_for('inicio'))
+
+
+# ==========================================
+# NUEVA RUTA: EXPORTAR A PDF ESTILO APPLE
+# ==========================================
+@app.route('/exportar_pdf')
+@login_required
+def exportar_pdf():
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        resultado = cliente.execute("SELECT id, titulo, equipo, categoria, estado, prioridad, reportado_por FROM incidencias ORDER BY id DESC")
+        incidencias = resultado.rows
+        cliente.close()
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+        elementos = []
+
+        # Estilos tipográficos limpios
+        styles = getSampleStyleSheet()
+        estilo_titulo = ParagraphStyle(
+            'TituloReporte',
+            parent=styles['Heading1'],
+            fontName='Helvetica-Bold',
+            fontSize=22,
+            textColor=colors.HexColor('#1D1D1F'),
+            spaceAfter=4
+        )
+        estilo_subtitulo = ParagraphStyle(
+            'SubTituloReporte',
+            parent=styles['Normal'],
+            fontName='Helvetica',
+            fontSize=10,
+            textColor=colors.HexColor('#86868B'),
+            spaceAfter=20
+        )
+
+        elementos.append(Paragraph("LocalDesk - Reporte de Incidencias", estilo_titulo))
+        elementos.append(Paragraph(f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} | Total de registros: {len(incidencias)}", estilo_subtitulo))
+
+        # Tabla de datos
+        data = [["ID", "Problema", "Equipo", "Categoría", "Estado", "Prioridad", "Reportado"]]
+        for item in incidencias:
+            data.append([str(item[0]), str(item[1]), str(item[2]), str(item[3]), str(item[4]), str(item[5]), str(item[6])])
+
+        # Construcción de la tabla con estética limpia y bordes sutiles
+        tabla = Table(data, colWidths=[30, 140, 75, 65, 65, 65, 100])
+        tabla.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0071E3')), # Azul Apple
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F5F5F7')), # Fondo gris suave tipo iOS
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E5EA')),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ]))
+
+        elementos.append(tabla)
+        doc.build(elementos)
+
+        buffer.seek(0)
+        return Response(
+            buffer,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"attachment;filename=Reporte_LocalDesk_{datetime.now().strftime('%Y%m%d')}.pdf"}
+        )
+    except Exception as e:
+        print(f"Error al generar PDF: {e}")
         return redirect(url_for('inicio'))
 
 
