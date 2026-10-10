@@ -230,5 +230,48 @@ def diagnostico_red():
     except Exception as e:
         return jsonify({'status': 'error', 'message': 'No se pudo ejecutar la herramienta de red.'})
 
+
+# ==========================================
+# RUTAS DE DEPARTAMENTOS / ÁREAS
+# ==========================================
+@app.route('/areas')
+@login_required
+def vista_areas():
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        # Agrupamos las incidencias por área y contamos cuántas hay y cuántas faltan
+        sql = """
+            SELECT area, 
+                   COUNT(id) as total, 
+                   SUM(CASE WHEN estado != 'Resuelta' THEN 1 ELSE 0 END) as pendientes
+            FROM incidencias 
+            GROUP BY area
+            ORDER BY area ASC
+        """
+        resultado = cliente.execute(sql)
+        areas = resultado.rows
+        cliente.close()
+    except Exception as e:
+        areas = []
+        print(f"Error al cargar áreas: {e}")
+        
+    return render_template('areas.html', areas=areas)
+
+
+@app.route('/area/<nombre_area>')
+@login_required
+def detalle_area(nombre_area):
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        # Traemos solo las incidencias que coincidan con el área seleccionada
+        sql = "SELECT * FROM incidencias WHERE area = ? ORDER BY id DESC"
+        resultado = cliente.execute(sql, (nombre_area,))
+        incidencias = resultado.rows
+        cliente.close()
+    except Exception as e:
+        incidencias = []
+        
+    return render_template('area_detalle.html', incidencias=incidencias, area=nombre_area)
+
 if __name__ == '__main__':
     app.run(debug=True)

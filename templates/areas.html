@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex-between mb-4">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Departamentos</h1>
+        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Incidencias organizadas por área de la empresa
+        </p>
+    </div>
+</div>
+
+<!-- Grid de Carpetas estilo macOS -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; margin-bottom: 32px;">
+    {% for item in areas %}
+    <a href="/area/{{ item[0] }}" style="text-decoration: none; color: inherit; display: block;">
+        <div class="apple-card stat-widget widget-blue" style="margin-bottom: 0;">
+            <div class="stat-header">
+                <span class="stat-title" style="font-size: 0.85rem;">Departamento</span>
+                <i class="fa-solid fa-folder text-blue" style="font-size: 1.4rem;"></i>
+            </div>
+            <div class="stat-value" style="font-size: 1.6rem; margin-bottom: 12px;">{{ item[0] }}</div>
+
+            <div
+                style="display: flex; justify-content: space-between; border-top: 1px solid var(--apple-border); padding-top: 12px;">
+                <span style="font-size: 0.85rem; color: var(--apple-text-secondary);"><b>{{ item[1] }}</b>
+                    Tickets</span>
+
+                {% if item[2] > 0 %}
+                <span style="font-size: 0.85rem;" class="text-red"><i class="fa-solid fa-circle-exclamation"></i> {{
+                    item[2] }} Pendientes</span>
+                {% else %}
+                <span style="font-size: 0.85rem;" class="text-green"><i class="fa-solid fa-circle-check"></i> Todo
+                    resuelto</span>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% else %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--apple-text-secondary);">
+        <i class="fa-solid fa-building-circle-xmark" style="font-size: 2rem; margin-bottom: 12px;"></i>
+        <p>No hay departamentos registrados aún.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

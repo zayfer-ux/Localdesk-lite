@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex-between mb-4">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Área: {{ area }}</h1>
+        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Mostrando únicamente las incidencias de este
+            departamento.</p>
+    </div>
+    <a href="/areas" class="btn-apple btn-apple-secondary">
+        <i class="fa-solid fa-arrow-left" style="margin-right: 6px;"></i> Volver a Departamentos
+    </a>
+</div>
+
+<!-- Tabla tipo Apple Mail / Finder -->
+<div class="apple-table-container">
+    <table class="apple-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Problema</th>
+                <th>Equipo</th>
+                <th>Estado</th>
+                <th>Prioridad</th>
+                <th style="text-align: right;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in incidencias %}
+            <tr>
+                <td style="color: var(--apple-text-secondary);">{{ item[0] }}</td>
+                <td style="font-weight: 600;">{{ item[1] }}</td>
+                <td>{{ item[2] }}</td>
+                <td>
+                    {% if item[7] == 'Resuelta' %}
+                    <span class="badge badge-green">Resuelta</span>
+                    {% elif item[7] == 'En revisión' %}
+                    <span class="badge badge-orange">En revisión</span>
+                    {% else %}
+                    <span class="badge badge-red">Pendiente</span>
+                    {% endif %}
+                </td>
+                <td style="color: var(--apple-text-secondary);">{{ item[6] }}</td>
+                <td style="text-align: right;">
+                    <a href="/incidencia/{{ item[0] }}" class="btn-apple btn-apple-secondary"
+                        style="padding: 6px 14px; font-size: 0.85rem;">Inspeccionar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 60px 20px; color: var(--apple-text-secondary);">
+                    No hay incidencias registradas en el área de {{ area }}.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
