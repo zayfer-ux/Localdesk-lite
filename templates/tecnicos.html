@@ -10,7 +10,6 @@
 
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
 
-    <!-- COLUMNA IZQUIERDA: FORMULARIO -->
     <div class="apple-card" style="height: fit-content;">
         <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 20px;">
             <i class="fa-solid fa-user-plus text-blue" style="margin-right: 8px;"></i>Nuevo Técnico
@@ -18,15 +17,16 @@
 
         <form action="/tecnicos" method="POST">
             <label class="apple-label">Nombre Completo</label>
-            <input type="text" name="nombre" class="apple-input" placeholder="Ej. Juan Pérez" required
-                style="margin-bottom: 16px; width: 100%;">
+            <input type="text" name="nombre" class="apple-input" required style="margin-bottom: 16px; width: 100%;">
 
-            <label class="apple-label">Nombre de Usuario (Para Login)</label>
-            <input type="text" name="usuario" class="apple-input" placeholder="Ej. jperez" required
-                style="margin-bottom: 16px; width: 100%;">
+            <label class="apple-label">Nombre de Usuario (@nick)</label>
+            <input type="text" name="usuario" class="apple-input" required style="margin-bottom: 16px; width: 100%;">
+
+            <label class="apple-label">Correo Electrónico (Para Login)</label>
+            <input type="email" name="email" class="apple-input" required style="margin-bottom: 16px; width: 100%;">
 
             <label class="apple-label">Contraseña de acceso</label>
-            <input type="password" name="password" class="apple-input" placeholder="Min. 6 caracteres" required
+            <input type="password" name="password" class="apple-input" required
                 style="margin-bottom: 16px; width: 100%;">
 
             <label class="apple-label">Rol en el sistema</label>
@@ -35,20 +35,16 @@
                 <option value="Administrador">Administrador</option>
             </select>
 
-            <button type="submit" class="btn-apple" style="width: 100%;">
-                Registrar Técnico
-            </button>
+            <button type="submit" class="btn-apple" style="width: 100%;">Registrar Técnico</button>
         </form>
     </div>
 
-    <!-- COLUMNA DERECHA: TABLA DE USUARIOS -->
     <div class="apple-table-container" style="margin-top: 0;">
         <table class="apple-table">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Nombre</th>
-                    <th>Usuario</th>
+                    <th>Correo</th>
                     <th>Perfil</th>
                     <th style="text-align: right;">Acciones</th>
                 </tr>
@@ -56,37 +52,34 @@
             <tbody>
                 {% for tec in tecnicos %}
                 <tr>
-                    <td style="color: var(--apple-text-secondary);">{{ tec[0] }}</td>
                     <td style="font-weight: 600;">{{ tec[1] }}</td>
-                    <td>@{{ tec[2] }}</td>
+                    <td style="color: var(--apple-text-secondary);">{{ tec[3] }}</td>
                     <td>
-                        {% if tec[3] == 'Administrador' or tec[3] == 'Admin' %}
+                        {% if tec[4] == 'Administrador' or tec[4] == 'Admin' %}
                         <span class="badge badge-orange"><i class="fa-solid fa-crown" style="margin-right: 4px;"></i>{{
-                            tec[3] }}</span>
+                            tec[4] }}</span>
                         {% else %}
                         <span class="badge badge-blue"><i class="fa-solid fa-headset" style="margin-right: 4px;"></i>{{
-                            tec[3] }}</span>
+                            tec[4] }}</span>
                         {% endif %}
                     </td>
                     <td style="text-align: right;">
                         {% if tec[0] != 1 %}
                         <form action="/eliminar_tecnico/{{ tec[0] }}" method="POST"
-                            onsubmit="return confirm('¿Seguro que deseas revocar el acceso a este técnico?');">
+                            onsubmit="return confirm('¿Revocar acceso?');">
                             <button type="submit" class="btn-apple"
-                                style="background-color: var(--apple-red); padding: 6px 12px; font-size: 0.85rem;">
-                                <i class="fa-solid fa-user-xmark"></i>
-                            </button>
+                                style="background-color: var(--apple-red); padding: 6px 12px; font-size: 0.85rem;"><i
+                                    class="fa-solid fa-user-xmark"></i></button>
                         </form>
                         {% else %}
-                        <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">Cuenta Principal</span>
+                        <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">Principal</span>
                         {% endif %}
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--apple-text-secondary);">
-                        No hay técnicos registrados.
-                    </td>
+                    <td colspan="4" style="text-align: center; padding: 40px; color: var(--apple-text-secondary);">No
+                        hay técnicos.</td>
                 </tr>
                 {% endfor %}
             </tbody>

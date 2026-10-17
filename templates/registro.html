@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - LocalDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body
+    style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--apple-bg);">
+    <div class="apple-card" style="width: 400px;">
+        <h2 style="text-align: center; margin-bottom: 24px; font-weight: 700;">Crear Cuenta</h2>
+
+        <form action="/registro" method="POST">
+            <label class="apple-label">Nombre Completo</label>
+            <input type="text" name="nombre" class="apple-input" required style="width: 100%; margin-bottom: 16px;">
+
+            <label class="apple-label">Nombre de Usuario (@nick)</label>
+            <input type="text" name="usuario" class="apple-input" required style="width: 100%; margin-bottom: 16px;">
+
+            <label class="apple-label">Correo Electrónico</label>
+            <input type="email" name="email" class="apple-input" required style="width: 100%; margin-bottom: 16px;">
+
+            <label class="apple-label">Contraseña</label>
+            <input type="password" name="password" class="apple-input" required
+                style="width: 100%; margin-bottom: 24px;">
+
+            <button type="submit" class="btn-apple" style="width: 100%; margin-bottom: 16px;">Registrarse</button>
+        </form>
+
+        <p style="text-align: center; font-size: 0.9rem; margin-top: 16px;">
+            ¿Ya tienes cuenta? <a href="/login"
+                style="color: var(--apple-blue); text-decoration: none; font-weight: 600;">Inicia sesión</a>
+        </p>
+    </div>
+</body>
+
+</html>
