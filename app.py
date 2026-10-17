@@ -160,15 +160,24 @@ def actualizar_estado(id):
 @app.route('/resolver/<int:id>', methods=['POST'])
 @login_required
 def resolver_incidencia(id):
-    solucion = request.form['solucion']
+    solucion_redactada = request.form['solucion']
     fecha_solucion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # 1. Obtenemos el nombre y rol del técnico que tiene la sesión iniciada
+    tecnico = session.get('nombre', 'Administrador')
+    rol = session.get('rol', 'TI')
+    
+    # 2. Generamos la firma automática
+    solucion_con_firma = f"{solucion_redactada}\n\n✅ Atendido por: {tecnico} ({rol})"
+    
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
         sql = "UPDATE incidencias SET solucion = ?, estado = 'Resuelta', fecha_solucion = ? WHERE id = ?"
-        cliente.execute(sql, (solucion, fecha_solucion, id))
+        cliente.execute(sql, (solucion_con_firma, fecha_solucion, id))
         cliente.close()
     except Exception as e:
-        pass
+        print(f"Error al resolver incidencia: {e}")
+        
     return redirect(url_for('ver_detalle', id=id))
 
 @app.route('/eliminar/<int:id>', methods=['POST'])

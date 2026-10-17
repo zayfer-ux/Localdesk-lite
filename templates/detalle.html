@@ -66,10 +66,10 @@
         </form>
         {% else %}
         <p class="apple-label" style="color: var(--apple-green);">Solución Aplicada ({{ incidencia[11] }})</p>
+        <!-- AQUÍ APLICAMOS LA REGLA WHITE-SPACE: PRE-WRAP -->
         <div
-            style="background-color: rgba(52, 199, 89, 0.1); padding: 16px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.3);">
-            {{ incidencia[9] }}
-        </div>
+            style="background-color: rgba(52, 199, 89, 0.1); padding: 16px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.3); white-space: pre-wrap;">
+            {{ incidencia[9] }}</div>
         {% endif %}
     </div>
 
