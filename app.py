@@ -15,6 +15,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from werkzeug.security import check_password_hash, generate_password_hash
 
 load_dotenv()
 url = os.getenv("TURSO_DATABASE_URL")
@@ -288,6 +289,56 @@ def detalle_area(nombre_area):
         incidencias = []
         
     return render_template('area_detalle.html', incidencias=incidencias, area=nombre_area)
+
+# ==========================================
+# RUTAS DE GESTIÓN DE TÉCNICOS (USUARIOS)
+# ==========================================
+@app.route('/tecnicos', methods=['GET', 'POST'])
+@login_required
+def gestion_tecnicos():
+    # Solo permitimos ver esta pantalla si es una solicitud GET o POST válida
+    cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+    
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        usuario_nick = request.form.get('usuario')
+        password = request.form.get('password')
+        rol = request.form.get('rol')
+        
+        # Encriptamos la contraseña antes de guardarla (Seguridad)
+        password_segura = generate_password_hash(password)
+        
+        try:
+            sql = "INSERT INTO usuarios (nombre, usuario, password, rol) VALUES (?, ?, ?, ?)"
+            cliente.execute(sql, (nombre, usuario_nick, password_segura, rol))
+        except Exception as e:
+            print(f"Error al registrar técnico: {e}")
+            
+        return redirect(url_for('gestion_tecnicos'))
+        
+    # Si es GET, mostramos la lista de técnicos registrados
+    try:
+        resultado = cliente.execute("SELECT id, nombre, usuario, rol FROM usuarios ORDER BY id DESC")
+        tecnicos = resultado.rows
+    except Exception as e:
+        tecnicos = []
+        
+    cliente.close()
+    return render_template('tecnicos.html', tecnicos=tecnicos)
+
+
+@app.route('/eliminar_tecnico/<int:id>', methods=['POST'])
+@login_required
+def eliminar_tecnico(id):
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        # Evitamos que el admin principal (ID 1) se elimine por accidente
+        if id != 1: 
+            cliente.execute("DELETE FROM usuarios WHERE id = ?", (id,))
+        cliente.close()
+    except Exception as e:
+        print(f"Error al eliminar técnico: {e}")
+    return redirect(url_for('gestion_tecnicos'))
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -6,13 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LocalDesk - Soporte Técnico</title>
 
-    <!-- Iconos de FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Tu archivo CSS principal -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        /* Estructura del Menú Lateral (Sidebar) estilo Apple HIG */
         :root {
             --sidebar-width: 260px;
         }
@@ -107,7 +104,6 @@
             background-color: rgba(255, 59, 48, 0.1);
         }
 
-        /* Contenedor del contenido dinámico */
         .main-content {
             flex-grow: 1;
             margin-left: var(--sidebar-width);
@@ -121,9 +117,7 @@
 
 <body>
 
-    <!-- MENÚ LATERAL (SIDEBAR) -->
     <aside class="sidebar">
-        <!-- Logo Vectorial -->
         <div class="brand">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -132,35 +126,28 @@
             LocalDesk
         </div>
 
-        <!-- Enlaces de Navegación -->
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="/" class="nav-link">
-                    <i class="fa-solid fa-house"></i> Dashboard
-                </a>
+                <a href="/" class="nav-link"><i class="fa-solid fa-house"></i> Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a href="/areas" class="nav-link"><i class="fa-solid fa-layer-group"></i> Departamentos</a>
+            </li>
+            <li class="nav-item">
+                <a href="/nuevo" class="nav-link"><i class="fa-solid fa-plus-circle"></i> Nuevo Ticket</a>
             </li>
 
-            <!-- EL NUEVO BOTÓN DE DEPARTAMENTOS -->
+            <!-- NUEVO BOTÓN AGREGADO -->
             <li class="nav-item">
-                <a href="/areas" class="nav-link">
-                    <i class="fa-solid fa-layer-group"></i> Departamentos
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="/nuevo" class="nav-link">
-                    <i class="fa-solid fa-plus-circle"></i> Nuevo Ticket
-                </a>
+                <a href="/tecnicos" class="nav-link"><i class="fa-solid fa-users-gear"></i> Equipo Técnico</a>
             </li>
         </ul>
 
-        <!-- Botón de Salida -->
         <a href="/logout" class="logout-btn">
             <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right: 10px;"></i> Cerrar Sesión
         </a>
     </aside>
 
-    <!-- AQUÍ SE INYECTAN LAS DEMÁS PANTALLAS (index, detalle, areas, etc.) -->
     <main class="main-content">
         {% block content %}
         {% endblock %}
