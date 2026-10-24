@@ -12,6 +12,17 @@
     <div class="apple-card" style="width: 400px;">
         <h2 style="text-align: center; margin-bottom: 24px; font-weight: 700;">Crear Cuenta</h2>
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div
+            style="background-color: rgba(255,59,48,0.1); color: var(--apple-red); padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-size: 0.9rem;">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
         <form action="/registro" method="POST">
             <label class="apple-label">Nombre Completo</label>
             <input type="text" name="nombre" class="apple-input" required style="width: 100%; margin-bottom: 16px;">
@@ -19,8 +30,9 @@
             <label class="apple-label">Nombre de Usuario (@nick)</label>
             <input type="text" name="usuario" class="apple-input" required style="width: 100%; margin-bottom: 16px;">
 
-            <label class="apple-label">Correo Electrónico</label>
-            <input type="email" name="email" class="apple-input" required style="width: 100%; margin-bottom: 16px;">
+            <label class="apple-label">Correo Electrónico (Real)</label>
+            <input type="email" name="email" class="apple-input" placeholder="Te enviaremos un código" required
+                style="width: 100%; margin-bottom: 16px;">
 
             <label class="apple-label">Contraseña</label>
             <input type="password" name="password" class="apple-input" required

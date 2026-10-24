@@ -3,6 +3,10 @@ import io
 import csv
 import subprocess
 import platform
+import smtplib
+import random
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, jsonify
 import libsql_client
@@ -19,6 +23,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 load_dotenv()
 url = os.getenv("TURSO_DATABASE_URL")
 token = os.getenv("TURSO_AUTH_TOKEN")
+MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super_secreto_futurista_123")
@@ -32,7 +38,41 @@ def login_required(f):
     return decorated_function
 
 # ==========================================
-# RUTAS DE AUTENTICACIÓN Y PERFIL
+# FUNCIÓN PARA ENVIAR CORREO DE VERIFICACIÓN
+# ==========================================
+def enviar_codigo_registro(destinatario, codigo):
+    msg = MIMEMultipart()
+    msg['From'] = MAIL_USERNAME
+    msg['To'] = destinatario
+    msg['Subject'] = "Verifica tu cuenta - LocalDesk"
+    
+    cuerpo = f"""Hola,
+
+Estás a un paso de unirte a LocalDesk. Tu código de verificación de 6 dígitos es:
+
+{codigo}
+
+Ingrésalo en la pantalla de registro para activar tu cuenta.
+Si no solicitaste este registro, por favor ignora este mensaje.
+
+Atentamente,
+El equipo de LocalDesk"""
+
+    msg.attach(MIMEText(cuerpo, 'plain'))
+    
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(MAIL_USERNAME, MAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print("Error SMTP:", e)
+        return False
+
+# ==========================================
+# RUTAS DE AUTENTICACIÓN, REGISTRO Y PERFIL
 # ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -57,7 +97,6 @@ def login():
             else:
                 flash('Correo o contraseña incorrectos.', 'danger')
         except Exception as e:
-            print(f"Error en login: {e}")
             flash('Error al conectar con la base de datos.', 'danger')
     return render_template('login.html')
 
@@ -68,16 +107,67 @@ def registro():
         usuario = request.form.get('usuario')
         email = request.form.get('email')
         password = request.form.get('password')
-        password_segura = generate_password_hash(password)
+        
+        # 1. Verificar si el correo ya existe en la base de datos
         try:
             cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-            sql = "INSERT INTO usuarios (nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, 'Soporte Técnico')"
-            cliente.execute(sql, (nombre, usuario, email, password_segura))
+            res = cliente.execute("SELECT id FROM usuarios WHERE email = ?", (email,))
             cliente.close()
-            return redirect(url_for('login'))
-        except Exception as e:
-            print("Error al registrar:", e)
+            if res.rows:
+                flash('Este correo ya está registrado. Intenta iniciar sesión.', 'danger')
+                return redirect(url_for('registro'))
+        except:
+            pass
+
+        # 2. Generar el código OTP y encriptar contraseña
+        password_segura = generate_password_hash(password)
+        codigo_otp = str(random.randint(100000, 999999))
+        
+        # 3. Guardar datos temporalmente en la sesión
+        session['reg_temp'] = {
+            'nombre': nombre,
+            'usuario': usuario,
+            'email': email,
+            'password': password_segura,
+            'otp': codigo_otp
+        }
+        
+        # 4. Enviar el correo
+        if enviar_codigo_registro(email, codigo_otp):
+            return redirect(url_for('verificar_registro'))
+        else:
+            flash('Error al enviar el correo. Revisa tu configuración.', 'danger')
+
     return render_template('registro.html')
+
+@app.route('/verificar_registro', methods=['GET', 'POST'])
+def verificar_registro():
+    # Si entra aquí sin haber pasado por el formulario, lo regresamos
+    if 'reg_temp' not in session:
+        return redirect(url_for('registro'))
+
+    if request.method == 'POST':
+        codigo_ingresado = request.form.get('codigo')
+        datos = session['reg_temp']
+
+        if codigo_ingresado == datos['otp']:
+            # ¡CÓDIGO CORRECTO! Guardamos al usuario en la BD
+            try:
+                cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+                sql = "INSERT INTO usuarios (nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, 'Soporte Técnico')"
+                cliente.execute(sql, (datos['nombre'], datos['usuario'], datos['email'], datos['password']))
+                cliente.close()
+                
+                # Borramos la sesión temporal
+                session.pop('reg_temp', None)
+                flash('¡Cuenta verificada y creada con éxito! Ya puedes iniciar sesión.', 'success')
+                return redirect(url_for('login'))
+            except Exception as e:
+                flash('Error al guardar en la base de datos.', 'danger')
+        else:
+            flash('Código incorrecto. Revisa tu correo e intenta de nuevo.', 'danger')
+
+    return render_template('verificar_registro.html', email=session['reg_temp']['email'])
 
 @app.route('/logout')
 def logout():
@@ -95,8 +185,7 @@ def perfil():
         try:
             cliente.execute("UPDATE usuarios SET telefono = ?, foto = ? WHERE id = ?", (telefono, foto_url, id_user))
             session['foto'] = foto_url
-        except Exception as e:
-            print(e)
+        except: pass
         return redirect(url_for('perfil'))
     
     resultado = cliente.execute("SELECT nombre, usuario, email, rol, telefono, foto FROM usuarios WHERE id = ?", (id_user,))
@@ -105,7 +194,7 @@ def perfil():
     return render_template('perfil.html', perfil=datos_perfil)
 
 # ==========================================
-# RUTAS DEL SISTEMA PRINCIPAL
+# RUTAS DEL SISTEMA PRINCIPAL (INCIDENCIAS Y DEMÁS)
 # ==========================================
 @app.route('/')
 @login_required

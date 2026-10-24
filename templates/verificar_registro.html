@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Verifica tu Correo - LocalDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body
+    style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--apple-bg);">
+    <div class="apple-card" style="width: 380px; text-align: center;">
+
+        <i class="fa-solid fa-envelope-open-text text-blue" style="font-size: 3rem; margin-bottom: 16px;"></i>
+        <h2 style="margin-bottom: 8px; font-weight: 700;">Verifica tu correo</h2>
+
+        <p style="color: var(--apple-text-secondary); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.5;">
+            Te hemos enviado un código de 6 dígitos a:<br>
+            <strong>{{ email }}</strong>
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div
+            style="background-color: rgba(255,59,48,0.1); color: var(--apple-red); padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-size: 0.9rem;">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form action="/verificar_registro" method="POST">
+            <input type="text" name="codigo" class="apple-input" placeholder="000000" maxlength="6" autocomplete="off"
+                required
+                style="width: 100%; text-align: center; font-size: 1.5rem; letter-spacing: 10px; margin-bottom: 24px; font-family: monospace;">
+
+            <button type="submit" class="btn-apple" style="width: 100%; margin-bottom: 16px;">Crear Cuenta</button>
+        </form>
+
+        <p style="font-size: 0.85rem; color: var(--apple-text-secondary);">
+            <a href="/registro" style="color: var(--apple-text-secondary); text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i> Cancelar registro
+            </a>
+        </p>
+    </div>
+</body>
+
+</html>
