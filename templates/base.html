@@ -112,46 +112,40 @@
             </div>
 
             <ul class="nav-menu">
+                <!-- Se corrigió el duplicado de Dashboard -->
                 <li class="nav-item"><a href="/" class="nav-link"><i class="fa-solid fa-house"></i> Dashboard</a></li>
 
-                <!-- NUEVO BOTÓN DE NOTIFICACIONES -->
-                <ul class="nav-menu">
-                    <li class="nav-item"><a href="/" class="nav-link"><i class="fa-solid fa-house"></i> Dashboard</a>
-                    </li>
+                <li class="nav-item">
+                    <a href="/notificaciones" class="nav-link" style="justify-content: space-between;">
+                        <div style="display: flex; gap: 14px; align-items: center;"><i class="fa-solid fa-bell"></i>
+                            Notificaciones</div>
+                        {% if noti_pendientes > 0 %}
+                        <span
+                            style="background-color: var(--apple-red); color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold;">{{
+                            noti_pendientes }}</span>
+                        {% endif %}
+                    </a>
+                </li>
 
-                    <li class="nav-item">
-                        <a href="/notificaciones" class="nav-link" style="justify-content: space-between;">
-                            <div style="display: flex; gap: 14px; align-items: center;"><i class="fa-solid fa-bell"></i>
-                                Notificaciones</div>
-                            {% if noti_pendientes > 0 %}
-                            <span
-                                style="background-color: var(--apple-red); color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold;">{{
-                                noti_pendientes }}</span>
-                            {% endif %}
-                        </a>
-                    </li>
-
-                    <!-- NUEVO BOTÓN: CHAT DIRECTO ENTRE USUARIOS -->
-                    <li class="nav-item"><a href="/chat" class="nav-link"><i class="fa-solid fa-comments"></i> Chat
-                            Interno</a></li>
-
-                    <li class="nav-item"><a href="/areas" class="nav-link"><i class="fa-solid fa-layer-group"></i>
-                            Departamentos</a></li>
-                    <li class="nav-item"><a href="/nuevo" class="nav-link"><i class="fa-solid fa-plus-circle"></i> Nuevo
-                            Ticket</a></li>
-                    {% if session.get('rol') == 'Admin' or session.get('rol') == 'Administrador' %}
-                    <li class="nav-item"><a href="/tecnicos" class="nav-link"><i class="fa-solid fa-users-gear"></i>
-                            Gestión Técnicos</a></li>
-                    {% endif %}
-                </ul>
+                <li class="nav-item"><a href="/chat" class="nav-link"><i class="fa-solid fa-comments"></i> Chat
+                        Interno</a></li>
+                <li class="nav-item"><a href="/areas" class="nav-link"><i class="fa-solid fa-layer-group"></i>
+                        Departamentos</a></li>
+                <li class="nav-item"><a href="/nuevo" class="nav-link"><i class="fa-solid fa-plus-circle"></i> Nuevo
+                        Ticket</a></li>
+                {% if session.get('rol') == 'Admin' or session.get('rol') == 'Administrador' %}
+                <li class="nav-item"><a href="/tecnicos" class="nav-link"><i class="fa-solid fa-users-gear"></i> Gestión
+                        Técnicos</a></li>
+                {% endif %}
+            </ul>
         </div>
 
         <div style="margin-top: auto; padding-top: 20px;">
             <p
                 style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 12px; margin-left: 12px; font-weight: 600;">
-                Others</p>
-            <a href="/perfil" class="nav-link"><i class="fa-solid fa-gear"></i> Settings</a>
-            <a href="/logout" class="nav-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+                Otros</p>
+            <a href="/perfil" class="nav-link"><i class="fa-solid fa-gear"></i> Ajustes</a>
+            <a href="/logout" class="nav-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
 
             <div
                 style="display: flex; align-items: center; gap: 12px; background-color: var(--apple-bg); padding: 12px; border-radius: 12px; margin-top: 16px; border: 1px solid var(--apple-border);">

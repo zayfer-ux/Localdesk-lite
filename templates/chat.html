@@ -17,7 +17,6 @@
         </h3>
         <ul style="list-style: none; padding: 0; margin: 0;">
             {% for u in usuarios %}
-            <!-- El fondo cambia si es el usuario que tengo seleccionado actualmente -->
             <li
                 style="border-bottom: 1px solid var(--apple-border); background-color: {% if destinatario and destinatario.id == u[0] %}#F0F7FF{% else %}transparent{% endif %};">
                 <a href="/chat/{{ u[0] }}"
@@ -54,20 +53,21 @@
         <!-- Historial de Mensajes -->
         <div style="flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
             {% for msg in mensajes %}
-            <!-- Si el remitente soy YO, alinear a la derecha y azul -->
+            <!-- Si el remitente soy YO, alinear a la derecha -->
             {% if msg[3] == mi_id %}
             <div style="align-self: flex-end; max-width: 75%;">
                 <div
                     style="display: flex; align-items: baseline; gap: 8px; justify-content: flex-end; margin-bottom: 4px;">
                     <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
                 </div>
+                <!-- CORRECCIÓN: Fondo azul, texto blanco para que se vea -->
                 <div
-                    style="background-color: var(--apple-blue); color: white; padding: 12px 16px; border-radius: 12px 12px 0 12px; font-size: 0.95rem; line-height: 1.5; box-shadow: var(--shadow-soft);">
+                    style="background-color: var(--apple-blue); color: #ffffff; padding: 12px 16px; border-radius: 12px 12px 0 12px; font-size: 0.95rem; line-height: 1.5; box-shadow: var(--shadow-soft);">
                     {{ msg[0] }}
                     {% if msg[1] %}
                     <div
                         style="margin-top: 8px; padding: 8px; background-color: rgba(255,255,255,0.2); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-file-arrow-down"></i>
+                        <i class="fa-solid fa-file-arrow-down" style="color: white;"></i>
                         <a href="{{ msg[1] }}" target="_blank"
                             style="color: white; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Archivo
                             Adjunto</a>
@@ -75,7 +75,7 @@
                     {% endif %}
                 </div>
             </div>
-            <!-- Si el remitente es EL OTRO, alinear a la izquierda y gris -->
+            <!-- Si el remitente es EL OTRO, alinear a la izquierda -->
             {% else %}
             <div style="align-self: flex-start; max-width: 75%; display: flex; gap: 12px;">
                 <img src="{{ msg[5] or 'https://ui-avatars.com/api/?name=' ~ msg[4] ~ '&background=E5E5EA&color=1D1D1F' }}"
