@@ -54,7 +54,6 @@
         </div>
 
         {% if incidencia[7] != 'Resuelta' %}
-        <!-- Formulario para Resolver -->
         <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px;">Resolver Incidencia</h3>
         <form action="/resolver/{{ incidencia[0] }}" method="POST">
             <textarea name="solucion" class="apple-input" rows="3"
@@ -66,38 +65,14 @@
         </form>
         {% else %}
         <p class="apple-label" style="color: var(--apple-green);">Solución Aplicada ({{ incidencia[11] }})</p>
-        <!-- AQUÍ APLICAMOS LA REGLA WHITE-SPACE: PRE-WRAP -->
         <div
             style="background-color: rgba(52, 199, 89, 0.1); padding: 16px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.3); white-space: pre-wrap;">
             {{ incidencia[9] }}</div>
         {% endif %}
     </div>
 
-    <!-- COLUMNA DERECHA: HERRAMIENTAS (RED Y ESTADOS) -->
+    <!-- COLUMNA DERECHA: HERRAMIENTAS Y ESTADOS -->
     <div>
-        <!-- NUEVO MÓDULO: Diagnóstico de Red -->
-        <div class="apple-card" style="margin-bottom: 24px;">
-            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">
-                <i class="fa-solid fa-network-wired text-blue" style="margin-right: 8px;"></i>Diagnóstico de Red
-            </h3>
-            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-bottom: 16px;">Verifica la conexión
-                del equipo por IP o Hostname.</p>
-
-            <input type="text" id="ip_host" class="apple-input" placeholder="Ej. 192.168.1.10 o PC-01"
-                value="{{ incidencia[2] }}" style="margin-bottom: 12px; width: 100%;">
-
-            <button id="btn-ping" class="btn-apple btn-apple-secondary" style="width: 100%; margin-bottom: 16px;"
-                onclick="hacerPing()">
-                <i class="fa-solid fa-satellite-dish" style="margin-right: 6px;"></i> Hacer Ping
-            </button>
-
-            <!-- Aquí aparecerá el resultado del Ping -->
-            <div id="ping-result"
-                style="display: none; padding: 12px; border-radius: 12px; text-align: center; font-weight: 600; font-size: 0.95rem;">
-            </div>
-        </div>
-
-        <!-- Módulo de Acciones Rápidas -->
         <div class="apple-card">
             <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px;">Acciones</h3>
 
@@ -122,57 +97,4 @@
         </div>
     </div>
 </div>
-
-<!-- SCRIPT AJAX PARA EJECUTAR EL PING EN TIEMPO REAL -->
-<script>
-    function hacerPing() {
-        const host = document.getElementById('ip_host').value;
-        const btn = document.getElementById('btn-ping');
-        const resultDiv = document.getElementById('ping-result');
-
-        if (!host) {
-            alert('Por favor ingresa una IP o el nombre del equipo.');
-            return;
-        }
-
-        // Estado visual de carga "Cargando..."
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px;"></i> Diagnosticando...';
-        btn.disabled = true;
-        resultDiv.style.display = 'none';
-
-        // Petición POST silenciosa a Python
-        fetch('/diagnostico_red', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ host: host })
-        })
-            .then(response => response.json())
-            .then(data => {
-                // Restaurar botón
-                btn.innerHTML = '<i class="fa-solid fa-satellite-dish" style="margin-right: 6px;"></i> Hacer Ping';
-                btn.disabled = false;
-                resultDiv.style.display = 'block';
-
-                // Pintar el resultado estilo Apple
-                if (data.status === 'online') {
-                    resultDiv.style.backgroundColor = 'rgba(52, 199, 89, 0.1)';
-                    resultDiv.style.color = 'var(--apple-green)';
-                    resultDiv.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right: 6px;"></i> ' + data.message;
-                } else if (data.status === 'offline') {
-                    resultDiv.style.backgroundColor = 'rgba(255, 59, 48, 0.1)';
-                    resultDiv.style.color = 'var(--apple-red)';
-                    resultDiv.innerHTML = '<i class="fa-solid fa-circle-xmark" style="margin-right: 6px;"></i> ' + data.message;
-                } else {
-                    resultDiv.style.backgroundColor = 'rgba(255, 149, 0, 0.1)';
-                    resultDiv.style.color = 'var(--apple-orange)';
-                    resultDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i> ' + data.message;
-                }
-            })
-            .catch(error => {
-                btn.innerHTML = '<i class="fa-solid fa-satellite-dish" style="margin-right: 6px;"></i> Hacer Ping';
-                btn.disabled = false;
-                alert('Error de conexión con el servidor.');
-            });
-    }
-</script>
 {% endblock %}

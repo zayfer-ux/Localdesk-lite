@@ -1,8 +1,6 @@
 import os
 import io
 import csv
-import subprocess
-import platform
 import smtplib
 import random
 from email.mime.text import MIMEText
@@ -43,12 +41,10 @@ def login_required(f):
 def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
     msg = MIMEMultipart('alternative')
     
-    # 1. Nombre corporativo como remitente
     msg['From'] = f'"LocalDesk Soporte" <{MAIL_USERNAME}>' 
     msg['To'] = destinatario
     msg['Subject'] = "Verifica tu cuenta - LocalDesk"
     
-    # 2. Diseño del correo en HTML
     cuerpo_html = f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -73,17 +69,10 @@ def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
                 </svg>
                 LocalDesk
             </div>
-            
             <h1 class="title">Hola, {nombre_usuario}</h1>
-            
             <p class="text">Estás a un paso de completar tu registro. Utiliza el siguiente código de verificación de 6 dígitos en la aplicación para activar tu cuenta.</p>
-            
             <div class="code-box">{codigo}</div>
-            
-            <p class="footer">
-                Te enviamos este correo electrónico a {destinatario} porque se solicitó crear una cuenta en LocalDesk.<br>
-                Si no fuiste tú, puedes ignorar este mensaje de forma segura.
-            </p>
+            <p class="footer">Te enviamos este correo electrónico a {destinatario} porque se solicitó crear una cuenta en LocalDesk.<br>Si no fuiste tú, puedes ignorar este mensaje de forma segura.</p>
         </div>
     </body>
     </html>
@@ -161,7 +150,6 @@ def registro():
             'otp': codigo_otp
         }
         
-        # Enviar el correo usando la nueva función con HTML
         if enviar_codigo_registro(email, codigo_otp, nombre):
             return redirect(url_for('verificar_registro'))
         else:
@@ -359,20 +347,6 @@ def exportar_pdf():
     doc.build(elementos)
     buffer.seek(0)
     return Response(buffer, mimetype="application/pdf", headers={"Content-Disposition": f"attachment;filename=Reporte_{datetime.now().strftime('%Y%m%d')}.pdf"})
-
-@app.route('/diagnostico_red', methods=['POST'])
-@login_required
-def diagnostico_red():
-    data = request.get_json()
-    host = data.get('host', '').strip()
-    if not host: return jsonify({'status': 'error', 'message': 'IP o Hostname vacío'})
-    parametro = '-n' if platform.system().lower() == 'windows' else '-c'
-    comando = ['ping', parametro, '1', host]
-    try:
-        resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if resultado.returncode == 0: return jsonify({'status': 'online', 'message': f'¡En línea! El equipo responde.'})
-        else: return jsonify({'status': 'offline', 'message': f'Desconectado. No hay respuesta.'})
-    except: return jsonify({'status': 'error', 'message': 'Error de red.'})
 
 @app.route('/areas')
 @login_required
