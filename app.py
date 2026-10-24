@@ -1,6 +1,8 @@
 import os
 import io
 import csv
+import subprocess
+import platform
 import smtplib
 import random
 from email.mime.text import MIMEText
@@ -17,6 +19,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 
 load_dotenv()
 url = os.getenv("TURSO_DATABASE_URL")
@@ -27,6 +30,9 @@ MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super_secreto_futurista_123")
 
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -36,48 +42,42 @@ def login_required(f):
     return decorated_function
 
 # ==========================================
-# FUNCIÓN PARA ENVIAR CORREO DE VERIFICACIÓN
+# NOTIFICACIONES GLOBALES (CAMPANITA)
+# ==========================================
+@app.context_processor
+def inyectar_notificaciones():
+    if 'logeado' in session:
+        try:
+            cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+            res = cliente.execute("SELECT COUNT(id) FROM notificaciones WHERE usuario_id = ? AND leida = 0", (session['id_usuario'],))
+            pendientes = res.rows[0][0] if res.rows else 0
+            cliente.close()
+            return dict(noti_pendientes=pendientes)
+        except: return dict(noti_pendientes=0)
+    return dict(noti_pendientes=0)
+
+@app.route('/notificaciones')
+@login_required
+def centro_notificaciones():
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        cliente.execute("UPDATE notificaciones SET leida = 1 WHERE usuario_id = ?", (session['id_usuario'],))
+        res = cliente.execute("SELECT texto, enlace, fecha FROM notificaciones WHERE usuario_id = ? ORDER BY id DESC LIMIT 20", (session['id_usuario'],))
+        notifs = res.rows
+        cliente.close()
+    except: notifs = []
+    return render_template('notificaciones.html', notificaciones=notifs)
+
+# ==========================================
+# AUTENTICACIÓN Y PERFIL
 # ==========================================
 def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
     msg = MIMEMultipart('alternative')
     msg['From'] = f'"LocalDesk Soporte" <{MAIL_USERNAME}>' 
     msg['To'] = destinatario
     msg['Subject'] = "Verifica tu cuenta - LocalDesk"
-    
-    cuerpo_html = f"""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F5F5F7; margin: 0; padding: 40px 20px; }}
-            .container {{ max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #E5E5EA; }}
-            .logo {{ font-size: 24px; font-weight: 700; color: #1D1D1F; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 10px; }}
-            .title {{ font-size: 22px; font-weight: 600; color: #1D1D1F; margin-bottom: 16px; }}
-            .text {{ font-size: 16px; color: #86868B; line-height: 1.5; margin-bottom: 32px; }}
-            .code-box {{ background-color: #F5F5F7; border-radius: 8px; padding: 16px 24px; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #0071E3; margin-bottom: 32px; display: inline-block; font-family: monospace; border: 1px solid #E5E5EA; }}
-            .footer {{ font-size: 12px; color: #8E8E93; margin-top: 32px; line-height: 1.5; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px; height:32px; color:#0071E3;">
-                    <path d="M5 5v14h7 M5 19l7-7v-7 M12 5q8 0 8 7t-8 7" />
-                </svg>
-                LocalDesk
-            </div>
-            <h1 class="title">Hola, {nombre_usuario}</h1>
-            <p class="text">Estás a un paso de completar tu registro. Utiliza el siguiente código de verificación de 6 dígitos en la aplicación para activar tu cuenta.</p>
-            <div class="code-box">{codigo}</div>
-            <p class="footer">Te enviamos este correo electrónico a {destinatario} porque se solicitó crear una cuenta en LocalDesk.<br>Si no fuiste tú, puedes ignorar este mensaje de forma segura.</p>
-        </div>
-    </body>
-    </html>
-    """
-    parte_html = MIMEText(cuerpo_html, 'html')
-    msg.attach(parte_html)
-    
+    cuerpo_html = f"""<!DOCTYPE html><html lang="es"><head><style>body {{ font-family: sans-serif; background-color: #F5F5F7; padding: 40px; text-align: center; }} .box {{ background: white; padding: 40px; border-radius: 12px; }} .code {{ font-size: 32px; letter-spacing: 8px; color: #0071E3; background: #F5F5F7; padding: 16px; border-radius: 8px; display: inline-block; font-weight: bold; margin: 24px 0; }}</style></head><body><div class="box"><h2 style="color: #1D1D1F;">Hola, {nombre_usuario}</h2><p style="color: #86868B;">Utiliza este código para activar tu cuenta.</p><div class="code">{codigo}</div></div></body></html>"""
+    msg.attach(MIMEText(cuerpo_html, 'html'))
     try:
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
@@ -85,81 +85,54 @@ def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
         server.send_message(msg)
         server.quit()
         return True
-    except Exception as e:
-        print("Error SMTP:", e)
-        return False
+    except: return False
 
-# ==========================================
-# RUTAS DE AUTENTICACIÓN Y PERFIL
-# ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
         try:
             cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-            resultado = cliente.execute("SELECT id, nombre, usuario, password, rol, email, telefono, foto FROM usuarios WHERE email = ?", (email,))
-            user_data = resultado.rows
+            user_data = cliente.execute("SELECT id, nombre, usuario, password, rol, email, telefono, foto FROM usuarios WHERE email = ?", (request.form.get('email'),)).rows
             cliente.close()
-
-            if user_data and check_password_hash(user_data[0][3], password):
-                session['logeado'] = True
-                session['id_usuario'] = user_data[0][0]
-                session['nombre'] = user_data[0][1]
-                session['usuario'] = user_data[0][2]
-                session['rol'] = user_data[0][4]
-                session['email'] = user_data[0][5]
-                session['foto'] = user_data[0][7]
+            if user_data and check_password_hash(user_data[0][3], request.form.get('password')):
+                session['logeado'], session['id_usuario'], session['nombre'], session['usuario'], session['rol'], session['email'], session['foto'] = True, user_data[0][0], user_data[0][1], user_data[0][2], user_data[0][4], user_data[0][5], user_data[0][7]
                 return redirect(url_for('inicio'))
-            else:
-                flash('Correo o contraseña incorrectos.', 'danger')
-        except Exception as e:
-            flash('Error al conectar con la base de datos.', 'danger')
+            else: flash('Correo o contraseña incorrectos.', 'danger')
+        except: flash('Error de conexión.', 'danger')
     return render_template('login.html')
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
-        nombre = request.form.get('nombre')
-        usuario = request.form.get('usuario')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
+        nombre, usuario, email, password = request.form.get('nombre'), request.form.get('usuario'), request.form.get('email'), request.form.get('password')
         try:
             cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-            res = cliente.execute("SELECT id FROM usuarios WHERE email = ?", (email,))
-            cliente.close()
-            if res.rows:
+            if cliente.execute("SELECT id FROM usuarios WHERE email = ?", (email,)).rows:
+                cliente.close()
                 flash('Este correo ya está registrado.', 'danger')
                 return redirect(url_for('registro'))
+            cliente.close()
         except: pass
 
-        password_segura = generate_password_hash(password)
-        codigo_otp = str(random.randint(100000, 999999))
-        
-        session['reg_temp'] = { 'nombre': nombre, 'usuario': usuario, 'email': email, 'password': password_segura, 'otp': codigo_otp }
-        
-        if enviar_codigo_registro(email, codigo_otp, nombre): return redirect(url_for('verificar_registro'))
+        session['reg_temp'] = { 'nombre': nombre, 'usuario': usuario, 'email': email, 'password': generate_password_hash(password), 'otp': str(random.randint(100000, 999999)) }
+        if enviar_codigo_registro(email, session['reg_temp']['otp'], nombre): return redirect(url_for('verificar_registro'))
         else: flash('Error al enviar el correo.', 'danger')
-
     return render_template('registro.html')
 
 @app.route('/verificar_registro', methods=['GET', 'POST'])
 def verificar_registro():
     if 'reg_temp' not in session: return redirect(url_for('registro'))
     if request.method == 'POST':
-        codigo_ingresado = request.form.get('codigo')
-        datos = session['reg_temp']
-        if codigo_ingresado == datos['otp']:
+        if request.form.get('codigo') == session['reg_temp']['otp']:
+            datos = session['reg_temp']
             try:
                 cliente = libsql_client.create_client_sync(url=url, auth_token=token)
                 cliente.execute("INSERT INTO usuarios (nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, 'Soporte Técnico')", (datos['nombre'], datos['usuario'], datos['email'], datos['password']))
                 cliente.close()
                 session.pop('reg_temp', None)
-                flash('¡Cuenta verificada y creada con éxito!', 'success')
+                flash('¡Cuenta verificada!', 'success')
                 return redirect(url_for('login'))
-            except: flash('Error en base de datos.', 'danger')
+            except: flash('Error en BD.', 'danger')
         else: flash('Código incorrecto.', 'danger')
     return render_template('verificar_registro.html', email=session['reg_temp']['email'])
 
@@ -171,24 +144,86 @@ def logout():
 @app.route('/perfil', methods=['GET', 'POST'])
 @login_required
 def perfil():
-    id_user = session.get('id_usuario')
     cliente = libsql_client.create_client_sync(url=url, auth_token=token)
     if request.method == 'POST':
-        telefono = request.form.get('telefono')
-        foto_url = request.form.get('foto')
         try:
-            cliente.execute("UPDATE usuarios SET telefono = ?, foto = ? WHERE id = ?", (telefono, foto_url, id_user))
-            session['foto'] = foto_url
+            cliente.execute("UPDATE usuarios SET telefono = ?, foto = ? WHERE id = ?", (request.form.get('telefono'), request.form.get('foto'), session.get('id_usuario')))
+            session['foto'] = request.form.get('foto')
         except: pass
         return redirect(url_for('perfil'))
-    
-    resultado = cliente.execute("SELECT nombre, usuario, email, rol, telefono, foto FROM usuarios WHERE id = ?", (id_user,))
-    datos_perfil = resultado.rows[0] if resultado.rows else None
+    datos_perfil = cliente.execute("SELECT nombre, usuario, email, rol, telefono, foto FROM usuarios WHERE id = ?", (session.get('id_usuario'),)).rows[0]
     cliente.close()
     return render_template('perfil.html', perfil=datos_perfil)
 
 # ==========================================
-# RUTAS DEL SISTEMA PRINCIPAL (INCIDENCIAS Y CHAT)
+# NUEVO: MENSAJERÍA DIRECTA (CHAT INTERNO)
+# ==========================================
+@app.route('/chat')
+@app.route('/chat/<int:dest_id>')
+@login_required
+def chat_interno(dest_id=None):
+    mi_id = session.get('id_usuario')
+    cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+    
+    # 1. Obtener lista de todos los usuarios para mostrar a la izquierda
+    usuarios = cliente.execute("SELECT id, nombre, rol, foto FROM usuarios WHERE id != ? ORDER BY nombre ASC", (mi_id,)).rows
+    
+    mensajes = []
+    destinatario = None
+    
+    # 2. Si se seleccionó un usuario, cargar la conversación
+    if dest_id:
+        dest_data = cliente.execute("SELECT nombre, rol, foto FROM usuarios WHERE id = ?", (dest_id,)).rows
+        if dest_data:
+            destinatario = {'id': dest_id, 'nombre': dest_data[0][0], 'rol': dest_data[0][1], 'foto': dest_data[0][2]}
+            # Traer historial de mensajes entre "yo" y el "destinatario"
+            sql = """
+                SELECT m.mensaje, m.archivo, m.fecha, m.remitente_id, u.nombre, u.foto 
+                FROM mensajes_privados m
+                JOIN usuarios u ON m.remitente_id = u.id
+                WHERE (m.remitente_id = ? AND m.destinatario_id = ?) 
+                   OR (m.remitente_id = ? AND m.destinatario_id = ?)
+                ORDER BY m.fecha ASC
+            """
+            mensajes = cliente.execute(sql, (mi_id, dest_id, dest_id, mi_id)).rows
+            
+    cliente.close()
+    return render_template('chat.html', usuarios=usuarios, mensajes=mensajes, destinatario=destinatario, mi_id=mi_id)
+
+@app.route('/enviar_privado/<int:dest_id>', methods=['POST'])
+@login_required
+def enviar_privado(dest_id):
+    mi_id = session.get('id_usuario')
+    mensaje = request.form.get('mensaje')
+    fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Subir archivo si existe
+    archivo_url = None
+    if 'archivo' in request.files:
+        file = request.files['archivo']
+        if file.filename != '':
+            filename = secure_filename(file.filename)
+            filename = f"{int(datetime.now().timestamp())}_{filename}"
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            archivo_url = f"/static/uploads/{filename}"
+            
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        # 1. Guardar el mensaje directo
+        cliente.execute("INSERT INTO mensajes_privados (remitente_id, destinatario_id, mensaje, archivo, fecha) VALUES (?, ?, ?, ?, ?)", (mi_id, dest_id, mensaje, archivo_url, fecha))
+        
+        # 2. MANDAR NOTIFICACIÓN DIRECTA AL DESTINATARIO
+        texto_noti = f"Tienes un nuevo mensaje privado de {session.get('nombre')}"
+        enlace = f"/chat/{mi_id}" # El enlace lo mandará al chat conmigo
+        cliente.execute("INSERT INTO notificaciones (usuario_id, texto, enlace, fecha) VALUES (?, ?, ?, ?)", (dest_id, texto_noti, enlace, fecha))
+        
+        cliente.close()
+    except Exception as e: print(e)
+    
+    return redirect(url_for('chat_interno', dest_id=dest_id))
+
+# ==========================================
+# RUTAS DEL SISTEMA PRINCIPAL (INCIDENCIAS)
 # ==========================================
 @app.route('/')
 @login_required
@@ -196,46 +231,28 @@ def inicio():
     busqueda = request.args.get('q', '')
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-        res_total = cliente.execute("SELECT * FROM incidencias")
-        todas = res_total.rows
+        todas = cliente.execute("SELECT * FROM incidencias").rows
         stats = {
-            'total': len(todas),
-            'pendientes': sum(1 for i in todas if i[7] == 'Pendiente'),
-            'revision': sum(1 for i in todas if i[7] == 'En revisión'),
-            'resueltas': sum(1 for i in todas if i[7] == 'Resuelta')
+            'total': len(todas), 'pendientes': sum(1 for i in todas if i[7] == 'Pendiente'),
+            'revision': sum(1 for i in todas if i[7] == 'En revisión'), 'resueltas': sum(1 for i in todas if i[7] == 'Resuelta')
         }
-        categorias = {
-            'Hardware': sum(1 for i in todas if i[4] == 'Hardware'), 'Software': sum(1 for i in todas if i[4] == 'Software'),
-            'Red': sum(1 for i in todas if i[4] == 'Red'), 'Otro': sum(1 for i in todas if i[4] == 'Otro')
-        }
+        categorias = { 'Hardware': sum(1 for i in todas if i[4] == 'Hardware'), 'Software': sum(1 for i in todas if i[4] == 'Software'), 'Red': sum(1 for i in todas if i[4] == 'Red'), 'Otro': sum(1 for i in todas if i[4] == 'Otro') }
         if busqueda:
-            param = f"%{busqueda}%"
-            resultado = cliente.execute("SELECT * FROM incidencias WHERE CAST(id AS TEXT) LIKE ? OR titulo LIKE ? OR equipo LIKE ? OR reportado_por LIKE ? ORDER BY id DESC", (param, param, param, param))
-        else:
-            resultado = cliente.execute("SELECT * FROM incidencias ORDER BY id DESC")
-        lista_incidencias = resultado.rows
+            lista_incidencias = cliente.execute("SELECT * FROM incidencias WHERE CAST(id AS TEXT) LIKE ? OR titulo LIKE ? OR equipo LIKE ? OR reportado_por LIKE ? ORDER BY id DESC", (f"%{busqueda}%", f"%{busqueda}%", f"%{busqueda}%", f"%{busqueda}%")).rows
+        else: lista_incidencias = cliente.execute("SELECT * FROM incidencias ORDER BY id DESC").rows
         cliente.close()
     except:
         lista_incidencias = []
-        stats = {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}
-        categorias = {'Hardware': 0, 'Software': 0, 'Red': 0, 'Otro': 0}
+        stats, categorias = {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}, {'Hardware': 0, 'Software': 0, 'Red': 0, 'Otro': 0}
     return render_template('index.html', incidencias=lista_incidencias, stats=stats, categorias=json.dumps(categorias), busqueda=busqueda)
 
 @app.route('/nuevo', methods=['GET', 'POST'])
 @login_required
 def nuevo_registro():
     if request.method == 'POST':
-        titulo = request.form['titulo']
-        equipo = request.form['equipo']
-        area = request.form['area']
-        categoria = request.form['categoria']
-        descripcion = request.form['descripcion']
-        prioridad = request.form['prioridad']
-        reportado_por = request.form['reportado_por']
-        fecha_reporte = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
             cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-            cliente.execute("INSERT INTO incidencias (titulo, equipo, area, categoria, descripcion, prioridad, estado, reportado_por, fecha_reporte) VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?, ?)", (titulo, equipo, area, categoria, descripcion, prioridad, reportado_por, fecha_reporte))
+            cliente.execute("INSERT INTO incidencias (titulo, equipo, area, categoria, descripcion, prioridad, estado, reportado_por, fecha_reporte) VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?, ?)", (request.form['titulo'], request.form['equipo'], request.form['area'], request.form['categoria'], request.form['descripcion'], request.form['prioridad'], request.form['reportado_por'], datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             cliente.close()
         except: pass
         return redirect(url_for('inicio'))
@@ -246,53 +263,36 @@ def nuevo_registro():
 def ver_detalle(id):
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-        # 1. Obtener datos del ticket
-        resultado = cliente.execute("SELECT * FROM incidencias WHERE id = ?", (id,))
-        incidencia = resultado.rows[0] if resultado.rows else None
-        
-        if not incidencia:
-            cliente.close()
-            return "<h1>Error: Incidencia no encontrada</h1>", 404
-            
-        # 2. Obtener historial del chat uniendo con la tabla de usuarios
-        sql_mensajes = """
-            SELECT m.mensaje, m.tipo, m.fecha, u.nombre, u.foto, u.rol 
-            FROM mensajes m 
-            JOIN usuarios u ON m.usuario_id = u.id 
-            WHERE m.incidencia_id = ? 
-            ORDER BY m.fecha ASC
-        """
-        res_mensajes = cliente.execute(sql_mensajes, (id,))
-        mensajes = res_mensajes.rows
-        
+        incidencia = cliente.execute("SELECT * FROM incidencias WHERE id = ?", (id,)).rows[0]
+        mensajes = cliente.execute("SELECT m.mensaje, m.tipo, m.fecha, u.nombre, u.foto, u.rol, m.archivo FROM mensajes m JOIN usuarios u ON m.usuario_id = u.id WHERE m.incidencia_id = ? ORDER BY m.fecha ASC", (id,)).rows
         cliente.close()
         return render_template('detalle.html', incidencia=incidencia, mensajes=mensajes)
-    except Exception as e: return f"<h1>Error: {e}</h1>"
+    except: return "<h1>Error: Incidencia no encontrada</h1>", 404
 
 @app.route('/enviar_mensaje/<int:id>', methods=['POST'])
 @login_required
 def enviar_mensaje(id):
-    mensaje = request.form.get('mensaje')
-    tipo = request.form.get('tipo', 'chat') # Puede ser 'chat' o 'nota'
-    usuario_id = session.get('id_usuario')
-    fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+    archivo_url = None
+    if 'archivo' in request.files and request.files['archivo'].filename != '':
+        file = request.files['archivo']
+        filename = f"{int(datetime.now().timestamp())}_{secure_filename(file.filename)}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        archivo_url = f"/static/uploads/{filename}"
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-        cliente.execute("INSERT INTO mensajes (incidencia_id, usuario_id, mensaje, tipo, fecha) VALUES (?, ?, ?, ?, ?)", (id, usuario_id, mensaje, tipo, fecha))
+        cliente.execute("INSERT INTO mensajes (incidencia_id, usuario_id, mensaje, tipo, archivo, fecha) VALUES (?, ?, ?, ?, ?, ?)", (id, session.get('id_usuario'), request.form.get('mensaje'), request.form.get('tipo', 'chat'), archivo_url, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        # Notificar si hay un comentario en el ticket
+        cliente.execute("INSERT INTO notificaciones (usuario_id, texto, enlace, fecha) VALUES (1, ?, ?, ?)", (f"{session.get('nombre')} actualizó el Ticket #{id}", f"/incidencia/{id}", datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         cliente.close()
-    except Exception as e:
-        print(f"Error al enviar chat: {e}")
-        
+    except: pass
     return redirect(url_for('ver_detalle', id=id))
 
 @app.route('/actualizar_estado/<int:id>', methods=['POST'])
 @login_required
 def actualizar_estado(id):
-    nuevo_estado = request.form['nuevo_estado']
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-        cliente.execute("UPDATE incidencias SET estado = ? WHERE id = ?", (nuevo_estado, id))
+        cliente.execute("UPDATE incidencias SET estado = ? WHERE id = ?", (request.form['nuevo_estado'], id))
         cliente.close()
     except: pass
     return redirect(url_for('ver_detalle', id=id))
@@ -300,14 +300,9 @@ def actualizar_estado(id):
 @app.route('/resolver/<int:id>', methods=['POST'])
 @login_required
 def resolver_incidencia(id):
-    solucion_redactada = request.form['solucion']
-    fecha_solucion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    tecnico = session.get('nombre', 'Técnico')
-    rol = session.get('rol', 'TI')
-    solucion_con_firma = f"{solucion_redactada}\n\n✅ Atendido por: {tecnico} ({rol})"
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-        cliente.execute("UPDATE incidencias SET solucion = ?, estado = 'Resuelta', fecha_solucion = ? WHERE id = ?", (solucion_con_firma, fecha_solucion, id))
+        cliente.execute("UPDATE incidencias SET solucion = ?, estado = 'Resuelta', fecha_solucion = ? WHERE id = ?", (f"{request.form['solucion']}\n\n✅ Atendido por: {session.get('nombre')} ({session.get('rol')})", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), id))
         cliente.close()
     except: pass
     return redirect(url_for('ver_detalle', id=id))
@@ -318,13 +313,11 @@ def eliminar_incidencia(id):
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
         cliente.execute("DELETE FROM incidencias WHERE id = ?", (id,))
-        # También borramos los mensajes asociados a este ticket para mantener limpia la BD
         cliente.execute("DELETE FROM mensajes WHERE incidencia_id = ?", (id,))
         cliente.close()
     except: pass
     return redirect(url_for('inicio'))
 
-# --- EXPORTACIÓN, ÁREAS Y TÉCNICOS SE MANTIENEN IGUAL ---
 @app.route('/exportar')
 @login_required
 def exportar_csv():
@@ -336,7 +329,7 @@ def exportar_csv():
     writer.writerow(['ID', 'Problema', 'Equipo', 'Area', 'Categoria', 'Descripcion', 'Prioridad', 'Estado', 'Reportado Por', 'Solucion', 'Fecha Reporte', 'Fecha Solucion'])
     for item in incidencias: writer.writerow(item)
     output.seek(0)
-    return Response(output, mimetype="text/csv", headers={"Content-Disposition": f"attachment;filename=Reporte_{datetime.now().strftime('%Y%m%d')}.csv"})
+    return Response(output, mimetype="text/csv", headers={"Content-Disposition": f"attachment;filename=Reporte.csv"})
 
 @app.route('/exportar_pdf')
 @login_required
@@ -381,9 +374,7 @@ def detalle_area(nombre_area):
 def gestion_tecnicos():
     cliente = libsql_client.create_client_sync(url=url, auth_token=token)
     if request.method == 'POST':
-        nombre, usuario_nick, email, password, rol = request.form.get('nombre'), request.form.get('usuario'), request.form.get('email'), request.form.get('password'), request.form.get('rol')
-        try:
-            cliente.execute("INSERT INTO usuarios (nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, ?)", (nombre, usuario_nick, email, generate_password_hash(password), rol))
+        try: cliente.execute("INSERT INTO usuarios (nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, ?)", (request.form.get('nombre'), request.form.get('usuario'), request.form.get('email'), generate_password_hash(request.form.get('password')), request.form.get('rol')))
         except: pass
         return redirect(url_for('gestion_tecnicos'))
     try: tecnicos = cliente.execute("SELECT id, nombre, usuario, email, rol FROM usuarios ORDER BY id DESC").rows
