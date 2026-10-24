@@ -38,27 +38,59 @@ def login_required(f):
     return decorated_function
 
 # ==========================================
-# FUNCIÓN PARA ENVIAR CORREO DE VERIFICACIÓN
+# FUNCIÓN PARA ENVIAR CORREO DE VERIFICACIÓN (HTML PROFESIONAL)
 # ==========================================
-def enviar_codigo_registro(destinatario, codigo):
-    msg = MIMEMultipart()
-    msg['From'] = MAIL_USERNAME
+def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
+    msg = MIMEMultipart('alternative')
+    
+    # 1. Nombre corporativo como remitente
+    msg['From'] = f'"LocalDesk Soporte" <{MAIL_USERNAME}>' 
     msg['To'] = destinatario
     msg['Subject'] = "Verifica tu cuenta - LocalDesk"
     
-    cuerpo = f"""Hola,
+    # 2. Diseño del correo en HTML
+    cuerpo_html = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F5F5F7; margin: 0; padding: 40px 20px; }}
+            .container {{ max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #E5E5EA; }}
+            .logo {{ font-size: 24px; font-weight: 700; color: #1D1D1F; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 10px; }}
+            .logo svg {{ width: 32px; height: 32px; color: #0071E3; }}
+            .title {{ font-size: 22px; font-weight: 600; color: #1D1D1F; margin-bottom: 16px; }}
+            .text {{ font-size: 16px; color: #86868B; line-height: 1.5; margin-bottom: 32px; }}
+            .code-box {{ background-color: #F5F5F7; border-radius: 8px; padding: 16px 24px; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #0071E3; margin-bottom: 32px; display: inline-block; font-family: monospace; border: 1px solid #E5E5EA; }}
+            .footer {{ font-size: 12px; color: #8E8E93; margin-top: 32px; line-height: 1.5; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px; height:32px; color:#0071E3;">
+                    <path d="M5 5v14h7 M5 19l7-7v-7 M12 5q8 0 8 7t-8 7" />
+                </svg>
+                LocalDesk
+            </div>
+            
+            <h1 class="title">Hola, {nombre_usuario}</h1>
+            
+            <p class="text">Estás a un paso de completar tu registro. Utiliza el siguiente código de verificación de 6 dígitos en la aplicación para activar tu cuenta.</p>
+            
+            <div class="code-box">{codigo}</div>
+            
+            <p class="footer">
+                Te enviamos este correo electrónico a {destinatario} porque se solicitó crear una cuenta en LocalDesk.<br>
+                Si no fuiste tú, puedes ignorar este mensaje de forma segura.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
 
-Estás a un paso de unirte a LocalDesk. Tu código de verificación de 6 dígitos es:
-
-{codigo}
-
-Ingrésalo en la pantalla de registro para activar tu cuenta.
-Si no solicitaste este registro, por favor ignora este mensaje.
-
-Atentamente,
-El equipo de LocalDesk"""
-
-    msg.attach(MIMEText(cuerpo, 'plain'))
+    parte_html = MIMEText(cuerpo_html, 'html')
+    msg.attach(parte_html)
     
     try:
         server = smtplib.SMTP('smtp.gmail.com', 587)
@@ -108,7 +140,6 @@ def registro():
         email = request.form.get('email')
         password = request.form.get('password')
         
-        # 1. Verificar si el correo ya existe en la base de datos
         try:
             cliente = libsql_client.create_client_sync(url=url, auth_token=token)
             res = cliente.execute("SELECT id FROM usuarios WHERE email = ?", (email,))
@@ -119,11 +150,9 @@ def registro():
         except:
             pass
 
-        # 2. Generar el código OTP y encriptar contraseña
         password_segura = generate_password_hash(password)
         codigo_otp = str(random.randint(100000, 999999))
         
-        # 3. Guardar datos temporalmente en la sesión
         session['reg_temp'] = {
             'nombre': nombre,
             'usuario': usuario,
@@ -132,8 +161,8 @@ def registro():
             'otp': codigo_otp
         }
         
-        # 4. Enviar el correo
-        if enviar_codigo_registro(email, codigo_otp):
+        # Enviar el correo usando la nueva función con HTML
+        if enviar_codigo_registro(email, codigo_otp, nombre):
             return redirect(url_for('verificar_registro'))
         else:
             flash('Error al enviar el correo. Revisa tu configuración.', 'danger')
@@ -142,7 +171,6 @@ def registro():
 
 @app.route('/verificar_registro', methods=['GET', 'POST'])
 def verificar_registro():
-    # Si entra aquí sin haber pasado por el formulario, lo regresamos
     if 'reg_temp' not in session:
         return redirect(url_for('registro'))
 
@@ -151,14 +179,12 @@ def verificar_registro():
         datos = session['reg_temp']
 
         if codigo_ingresado == datos['otp']:
-            # ¡CÓDIGO CORRECTO! Guardamos al usuario en la BD
             try:
                 cliente = libsql_client.create_client_sync(url=url, auth_token=token)
                 sql = "INSERT INTO usuarios (nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, 'Soporte Técnico')"
                 cliente.execute(sql, (datos['nombre'], datos['usuario'], datos['email'], datos['password']))
                 cliente.close()
                 
-                # Borramos la sesión temporal
                 session.pop('reg_temp', None)
                 flash('¡Cuenta verificada y creada con éxito! Ya puedes iniciar sesión.', 'success')
                 return redirect(url_for('login'))
