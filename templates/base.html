@@ -9,9 +9,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
+    <!-- SCRIPT DE CARGA TEMPRANA -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+
     <style>
         :root {
             --sidebar-width: 260px;
+
+            /* Variables globales por defecto (Modo Claro) */
+            --apple-bg: #F5F5F7;
+            --apple-surface: #FFFFFF;
+            --apple-border: #E5E5EA;
+            --apple-text-main: #1D1D1F;
+            --apple-text-secondary: #8E8E93;
+
+            /* Variables específicas para el Chat (Modo Claro) */
+            --chat-active-bg: #F0F7FF;
+            --chat-header-bg: #FAFAFA;
+            --chat-receiver-bg: #F5F5F7;
+            --clip-btn-bg: #FFFFFF;
         }
 
         body {
@@ -22,6 +42,7 @@
             color: var(--apple-text-main);
             display: flex;
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .sidebar {
@@ -36,6 +57,7 @@
             height: 100vh;
             overflow-y: auto;
             box-sizing: border-box;
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         .brand {
@@ -70,11 +92,16 @@
             font-weight: 500;
             font-size: 0.95rem;
             transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
         }
 
         .nav-link:hover {
-            background-color: var(--apple-bg);
-            color: var(--apple-accent);
+            background-color: rgba(128, 128, 128, 0.1);
+            color: var(--apple-accent, #0071E3);
         }
 
         .nav-link i {
@@ -85,7 +112,7 @@
         }
 
         .nav-link:hover i {
-            color: var(--apple-accent);
+            color: var(--apple-accent, #0071E3);
         }
 
         .main-content {
@@ -95,6 +122,95 @@
             max-width: 1200px;
             width: 100%;
             box-sizing: border-box;
+        }
+
+        /* =======================================
+           SISTEMA DE MODO OSCURO (APPLE STYLE)
+           ======================================= */
+        [data-theme="dark"] {
+            --apple-bg: #000000 !important;
+            --apple-surface: #1C1C1E !important;
+            --apple-border: #38383A !important;
+            --apple-text-main: #F5F5F7 !important;
+            --apple-text-secondary: #98989D !important;
+
+            /* Variables específicas para el Chat (Modo Oscuro) */
+            --chat-active-bg: #2C2C2E !important;
+            --chat-header-bg: #1C1C1E !important;
+            --chat-receiver-bg: #2C2C2E !important;
+            --clip-btn-bg: #2C2C2E !important;
+        }
+
+        [data-theme="dark"] body {
+            background-color: var(--apple-bg) !important;
+            color: var(--apple-text-main) !important;
+        }
+
+        [data-theme="dark"] .sidebar {
+            background-color: var(--apple-surface) !important;
+            border-color: var(--apple-border) !important;
+        }
+
+        [data-theme="dark"] .apple-card {
+            background-color: var(--apple-surface) !important;
+            border-color: var(--apple-border) !important;
+            color: var(--apple-text-main) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        [data-theme="dark"] .apple-input {
+            background-color: #2C2C2E !important;
+            border-color: var(--apple-border) !important;
+            color: var(--apple-text-main) !important;
+        }
+
+        [data-theme="dark"] .apple-input::placeholder {
+            color: var(--apple-text-secondary) !important;
+        }
+
+        [data-theme="dark"] .nav-link:hover {
+            background-color: #2C2C2E !important;
+        }
+
+        [data-theme="dark"] .profile-box {
+            background-color: #2C2C2E !important;
+            border-color: var(--apple-border) !important;
+        }
+
+        /* PARCHE DEFINITIVO PARA LAS TABLAS (Soluciona las filas blancas del Dashboard) */
+        [data-theme="dark"] table,
+        [data-theme="dark"] tr,
+        [data-theme="dark"] td,
+        [data-theme="dark"] th {
+            background-color: transparent !important;
+            color: var(--apple-text-main) !important;
+            border-color: var(--apple-border) !important;
+        }
+
+        [data-theme="dark"] tbody tr,
+        [data-theme="dark"] tbody tr:nth-child(even),
+        [data-theme="dark"] tbody tr:nth-child(odd) {
+            background-color: transparent !important;
+        }
+
+        [data-theme="dark"] tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        /* Parche para badges (etiquetas de estado) en modo oscuro */
+        [data-theme="dark"] .badge-green {
+            background-color: rgba(52, 199, 89, 0.2) !important;
+            color: #34C759 !important;
+        }
+
+        [data-theme="dark"] .badge-orange {
+            background-color: rgba(255, 149, 0, 0.2) !important;
+            color: #FF9500 !important;
+        }
+
+        [data-theme="dark"] .badge-red {
+            background-color: rgba(255, 59, 48, 0.2) !important;
+            color: #FF3B30 !important;
         }
     </style>
 </head>
@@ -118,10 +234,8 @@
                     <a href="/notificaciones" class="nav-link" style="justify-content: space-between;">
                         <div style="display: flex; gap: 14px; align-items: center;"><i class="fa-solid fa-bell"></i>
                             Notificaciones</div>
-
-                        <!-- El badge ahora tiene un ID y se muestra/oculta automáticamente -->
                         <span id="badge-notificaciones"
-                            style="background-color: var(--apple-red); color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; {% if noti_pendientes == 0 %}display: none;{% endif %}">{{
+                            style="background-color: var(--apple-red, #FF3B30); color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; {% if noti_pendientes == 0 %}display: none;{% endif %}">{{
                             noti_pendientes }}</span>
                     </a>
                 </li>
@@ -143,11 +257,17 @@
             <p
                 style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 12px; margin-left: 12px; font-weight: 600;">
                 Otros</p>
+
+            <button id="theme-toggle" class="nav-link">
+                <i class="fa-solid fa-moon" id="theme-icon"></i>
+                <span id="theme-text">Modo Oscuro</span>
+            </button>
+
             <a href="/perfil" class="nav-link"><i class="fa-solid fa-gear"></i> Ajustes</a>
             <a href="/logout" class="nav-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
 
-            <div
-                style="display: flex; align-items: center; gap: 12px; background-color: var(--apple-bg); padding: 12px; border-radius: 12px; margin-top: 16px; border: 1px solid var(--apple-border);">
+            <div class="profile-box"
+                style="display: flex; align-items: center; gap: 12px; background-color: var(--apple-bg, #F5F5F7); padding: 12px; border-radius: 12px; margin-top: 16px; border: 1px solid var(--apple-border, #E5E5EA); transition: all 0.3s;">
                 <img src="{{ session.get('foto') or 'https://ui-avatars.com/api/?name=' + session.get('nombre', 'U') + '&background=0071E3&color=fff' }}"
                     style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover;">
                 <div style="overflow: hidden;">
@@ -166,7 +286,6 @@
         {% endblock %}
     </main>
 
-    <!-- SCRIPT DE TIEMPO REAL PARA LAS NOTIFICACIONES -->
     <script>
         setInterval(() => {
             fetch('/api/notificaciones_count')
@@ -183,7 +302,34 @@
                     }
                 })
                 .catch(err => console.log(err));
-        }, 3000); // Revisa cada 3 segundos
+        }, 3000);
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+
+        function updateThemeUI(theme) {
+            if (theme === 'dark') {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                themeText.innerText = 'Modo Claro';
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                themeText.innerText = 'Modo Oscuro';
+            }
+        }
+
+        updateThemeUI(document.documentElement.getAttribute('data-theme') || 'light');
+
+        themeToggle.addEventListener('click', () => {
+            let currentTheme = document.documentElement.getAttribute('data-theme');
+            let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeUI(newTheme);
+        });
     </script>
 </body>
 

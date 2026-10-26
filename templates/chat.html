@@ -3,7 +3,7 @@
 {% block content %}
 <div class="d-flex-between mb-4">
     <div>
-        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Chat Interno</h1>
+        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px; margin: 0;">Chat Interno</h1>
         <p style="color: var(--apple-text-secondary); margin-top: 4px;">Mensajería directa y compartición de archivos
         </p>
     </div>
@@ -17,11 +17,12 @@
         </h3>
         <ul style="list-style: none; padding: 0; margin: 0;">
             {% for u in usuarios %}
+            <!-- CORRECCIÓN: Se usa la variable var(--chat-active-bg) en lugar de color fijo -->
             <li
-                style="border-bottom: 1px solid var(--apple-border); background-color: {% if destinatario and destinatario.id == u[0] %}#F0F7FF{% else %}transparent{% endif %};">
+                style="border-bottom: 1px solid var(--apple-border); background-color: {% if destinatario and destinatario.id == u[0] %}var(--chat-active-bg){% else %}transparent{% endif %}; transition: background-color 0.3s;">
                 <a href="/chat/{{ u[0] }}"
-                    style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; text-decoration: none; color: inherit; transition: 0.2s;"
-                    onmouseover="this.style.backgroundColor='#FAFAFA'"
+                    style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; text-decoration: none; color: inherit;"
+                    onmouseover="this.style.backgroundColor='var(--chat-active-bg)'"
                     onmouseout="this.style.backgroundColor='transparent'">
                     <img src="{{ u[3] or 'https://ui-avatars.com/api/?name=' ~ u[1] ~ '&background=E5E5EA&color=1D1D1F' }}"
                         style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -39,40 +40,38 @@
     <!-- COLUMNA DERECHA: CONVERSACIÓN PRIVADA -->
     <div class="apple-card" style="padding: 0; display: flex; flex-direction: column;">
         {% if destinatario %}
-        <!-- Cabecera del Chat con Botón de Vaciar -->
+        <!-- Cabecera del Chat (CORRECCIÓN FONDO Y BORDE) -->
         <div
-            style="padding: 16px 20px; border-bottom: 1px solid var(--apple-border); background-color: #FAFAFA; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: space-between;">
+            style="padding: 16px 20px; border-bottom: 1px solid var(--apple-border); background-color: var(--chat-header-bg); border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: space-between; transition: background-color 0.3s;">
 
             <div style="display: flex; align-items: center; gap: 12px;">
                 <img src="{{ destinatario.foto or 'https://ui-avatars.com/api/?name=' ~ destinatario.nombre ~ '&background=E5E5EA&color=1D1D1F' }}"
                     style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
                 <div>
-                    <h2 style="font-size: 1.05rem; font-weight: 600; margin: 0;">{{ destinatario.nombre }}</h2>
-                    <p style="margin: 0; font-size: 0.8rem; color: #8E8E93;">Mensaje Directo</p>
+                    <h2 style="font-size: 1.05rem; font-weight: 600; margin: 0; color: var(--apple-text-main);">{{
+                        destinatario.nombre }}</h2>
+                    <p style="margin: 0; font-size: 0.8rem; color: var(--apple-text-secondary);">Mensaje Directo</p>
                 </div>
             </div>
 
-            <!-- NUEVO BOTÓN: VACIAR CHAT -->
             <form action="/vaciar_chat/{{ destinatario.id }}" method="POST"
                 onsubmit="return confirm('¿Estás seguro de que quieres eliminar TODO el historial de mensajes con este usuario? Esta acción no se puede deshacer.');">
                 <button type="submit" class="btn-apple"
-                    style="background-color: var(--apple-red); padding: 6px 14px; font-size: 0.85rem;">
+                    style="background-color: #FF3B30; color: white; padding: 6px 14px; font-size: 0.85rem; border: none;">
                     <i class="fa-solid fa-trash-can" style="margin-right: 6px;"></i> Vaciar chat
                 </button>
             </form>
 
         </div>
 
-        <!-- Historial de Mensajes -->
         <div id="chat-box"
             style="flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
             {% for msg in mensajes %}
-            <!-- Si el remitente soy YO, alinear a la derecha -->
             {% if msg[3] == mi_id %}
             <div style="align-self: flex-end; max-width: 75%;">
                 <div
                     style="display: flex; align-items: baseline; gap: 8px; justify-content: flex-end; margin-bottom: 4px;">
-                    <span style="font-size: 0.75rem; color: #8E8E93;">{{ msg[2] }}</span>
+                    <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
                 </div>
                 <div
                     style="background-color: #0071E3; color: #FFFFFF; padding: 12px 16px; border-radius: 12px 12px 0 12px; font-size: 0.95rem; line-height: 1.5; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -88,21 +87,21 @@
                     {% endif %}
                 </div>
             </div>
-            <!-- Si el remitente es EL OTRO, alinear a la izquierda -->
             {% else %}
             <div style="align-self: flex-start; max-width: 75%; display: flex; gap: 12px;">
                 <img src="{{ msg[5] or 'https://ui-avatars.com/api/?name=' ~ msg[4] ~ '&background=E5E5EA&color=1D1D1F' }}"
                     style="width: 32px; height: 32px; border-radius: 50%; margin-top: auto;">
                 <div>
                     <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-                        <span style="font-size: 0.75rem; color: #8E8E93;">{{ msg[2] }}</span>
+                        <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
                     </div>
+                    <!-- CORRECCIÓN: Fondo dinámico para el mensaje recibido -->
                     <div
-                        style="background-color: #F5F5F7; color: #1D1D1F; padding: 12px 16px; border-radius: 12px 12px 12px 0; font-size: 0.95rem; line-height: 1.5; border: 1px solid #E5E5EA;">
+                        style="background-color: var(--chat-receiver-bg); color: var(--apple-text-main); padding: 12px 16px; border-radius: 12px 12px 12px 0; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--apple-border); transition: background-color 0.3s, color 0.3s;">
                         {{ msg[0] }}
                         {% if msg[1] %}
                         <div
-                            style="margin-top: 8px; padding: 8px; background-color: rgba(0,0,0,0.05); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
+                            style="margin-top: 8px; padding: 8px; background-color: rgba(0,113,227,0.1); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
                             <i class="fa-solid fa-file-arrow-down" style="color: #0071E3;"></i>
                             <a href="{{ msg[1] }}" target="_blank"
                                 style="color: #0071E3; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Archivo
@@ -114,49 +113,48 @@
             </div>
             {% endif %}
             {% else %}
-            <div style="text-align: center; color: #8E8E93; padding: 40px; margin: auto;">
+            <div style="text-align: center; color: var(--apple-text-secondary); padding: 40px; margin: auto;">
                 <i class="fa-regular fa-comments" style="font-size: 3rem; margin-bottom: 12px;"></i>
                 <p>No hay mensajes. ¡Escribe el primero para iniciar la conversación!</p>
             </div>
             {% endfor %}
         </div>
 
-        <!-- Caja de envío -->
+        <!-- Caja de envío (CORRECCIÓN FONDO) -->
         <div
-            style="padding: 16px; border-top: 1px solid var(--apple-border); background-color: #FAFAFA; border-radius: 0 0 12px 12px;">
+            style="padding: 16px; border-top: 1px solid var(--apple-border); background-color: var(--chat-header-bg); border-radius: 0 0 12px 12px; transition: background-color 0.3s;">
             <form action="/enviar_privado/{{ destinatario.id }}" method="POST" enctype="multipart/form-data">
                 <textarea name="mensaje" class="apple-input" rows="2" placeholder="Escribe un mensaje privado..."
                     required style="width: 100%; margin-bottom: 12px; resize: none;"></textarea>
 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <!-- CORRECCIÓN: Botón de adjuntar con fondo dinámico -->
                     <label
-                        style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 8px; transition: 0.2s;"
-                        onmouseover="this.style.backgroundColor='#E5E5EA'"
-                        onmouseout="this.style.backgroundColor='#FFFFFF'">
-                        <i class="fa-solid fa-paperclip" style="color: #8E8E93;"></i>
+                        style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--clip-btn-bg); border: 1px solid var(--apple-border); border-radius: 8px; transition: 0.2s;"
+                        onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                        <i class="fa-solid fa-paperclip" style="color: var(--apple-text-secondary);"></i>
                         <input type="file" name="archivo" style="display: none;"
                             onchange="document.getElementById('nombre-archivo').innerText = this.files[0].name">
                     </label>
                     <span id="nombre-archivo"
-                        style="font-size: 0.8rem; color: #8E8E93; margin-left: 10px; flex-grow: 1;"></span>
+                        style="font-size: 0.8rem; color: var(--apple-text-secondary); margin-left: 10px; flex-grow: 1;"></span>
 
-                    <button type="submit" class="btn-apple">Enviar</button>
+                    <button type="submit" class="btn-apple"
+                        style="background-color: #0071E3; color: white; border: none;">Enviar</button>
                 </div>
             </form>
         </div>
         {% else %}
-        <!-- Pantalla vacía cuando no has seleccionado a nadie -->
         <div
-            style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #8E8E93;">
+            style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--apple-text-secondary);">
             <i class="fa-solid fa-user-group" style="font-size: 4rem; margin-bottom: 16px; opacity: 0.3;"></i>
-            <h3 style="font-weight: 500; font-size: 1.2rem; color: #1D1D1F;">Selecciona un contacto</h3>
+            <h3 style="font-weight: 500; font-size: 1.2rem; color: var(--apple-text-main);">Selecciona un contacto</h3>
             <p style="font-size: 0.95rem;">Elige a alguien de la lista para iniciar un chat privado.</p>
         </div>
         {% endif %}
     </div>
 </div>
 
-<!-- SCRIPT DE TIEMPO REAL PARA EL CHAT -->
 <script>
     const chatBox = document.getElementById('chat-box');
 

@@ -225,22 +225,16 @@ def enviar_privado(dest_id):
     
     return redirect(url_for('chat_interno', dest_id=dest_id))
 
-# NUEVO: Ruta para vaciar el historial del chat
 @app.route('/vaciar_chat/<int:dest_id>', methods=['POST'])
 @login_required
 def vaciar_chat(dest_id):
     mi_id = session.get('id_usuario')
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-        sql = """
-            DELETE FROM mensajes_privados 
-            WHERE (remitente_id = ? AND destinatario_id = ?) 
-               OR (remitente_id = ? AND destinatario_id = ?)
-        """
+        sql = "DELETE FROM mensajes_privados WHERE (remitente_id = ? AND destinatario_id = ?) OR (remitente_id = ? AND destinatario_id = ?)"
         cliente.execute(sql, (mi_id, dest_id, dest_id, mi_id))
         cliente.close()
-    except Exception as e:
-        print(f"Error al vaciar chat: {e}")
+    except: pass
     return redirect(url_for('chat_interno', dest_id=dest_id))
 
 # ==========================================
@@ -338,6 +332,102 @@ def eliminar_incidencia(id):
     except: pass
     return redirect(url_for('inicio'))
 
+
+# ==========================================
+# REPORTE PDF - ESTILO CORPORATIVO AVANZADO
+# ==========================================
+@app.route('/exportar_pdf')
+@login_required
+def exportar_pdf():
+    cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+    incidencias = cliente.execute("SELECT id, titulo, equipo, categoria, estado, prioridad, reportado_por FROM incidencias ORDER BY id DESC").rows
+    cliente.close()
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=40, bottomMargin=40)
+    elementos = []
+    estilos = getSampleStyleSheet()
+    
+    # 1. Bloque de título principal (fondo azul, texto blanco)
+    titulo_data = [[Paragraph("<font color='white'><b>Reporte General de Incidencias - LocalDesk</b></font>", ParagraphStyle('Tit', parent=estilos['Normal'], fontSize=16, alignment=0))]]
+    tabla_titulo = Table(titulo_data, colWidths=[550])
+    tabla_titulo.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#23a5f7')), # Azul claro estilo reporte
+        ('PADDING', (0,0), (-1,-1), 12),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 14),
+    ]))
+    elementos.append(tabla_titulo)
+    elementos.append(Spacer(1, 20))
+    
+    # 2. Subtítulo y Fecha (Separados del título principal)
+    fecha_actual = datetime.now().strftime("%d/%m/%Y")
+    hora_actual = datetime.now().strftime("%H:%M")
+    
+    info_data = [
+        [Paragraph("<font color='#40c0cb'><b>Detalle de Incidencias Registradas</b></font>", ParagraphStyle('Sub', parent=estilos['Normal'], fontSize=12))],
+        [Paragraph(f"<font color='#808080'>Generado el: {fecha_actual} a las {hora_actual}</font>", ParagraphStyle('Fec', parent=estilos['Normal'], fontSize=9))]
+    ]
+    tabla_info = Table(info_data, colWidths=[550])
+    tabla_info.setStyle(TableStyle([('PADDING', (0,0), (-1,-1), 0), ('BOTTOMPADDING', (0,0), (-1,-1), 5)]))
+    elementos.append(tabla_info)
+    elementos.append(Spacer(1, 15))
+    
+    # 3. Preparación de datos de la tabla con colores en los estados
+    data = [["ID", "PROBLEMA", "EQUIPO", "CATEGORÍA", "ESTADO", "PRIORIDAD", "REPORTADO POR"]]
+    
+    for item in incidencias:
+        titulo = str(item[1])
+        if len(titulo) > 22: titulo = titulo[:19] + "..."
+        
+        # Aplicar colores llamativos al estado
+        estado_texto = str(item[4])
+        if estado_texto == 'Resuelta':
+            estado_formateado = Paragraph("<font color='#34C759'><b>Resuelta</b></font>", estilos['Normal'])
+        elif estado_texto == 'En revisión':
+            estado_formateado = Paragraph("<font color='#FF9500'><b>En revisión</b></font>", estilos['Normal'])
+        else:
+            estado_formateado = Paragraph("<font color='#FF3B30'><b>Pendiente</b></font>", estilos['Normal'])
+            
+        data.append([str(item[0]), titulo, str(item[2]), str(item[3]), estado_formateado, str(item[5]), str(item[6])])
+        
+    tabla = Table(data, colWidths=[25, 120, 80, 75, 75, 65, 110])
+    
+    # 4. Estilos de tabla intercalada fina
+    estilo_tabla = TableStyle([
+        # Cabecera (Azul muy claro con texto azul oscuro/grisáceo)
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dcf2f9')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#5c8c9e')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('ALIGN', (0, 0), (-1, 0), 'LEFT'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        
+        # Contenido
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        
+        # Líneas de cuadrícula muy finas y claras
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e6e6e6')),
+    ])
+    
+    # Color de fondo intercalado para las filas
+    for i in range(1, len(data)):
+        if i % 2 == 0:
+            estilo_tabla.add('BACKGROUND', (0, i), (-1, i), colors.HexColor('#f9f9f9'))
+            
+    tabla.setStyle(estilo_tabla)
+    elementos.append(tabla)
+    
+    doc.build(elementos)
+    buffer.seek(0)
+    return Response(buffer, mimetype="application/pdf", headers={"Content-Disposition": f"attachment;filename=Reporte_LocalDesk.pdf"})
+
+
 @app.route('/exportar')
 @login_required
 def exportar_csv():
@@ -350,24 +440,6 @@ def exportar_csv():
     for item in incidencias: writer.writerow(item)
     output.seek(0)
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": f"attachment;filename=Reporte.csv"})
-
-@app.route('/exportar_pdf')
-@login_required
-def exportar_pdf():
-    cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-    incidencias = cliente.execute("SELECT id, titulo, equipo, categoria, estado, prioridad, reportado_por FROM incidencias ORDER BY id DESC").rows
-    cliente.close()
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
-    elementos = [Paragraph("LocalDesk - Reporte", ParagraphStyle('Titulo', parent=getSampleStyleSheet()['Heading1'], fontName='Helvetica-Bold', fontSize=22, textColor=colors.HexColor('#1D1D1F'), spaceAfter=4))]
-    data = [["ID", "Problema", "Equipo", "Categoría", "Estado", "Prioridad", "Reportado"]]
-    for item in incidencias: data.append([str(item[0]), str(item[1]), str(item[2]), str(item[3]), str(item[4]), str(item[5]), str(item[6])])
-    tabla = Table(data, colWidths=[30, 140, 75, 65, 65, 65, 100])
-    tabla.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0071E3')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke), ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('FONTSIZE', (0, 0), (-1, 0), 9), ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F5F5F7')), ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E5EA'))]))
-    elementos.append(tabla)
-    doc.build(elementos)
-    buffer.seek(0)
-    return Response(buffer, mimetype="application/pdf", headers={"Content-Disposition": f"attachment;filename=Reporte.pdf"})
 
 @app.route('/areas')
 @login_required

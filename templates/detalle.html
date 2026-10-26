@@ -3,151 +3,144 @@
 {% block content %}
 <div class="d-flex-between mb-4">
     <div style="display: flex; align-items: center; gap: 16px;">
-        <h1 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -1px; margin: 0;">Ticket #{{ incidencia[0] }}
-        </h1>
-        {% if incidencia[7] == 'Resuelta' %}
-        <span class="badge badge-green">Resuelta</span>
-        {% elif incidencia[7] == 'En revisión' %}
-        <span class="badge badge-orange">En revisión</span>
-        {% else %}
-        <span class="badge badge-red">Pendiente</span>
-        {% endif %}
+        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px; margin: 0; color: var(--apple-text-main);">
+            Ticket #{{ incidencia[0] }}</h1>
+        {% if incidencia[7] == 'Resuelta' %}<span class="badge badge-green">Resuelta</span>
+        {% elif incidencia[7] == 'En revisión' %}<span class="badge badge-orange">En revisión</span>
+        {% else %}<span class="badge badge-red">Pendiente</span>{% endif %}
     </div>
-    <a href="/" class="btn-apple btn-apple-secondary">
-        <i class="fa-solid fa-arrow-left" style="margin-right: 6px;"></i> Volver
+    <a href="/" class="btn-apple btn-apple-secondary" style="display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-arrow-left"></i> Volver
     </a>
 </div>
 
-<!-- DISEÑO A 3 COLUMNAS -->
-<div style="display: grid; grid-template-columns: 260px 1fr 260px; gap: 24px; align-items: start;">
+<div style="display: grid; grid-template-columns: 280px 1fr 280px; gap: 24px; align-items: start;">
 
-    <!-- COLUMNA 1: DETALLES -->
-    <div class="apple-card" style="padding: 20px;">
+    <!-- COLUMNA IZQUIERDA: DETALLES -->
+    <div class="apple-card">
         <h3
-            style="font-size: 1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid var(--apple-border); padding-bottom: 8px;">
+            style="font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 20px; color: var(--apple-text-main);">
             Detalles</h3>
 
         <div style="margin-bottom: 16px;">
-            <p class="apple-label" style="font-size: 0.8rem; margin-bottom: 4px;">Reportado por</p>
-            <div style="display: flex; align-items: center; gap: 10px;">
+            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin: 0 0 4px 0;">Reportado por</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
                 <img src="https://ui-avatars.com/api/?name={{ incidencia[8] }}&background=E5E5EA&color=1D1D1F"
-                    style="width: 28px; height: 28px; border-radius: 50%;">
-                <p style="font-weight: 600; font-size: 0.95rem; margin: 0;">{{ incidencia[8] }}</p>
+                    style="width: 24px; height: 24px; border-radius: 50%;">
+                <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{ incidencia[8]
+                    }}</span>
             </div>
         </div>
+
         <div style="margin-bottom: 16px;">
-            <p class="apple-label" style="font-size: 0.8rem; margin-bottom: 4px;">Equipo / IP</p>
-            <p style="font-weight: 500; font-size: 0.95rem; margin: 0;">{{ incidencia[2] }}</p>
+            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin: 0 0 4px 0;">Equipo / IP</p>
+            <p style="margin: 0; font-weight: 500; color: var(--apple-text-main);">{{ incidencia[2] }}</p>
         </div>
+
         <div style="margin-bottom: 16px;">
-            <p class="apple-label" style="font-size: 0.8rem; margin-bottom: 4px;">Departamento</p><span
-                class="badge badge-blue">{{ incidencia[3] }}</span>
+            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin: 0 0 4px 0;">Departamento</p>
+            <p style="margin: 0; font-weight: 600; color: var(--apple-text-main);">{{ incidencia[3] }}</p>
         </div>
+
         <div style="margin-bottom: 16px;">
-            <p class="apple-label" style="font-size: 0.8rem; margin-bottom: 4px;">Prioridad</p>
-            <p style="font-weight: 500; font-size: 0.95rem; margin: 0;">{{ incidencia[6] }}</p>
+            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin: 0 0 4px 0;">Prioridad</p>
+            <p style="margin: 0; font-weight: 500; color: var(--apple-text-main);">{{ incidencia[6] }}</p>
         </div>
+
         <div>
-            <p class="apple-label" style="font-size: 0.8rem; margin-bottom: 4px;">Fecha de creación</p>
-            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin: 0;">{{ incidencia[10] }}</p>
+            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin: 0 0 4px 0;">Fecha de creación</p>
+            <p style="margin: 0; font-size: 0.9rem; color: var(--apple-text-secondary);">{{ incidencia[10] }}</p>
         </div>
     </div>
 
-    <!-- COLUMNA 2: CHAT -->
+    <!-- COLUMNA CENTRAL: CHAT / HISTORIAL -->
     <div class="apple-card" style="padding: 0; display: flex; flex-direction: column; height: 600px;">
+
+        <!-- Cabecera del chat interno (CORREGIDA PARA MODO OSCURO) -->
         <div
-            style="padding: 16px 20px; border-bottom: 1px solid var(--apple-border); background-color: #FAFAFA; border-radius: 12px 12px 0 0;">
-            <h2 style="font-size: 1.1rem; font-weight: 600; margin: 0;">{{ incidencia[1] }}</h2>
+            style="padding: 20px 24px; border-bottom: 1px solid var(--apple-border); background-color: var(--chat-header-bg); border-radius: 12px 12px 0 0; transition: background-color 0.3s;">
+            <h2 style="margin: 0; font-size: 1.1rem; font-weight: 600; color: var(--apple-text-main);">{{ incidencia[1]
+                }}</h2>
         </div>
 
-        <!-- HISTORIAL DE MENSAJES -->
-        <div style="flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;">
-            <!-- Descripción original -->
+        <!-- Historial de mensajes -->
+        <div
+            style="flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background-color: var(--apple-surface);">
+
+            <!-- Mensaje original (Descripción) -->
             <div style="display: flex; gap: 12px;">
                 <img src="https://ui-avatars.com/api/?name={{ incidencia[8] }}&background=E5E5EA&color=1D1D1F"
                     style="width: 36px; height: 36px; border-radius: 50%;">
-                <div>
+                <div style="flex-grow: 1;">
                     <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-                        <span style="font-weight: 600; font-size: 0.95rem;">{{ incidencia[8] }}</span>
+                        <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{
+                            incidencia[8] }}</span>
                         <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ incidencia[10]
                             }}</span>
                     </div>
+                    <!-- Burbuja corregida -->
                     <div
-                        style="background-color: var(--apple-surface); padding: 12px 16px; border-radius: 0 12px 12px 12px; border: 1px solid var(--apple-border); font-size: 0.95rem; line-height: 1.5;">
+                        style="background-color: var(--chat-receiver-bg); padding: 12px 16px; border-radius: 0 12px 12px 12px; font-size: 0.95rem; line-height: 1.5; color: var(--apple-text-main); border: 1px solid var(--apple-border); transition: background-color 0.3s;">
                         {{ incidencia[5] }}
                     </div>
                 </div>
             </div>
 
-            <!-- Mensajes con Adjuntos -->
+            <!-- Iterar mensajes (Respuestas y Notas) -->
             {% for msg in mensajes %}
             <div style="display: flex; gap: 12px;">
-                <img src="{{ msg[4] or 'https://ui-avatars.com/api/?name=' ~ msg[3] ~ '&background=0071E3&color=fff' }}"
-                    style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
-                <div style="flex-grow: 1; max-width: 90%;">
+                <img src="{{ msg[4] or 'https://ui-avatars.com/api/?name=' ~ msg[3] ~ '&background=E5E5EA&color=1D1D1F' }}"
+                    style="width: 36px; height: 36px; border-radius: 50%;">
+                <div style="flex-grow: 1;">
                     <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-                        <span style="font-weight: 600; font-size: 0.95rem;">{{ msg[3] }}</span>
+                        <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{ msg[3]
+                            }}</span>
                         <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
-                        <span
-                            style="font-size: 0.7rem; background-color: #E5E5EA; padding: 2px 6px; border-radius: 4px; color: #8E8E93;">{{
-                            msg[5] }}</span>
+                        {% if msg[5] == 'Admin' %}<span
+                            style="font-size: 0.65rem; background-color: var(--apple-border); padding: 2px 6px; border-radius: 4px; color: var(--apple-text-main);">Admin</span>{%
+                        endif %}
                     </div>
 
-                    {% if msg[1] == 'nota' %}
                     <div
-                        style="background-color: #FFF9C4; padding: 12px 16px; border-radius: 0 12px 12px 12px; border: 1px solid #FBC02D; font-size: 0.95rem; line-height: 1.5; color: #7F6000;">
-                        <i class="fa-solid fa-lock" style="margin-right: 6px; opacity: 0.5;"></i> {{ msg[0] }}
+                        style="padding: 12px 16px; font-size: 0.95rem; line-height: 1.5; color: var(--apple-text-main); border-radius: 0 12px 12px 12px; border: 1px solid {% if msg[1] == 'nota' %}#FDE68A{% else %}var(--apple-border){% endif %}; background-color: {% if msg[1] == 'nota' %}#FEF3C7{% else %}var(--chat-receiver-bg){% endif %}; transition: background-color 0.3s;">
+                        {% if msg[1] == 'nota' %}
+                        <div
+                            style="font-size: 0.8rem; font-weight: 600; color: #D97706; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-lock"></i> NOTA INTERNA (Solo técnicos)</div>
+                        {% endif %}
 
-                        <!-- Si la nota tiene archivo -->
+                        <span style="{% if msg[1] == 'nota' %}color: #92400E;{% endif %}">{{ msg[0] }}</span>
+
                         {% if msg[6] %}
                         <div
-                            style="margin-top: 12px; padding: 10px; background-color: rgba(0,0,0,0.05); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-file-arrow-down text-blue"></i>
+                            style="margin-top: 8px; padding: 8px; background-color: rgba(0,0,0,0.05); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-file-arrow-down" style="color: #0071E3;"></i>
                             <a href="{{ msg[6] }}" target="_blank"
-                                style="color: var(--apple-blue); text-decoration: none; font-weight: 600; font-size: 0.85rem;">Ver
+                                style="color: #0071E3; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Ver
                                 archivo adjunto</a>
                         </div>
                         {% endif %}
                     </div>
-                    {% else %}
-                    <div
-                        style="background-color: #F0F7FF; padding: 12px 16px; border-radius: 0 12px 12px 12px; border: 1px solid #D0E3F5; font-size: 0.95rem; line-height: 1.5; color: var(--apple-text-main);">
-                        {{ msg[0] }}
-
-                        <!-- Si el chat tiene archivo -->
-                        {% if msg[6] %}
-                        <div
-                            style="margin-top: 12px; padding: 10px; background-color: rgba(0,113,227,0.1); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-file-arrow-down text-blue"></i>
-                            <a href="{{ msg[6] }}" target="_blank"
-                                style="color: var(--apple-blue); text-decoration: none; font-weight: 600; font-size: 0.85rem;">Ver
-                                archivo adjunto</a>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
                 </div>
             </div>
             {% endfor %}
         </div>
 
-        <!-- FORMULARIO DE ENVÍO CON ARCHIVOS -->
-        {% if incidencia[7] != 'Resuelta' %}
+        <!-- Caja de envío inferior (CORREGIDA PARA MODO OSCURO) -->
         <div
-            style="padding: 16px; border-top: 1px solid var(--apple-border); background-color: #FAFAFA; border-radius: 0 0 12px 12px;">
-            <!-- ¡MUY IMPORTANTE EL enctype="multipart/form-data" para subir archivos! -->
+            style="padding: 20px 24px; border-top: 1px solid var(--apple-border); background-color: var(--chat-header-bg); border-radius: 0 0 12px 12px; transition: background-color 0.3s;">
             <form action="/enviar_mensaje/{{ incidencia[0] }}" method="POST" enctype="multipart/form-data">
 
-                <div style="display: flex; gap: 16px; margin-bottom: 12px; padding-left: 4px;">
+                <div style="display: flex; gap: 16px; margin-bottom: 12px;">
                     <label
-                        style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <input type="radio" name="tipo" value="chat" checked> <i
-                            class="fa-solid fa-comment text-blue"></i> Respuesta
+                        style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; color: var(--apple-text-secondary);">
+                        <input type="radio" name="tipo" value="chat" checked style="accent-color: #0071E3;"> <i
+                            class="fa-solid fa-comment" style="color: #0071E3;"></i> Respuesta
                     </label>
                     <label
-                        style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <input type="radio" name="tipo" value="nota"> <i class="fa-solid fa-lock text-orange"></i> Nota
-                        Interna
+                        style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; color: var(--apple-text-secondary);">
+                        <input type="radio" name="tipo" value="nota" style="accent-color: #F59E0B;"> <i
+                            class="fa-solid fa-lock" style="color: #F59E0B;"></i> Nota Interna
                     </label>
                 </div>
 
@@ -155,53 +148,92 @@
                     style="width: 100%; margin-bottom: 12px; resize: none;"></textarea>
 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <!-- Botón de Adjuntar Archivo (Clip) -->
-                    <label
-                        style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--apple-surface); border: 1px solid var(--apple-border); border-radius: 8px; transition: 0.2s;"
-                        onmouseover="this.style.backgroundColor='#E5E5EA'"
-                        onmouseout="this.style.backgroundColor='var(--apple-surface)'">
-                        <i class="fa-solid fa-paperclip" style="color: var(--apple-text-secondary);"></i>
-                        <input type="file" name="archivo" style="display: none;"
-                            onchange="document.getElementById('nombre-archivo').innerText = this.files[0].name">
-                    </label>
-                    <span id="nombre-archivo"
-                        style="font-size: 0.8rem; color: var(--apple-text-secondary); margin-left: 10px; flex-grow: 1;"></span>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <!-- Botón de clip corregido -->
+                        <label
+                            style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--clip-btn-bg); border: 1px solid var(--apple-border); border-radius: 8px; transition: 0.2s;">
+                            <i class="fa-solid fa-paperclip" style="color: var(--apple-text-secondary);"></i>
+                            <input type="file" name="archivo" style="display: none;"
+                                onchange="document.getElementById('nombre-archivo-ticket').innerText = this.files[0].name">
+                        </label>
+                        <span id="nombre-archivo-ticket"
+                            style="font-size: 0.8rem; color: var(--apple-text-secondary);"></span>
+                    </div>
 
-                    <button type="submit" class="btn-apple">Enviar</button>
+                    <button type="submit" class="btn-apple"
+                        style="background-color: #0071E3; color: white; border: none;">Enviar</button>
                 </div>
             </form>
         </div>
-        {% else %}
-        <div
-            style="padding: 20px; border-top: 1px solid var(--apple-border); text-align: center; color: var(--apple-text-secondary); font-size: 0.9rem;">
-            <i class="fa-solid fa-lock" style="margin-right: 6px;"></i> Ticket cerrado.</div>
-        {% endif %}
     </div>
 
-    <!-- COLUMNA 3: ACCIONES RÁPIDAS -->
-    <div>
-        <div class="apple-card" style="padding: 20px; margin-bottom: 24px;">
-            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px;">Acciones</h3>
-            {% if incidencia[7] != 'Resuelta' %}
-            <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" style="margin-bottom: 16px;">
-                <select name="nuevo_estado" class="apple-input"
-                    style="margin-bottom: 12px; width: 100%; font-size: 0.9rem;">
-                    <option value="Pendiente" {% if incidencia[7]=='Pendiente' %}selected{% endif %}>Pendiente</option>
-                    <option value="En revisión" {% if incidencia[7]=='En revisión' %}selected{% endif %}>En revisión
-                    </option>
-                </select>
-                <button type="submit" class="btn-apple btn-apple-secondary"
-                    style="width: 100%; font-size: 0.85rem;">Actualizar Estado</button>
-            </form>
-            <hr style="border: 0; border-top: 1px solid var(--apple-border); margin: 16px 0;">
-            <form action="/resolver/{{ incidencia[0] }}" method="POST">
-                <input type="hidden" name="solucion" value="Resuelto mediante chat de soporte.">
-                <button type="submit" class="btn-apple"
-                    style="background-color: var(--apple-green); width: 100%; font-size: 0.85rem;"><i
-                        class="fa-solid fa-check" style="margin-right: 6px;"></i> Marcar Resuelta</button>
-            </form>
-            {% endif %}
+    <!-- COLUMNA DERECHA: ACCIONES -->
+    <div class="apple-card">
+        <h3
+            style="font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 20px; color: var(--apple-text-main);">
+            Acciones</h3>
+
+        <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" style="margin-bottom: 24px;">
+            <select name="nuevo_estado" class="apple-input"
+                style="width: 100%; margin-bottom: 12px; background-color: var(--chat-active-bg); color: var(--apple-text-main); border-color: var(--apple-border);">
+                <option value="Pendiente" {% if incidencia[7]=='Pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="En revisión" {% if incidencia[7]=='En revisión' %}selected{% endif %}>En revisión
+                </option>
+                <option value="Resuelta" {% if incidencia[7]=='Resuelta' %}selected{% endif %}>Resuelta</option>
+            </select>
+            <button type="submit" class="btn-apple"
+                style="width: 100%; background-color: var(--apple-bg); color: var(--apple-text-main); border: 1px solid var(--apple-border); justify-content: center;">Actualizar
+                Estado</button>
+        </form>
+
+        <hr style="border: 0; border-top: 1px solid var(--apple-border); margin: 20px 0;">
+
+        {% if incidencia[7] != 'Resuelta' %}
+        <button onclick="document.getElementById('modal-resolver').style.display='flex'" class="btn-apple"
+            style="width: 100%; background-color: #34C759; color: white; border: none; justify-content: center; font-weight: 600;">
+            <i class="fa-solid fa-check"></i> Marcar Resuelta
+        </button>
+        {% else %}
+        <div
+            style="background-color: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.3); padding: 16px; border-radius: 8px;">
+            <h4 style="color: #34C759; margin: 0 0 8px 0; font-size: 0.95rem;"><i class="fa-solid fa-circle-check"></i>
+                Solución Aplicada</h4>
+            <p style="margin: 0; font-size: 0.85rem; color: var(--apple-text-main); white-space: pre-wrap;">{{
+                incidencia[9] }}</p>
+            <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: var(--apple-text-secondary);">Cerrado el: {{
+                incidencia[11] }}</p>
         </div>
+        {% endif %}
+
+        {% if session.get('rol') == 'Admin' %}
+        <hr style="border: 0; border-top: 1px solid var(--apple-border); margin: 20px 0;">
+        <form action="/eliminar/{{ incidencia[0] }}" method="POST"
+            onsubmit="return confirm('¿Eliminar definitivamente este ticket?');">
+            <button type="submit" class="btn-apple"
+                style="width: 100%; background-color: transparent; color: #FF3B30; border: 1px solid #FF3B30; justify-content: center;">Eliminar
+                Ticket</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para Resolver -->
+<div id="modal-resolver"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="apple-card" style="width: 400px; padding: 24px;">
+        <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--apple-text-main);">Resolver Incidencia</h3>
+        <form action="/resolver/{{ incidencia[0] }}" method="POST">
+            <p style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 8px;">Describe la solución
+                aplicada:</p>
+            <textarea name="solucion" class="apple-input" rows="4" required
+                style="width: 100%; margin-bottom: 16px; resize: none;"></textarea>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" class="btn-apple btn-apple-secondary"
+                    onclick="document.getElementById('modal-resolver').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn-apple"
+                    style="background-color: #34C759; color: white; border: none;">Confirmar Solución</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
