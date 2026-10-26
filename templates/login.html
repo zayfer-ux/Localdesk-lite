@@ -1,43 +1,350 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Iniciar Sesión - LocalDesk</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+<!-- DESACTIVAMOS LA BARRA LATERAL (SIDEBAR) PARA EL LOGIN -->
+{% block sidebar %}{% endblock %}
 
-<body
-    style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--apple-bg);">
-    <div class="apple-card" style="width: 360px;">
-        <h2 style="text-align: center; margin-bottom: 24px; font-weight: 700;">LocalDesk</h2>
+{% block content %}
+<!-- Ajustamos el contenedor del login para que ocupe toda la pantalla de forma independiente -->
+<style>
+    /* Reseteo del layout principal para centrar el formulario */
+    body {
+        margin: 0;
+        padding: 0 !important;
+        background-color: var(--apple-bg, #F5F5F7) !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+    }
 
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div
-            style="background-color: rgba(255,59,48,0.1); color: var(--apple-red); padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-size: 0.9rem;">
-            {{ messages[0] }}
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar {
+        display: none !important;
+    }
+
+    /* Tarjeta principal estilo pantalla dividida (Apple macOS login style) */
+    .login-container {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        width: 1000px;
+        height: 650px;
+        background-color: var(--apple-surface, #FFFFFF);
+        border-radius: 24px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border: 1px solid var(--apple-border, #E5E5EA);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* PANEL IZQUIERDO: Promoción y Dashboard 3D (Gradiente e Ilustraciones) */
+    .panel-left {
+        background: linear-gradient(135deg, #0071E3 0%, #005BB5 40%, #0d9488 80%, #f97316 120%);
+        padding: 48px;
+        color: #FFFFFF;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .panel-left::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+        border-radius: 50%;
+    }
+
+    /* Estilo de la marca de la App */
+    .brand-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #FFFFFF;
+        margin: 0;
+    }
+
+    /* Texto principal llamativo */
+    .promo-text {
+        font-size: 1.85rem;
+        font-weight: 700;
+        line-height: 1.35;
+        margin-top: 24px;
+        letter-spacing: -0.5px;
+    }
+
+    .promo-subtext {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 12px;
+        line-height: 1.5;
+    }
+
+    /* Área visual interactiva (Simulación Dashboard de ayuda) */
+    .dashboard-preview {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin-top: 20px;
+    }
+
+    .preview-card {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 20px;
+        width: 85%;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    }
+
+    .preview-header {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.35);
+    }
+
+    .dot.red {
+        background-color: #ff5f56;
+    }
+
+    .dot.yellow {
+        background-color: #ffbd2e;
+    }
+
+    .dot.green {
+        background-color: #27c93f;
+    }
+
+    .preview-line {
+        height: 8px;
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+
+    /* PANEL DERECHO: Formulario de Inicio de Sesión */
+    .panel-right {
+        padding: 48px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-color: var(--apple-surface, #FFFFFF);
+    }
+
+    /* Inputs de formulario mejorados de Apple */
+    .input-group {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .input-group i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--apple-text-secondary, #8E8E93);
+        font-size: 1rem;
+        pointer-events: none;
+    }
+
+    .login-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 14px 14px 14px 42px !important;
+        font-size: 0.95rem;
+        background-color: var(--apple-bg, #F5F5F7);
+        border: 1px solid var(--apple-border, #E5E5EA);
+        border-radius: 12px !important;
+        color: var(--apple-text-main, #1D1D1F);
+        transition: all 0.2s ease;
+    }
+
+    .login-input:focus {
+        outline: none;
+        border-color: #0071E3;
+        background-color: var(--apple-surface, #FFFFFF);
+        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+    }
+
+    /* Alertas de flash rediseñadas */
+    .custom-alert {
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .custom-alert-danger {
+        background-color: rgba(255, 59, 48, 0.1);
+        color: #FF3B30;
+        border: 1px solid rgba(255, 59, 48, 0.2);
+    }
+
+    .custom-alert-success {
+        background-color: rgba(52, 199, 89, 0.1);
+        color: #34C759;
+        border: 1px solid rgba(52, 199, 89, 0.2);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        .login-container {
+            grid-template-columns: 1fr;
+            width: 90%;
+            height: auto;
+            max-width: 450px;
+        }
+
+        .panel-left {
+            display: none;
+        }
+    }
+</style>
+
+<div class="login-container">
+
+    <!-- LADO IZQUIERDO: SECCIÓN DE PROMOCIÓN 3D / GRADIENTE -->
+    <div class="panel-left">
+        <div class="brand-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 5v14h7 M5 19l7-7v-7 M12 5q8 0 8 7t-8 7" />
+            </svg>
+            LocalDesk
         </div>
+
+        <div style="margin-bottom: 40px;">
+            <h2 class="promo-text">Soporte rápido, eficiente y al alcance de tu mano.</h2>
+            <p class="promo-subtext">Gestiona incidencias, coordina con tu equipo de Trabajo y mantén la productividad
+                de tu
+                organización al máximo.</p>
+        </div>
+
+        <!-- Área visual de simulación de dashboard interactivo -->
+        <div class="dashboard-preview">
+            <div class="preview-card">
+                <div class="preview-header">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                </div>
+                <!-- Vista rápida de estadísticas simulada -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.95;">Incidencias Activas</span>
+                    <span style="font-size: 0.75rem; opacity: 0.7;">En tiempo real</span>
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <div
+                        style="flex-grow: 1; height: 32px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">
+                        Tickets Pendientes: 4</div>
+                    <div
+                        style="flex-grow: 1; height: 32px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">
+                        En Revisión: 1</div>
+                </div>
+                <div class="preview-line" style="width: 100%;"></div>
+                <div class="preview-line" style="width: 80%;"></div>
+                <div class="preview-line" style="width: 45%; margin-bottom: 0;"></div>
+            </div>
+        </div>
+
+        <div style="font-size: 0.8rem; opacity: 0.5;">
+            LocalDesk Platform &copy; 2026. Todos los derechos reservados.
+        </div>
+    </div>
+
+    <!-- LADO DERECHO: FORMULARIO DE INICIO DE SESIÓN -->
+    <div class="panel-right">
+        <div style="margin-bottom: 32px; text-align: center;">
+            <h1 style="font-size: 2.2rem; font-weight: 800; color: #0071E3; margin: 0 0 8px 0; letter-spacing: -1.5px;">
+                <span style="color: var(--apple-text-main);">Local</span>Desk
+            </h1>
+            <h2
+                style="font-size: 1.4rem; font-weight: 700; color: var(--apple-text-main); margin: 0 0 4px 0; letter-spacing: -0.5px;">
+                Iniciar Sesión</h2>
+            <p style="font-size: 0.9rem; color: var(--apple-text-secondary); margin: 0;">Ingresa a tu cuenta para
+                continuar</p>
+        </div>
+
+        <!-- Muestra de notificaciones de la app -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div
+            class="custom-alert {% if category == 'danger' %}custom-alert-danger{% else %}custom-alert-success{% endif %}">
+            <i class="fa-solid {% if category == 'danger' %}fa-circle-xmark{% else %}fa-circle-check{% endif %}"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
         {% endif %}
         {% endwith %}
 
-        <form action="/login" method="POST">
-            <label class="apple-label">Correo Electrónico</label>
-            <input type="email" name="email" class="apple-input" placeholder="ejemplo@empresa.com" required
-                style="width: 100%; margin-bottom: 16px;">
+        <form action="/login" method="POST" style="margin-bottom: 24px;">
+            <div class="input-group">
+                <i class="fa-solid fa-envelope"></i>
+                <input type="email" name="email" class="login-input" placeholder="Correo electrónico" required
+                    autocomplete="email">
+            </div>
 
-            <label class="apple-label">Contraseña</label>
-            <input type="password" name="password" class="apple-input" required
-                style="width: 100%; margin-bottom: 24px;">
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" name="password" class="login-input" placeholder="Contraseña" required
+                    autocomplete="current-password">
+            </div>
 
-            <button type="submit" class="btn-apple" style="width: 100%; margin-bottom: 16px;">Iniciar Sesión</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <label
+                    style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--apple-text-secondary); cursor: pointer;">
+                    <input type="checkbox" name="recordar"
+                        style="accent-color: #0071E3; cursor: pointer; width: 15px; height: 15px;"> Recordarme
+                </label>
+                <a href="#"
+                    style="font-size: 0.85rem; color: #0071E3; text-decoration: none; font-weight: 500;">¿Olvidaste tu
+                    contraseña?</a>
+            </div>
+
+            <button type="submit" class="btn-apple"
+                style="width: 100%; height: 48px; font-size: 1rem; font-weight: 600; justify-content: center; background-color: #0071E3; color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25); transition: background-color 0.2s, transform 0.1s;">
+                Iniciar Sesión
+            </button>
         </form>
 
-        <p style="text-align: center; font-size: 0.9rem; margin-top: 16px;">
-            ¿No tienes cuenta? <a href="/registro"
-                style="color: var(--apple-blue); text-decoration: none; font-weight: 600;">Regístrate aquí</a>
-        </p>
+        <div style="text-align: center; font-size: 0.9rem;">
+            <span style="color: var(--apple-text-secondary);">¿No tienes cuenta?</span>
+            <a href="/registro"
+                style="color: #0071E3; text-decoration: none; font-weight: 600; margin-left: 4px;">Regístrate aquí</a>
+        </div>
     </div>
-</body>
-
-</html>
+</div>
+{% endblock %}
