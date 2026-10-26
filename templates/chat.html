@@ -46,7 +46,7 @@
                 style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
             <div>
                 <h2 style="font-size: 1.05rem; font-weight: 600; margin: 0;">{{ destinatario.nombre }}</h2>
-                <p style="margin: 0; font-size: 0.8rem; color: var(--apple-text-secondary);">Mensaje Directo</p>
+                <p style="margin: 0; font-size: 0.8rem; color: #8E8E93;">Mensaje Directo</p>
             </div>
         </div>
 
@@ -58,18 +58,18 @@
             <div style="align-self: flex-end; max-width: 75%;">
                 <div
                     style="display: flex; align-items: baseline; gap: 8px; justify-content: flex-end; margin-bottom: 4px;">
-                    <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
+                    <span style="font-size: 0.75rem; color: #8E8E93;">{{ msg[2] }}</span>
                 </div>
-                <!-- CORRECCIÓN: Fondo azul, texto blanco para que se vea -->
+                <!-- FONDO AZUL (#0071E3) Y TEXTO BLANCO ESTRICTOS -->
                 <div
-                    style="background-color: var(--apple-blue); color: #ffffff; padding: 12px 16px; border-radius: 12px 12px 0 12px; font-size: 0.95rem; line-height: 1.5; box-shadow: var(--shadow-soft);">
+                    style="background-color: #0071E3; color: #FFFFFF; padding: 12px 16px; border-radius: 12px 12px 0 12px; font-size: 0.95rem; line-height: 1.5; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     {{ msg[0] }}
                     {% if msg[1] %}
                     <div
                         style="margin-top: 8px; padding: 8px; background-color: rgba(255,255,255,0.2); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-file-arrow-down" style="color: white;"></i>
+                        <i class="fa-solid fa-file-arrow-down" style="color: #FFFFFF;"></i>
                         <a href="{{ msg[1] }}" target="_blank"
-                            style="color: white; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Archivo
+                            style="color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Archivo
                             Adjunto</a>
                     </div>
                     {% endif %}
@@ -82,17 +82,18 @@
                     style="width: 32px; height: 32px; border-radius: 50%; margin-top: auto;">
                 <div>
                     <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-                        <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
+                        <span style="font-size: 0.75rem; color: #8E8E93;">{{ msg[2] }}</span>
                     </div>
+                    <!-- FONDO GRIS Y TEXTO OSCURO ESTRICTOS -->
                     <div
-                        style="background-color: #F5F5F7; color: var(--apple-text-main); padding: 12px 16px; border-radius: 12px 12px 12px 0; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--apple-border);">
+                        style="background-color: #F5F5F7; color: #1D1D1F; padding: 12px 16px; border-radius: 12px 12px 12px 0; font-size: 0.95rem; line-height: 1.5; border: 1px solid #E5E5EA;">
                         {{ msg[0] }}
                         {% if msg[1] %}
                         <div
                             style="margin-top: 8px; padding: 8px; background-color: rgba(0,0,0,0.05); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-file-arrow-down text-blue"></i>
+                            <i class="fa-solid fa-file-arrow-down" style="color: #0071E3;"></i>
                             <a href="{{ msg[1] }}" target="_blank"
-                                style="color: var(--apple-blue); text-decoration: none; font-weight: 600; font-size: 0.85rem;">Archivo
+                                style="color: #0071E3; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Archivo
                                 Adjunto</a>
                         </div>
                         {% endif %}
@@ -101,7 +102,7 @@
             </div>
             {% endif %}
             {% else %}
-            <div style="text-align: center; color: var(--apple-text-secondary); padding: 40px; margin: auto;">
+            <div style="text-align: center; color: #8E8E93; padding: 40px; margin: auto;">
                 <i class="fa-regular fa-comments" style="font-size: 3rem; margin-bottom: 12px;"></i>
                 <p>No hay mensajes. ¡Escribe el primero para iniciar la conversación!</p>
             </div>
@@ -117,15 +118,15 @@
 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <label
-                        style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--apple-surface); border: 1px solid var(--apple-border); border-radius: 8px; transition: 0.2s;"
+                        style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 8px; transition: 0.2s;"
                         onmouseover="this.style.backgroundColor='#E5E5EA'"
-                        onmouseout="this.style.backgroundColor='var(--apple-surface)'">
-                        <i class="fa-solid fa-paperclip" style="color: var(--apple-text-secondary);"></i>
+                        onmouseout="this.style.backgroundColor='#FFFFFF'">
+                        <i class="fa-solid fa-paperclip" style="color: #8E8E93;"></i>
                         <input type="file" name="archivo" style="display: none;"
                             onchange="document.getElementById('nombre-archivo').innerText = this.files[0].name">
                     </label>
                     <span id="nombre-archivo"
-                        style="font-size: 0.8rem; color: var(--apple-text-secondary); margin-left: 10px; flex-grow: 1;"></span>
+                        style="font-size: 0.8rem; color: #8E8E93; margin-left: 10px; flex-grow: 1;"></span>
 
                     <button type="submit" class="btn-apple">Enviar</button>
                 </div>
@@ -134,9 +135,9 @@
         {% else %}
         <!-- Pantalla vacía cuando no has seleccionado a nadie -->
         <div
-            style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--apple-text-secondary);">
+            style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #8E8E93;">
             <i class="fa-solid fa-user-group" style="font-size: 4rem; margin-bottom: 16px; opacity: 0.3;"></i>
-            <h3 style="font-weight: 500; font-size: 1.2rem;">Selecciona un contacto</h3>
+            <h3 style="font-weight: 500; font-size: 1.2rem; color: #1D1D1F;">Selecciona un contacto</h3>
             <p style="font-size: 0.95rem;">Elige a alguien de la lista para iniciar un chat privado.</p>
         </div>
         {% endif %}
