@@ -56,6 +56,19 @@ def inyectar_notificaciones():
         except: return dict(noti_pendientes=0)
     return dict(noti_pendientes=0)
 
+# NUEVO: Ruta API secreta para actualizar la campanita en tiempo real
+@app.route('/api/notificaciones_count')
+@login_required
+def api_notificaciones_count():
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        res = cliente.execute("SELECT COUNT(id) FROM notificaciones WHERE usuario_id = ? AND leida = 0", (session['id_usuario'],))
+        pendientes = res.rows[0][0] if res.rows else 0
+        cliente.close()
+        return jsonify({'count': pendientes})
+    except:
+        return jsonify({'count': 0})
+
 @app.route('/notificaciones')
 @login_required
 def centro_notificaciones():
@@ -156,7 +169,7 @@ def perfil():
     return render_template('perfil.html', perfil=datos_perfil)
 
 # ==========================================
-# NUEVO: MENSAJERÍA DIRECTA (CHAT INTERNO)
+# MENSAJERÍA DIRECTA (CHAT INTERNO)
 # ==========================================
 @app.route('/chat')
 @app.route('/chat/<int:dest_id>')
@@ -165,18 +178,14 @@ def chat_interno(dest_id=None):
     mi_id = session.get('id_usuario')
     cliente = libsql_client.create_client_sync(url=url, auth_token=token)
     
-    # 1. Obtener lista de todos los usuarios para mostrar a la izquierda
     usuarios = cliente.execute("SELECT id, nombre, rol, foto FROM usuarios WHERE id != ? ORDER BY nombre ASC", (mi_id,)).rows
-    
     mensajes = []
     destinatario = None
     
-    # 2. Si se seleccionó un usuario, cargar la conversación
     if dest_id:
         dest_data = cliente.execute("SELECT nombre, rol, foto FROM usuarios WHERE id = ?", (dest_id,)).rows
         if dest_data:
             destinatario = {'id': dest_id, 'nombre': dest_data[0][0], 'rol': dest_data[0][1], 'foto': dest_data[0][2]}
-            # Traer historial de mensajes entre "yo" y el "destinatario"
             sql = """
                 SELECT m.mensaje, m.archivo, m.fecha, m.remitente_id, u.nombre, u.foto 
                 FROM mensajes_privados m
@@ -197,7 +206,6 @@ def enviar_privado(dest_id):
     mensaje = request.form.get('mensaje')
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # Subir archivo si existe
     archivo_url = None
     if 'archivo' in request.files:
         file = request.files['archivo']
@@ -209,14 +217,10 @@ def enviar_privado(dest_id):
             
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
-        # 1. Guardar el mensaje directo
         cliente.execute("INSERT INTO mensajes_privados (remitente_id, destinatario_id, mensaje, archivo, fecha) VALUES (?, ?, ?, ?, ?)", (mi_id, dest_id, mensaje, archivo_url, fecha))
-        
-        # 2. MANDAR NOTIFICACIÓN DIRECTA AL DESTINATARIO
         texto_noti = f"Tienes un nuevo mensaje privado de {session.get('nombre')}"
-        enlace = f"/chat/{mi_id}" # El enlace lo mandará al chat conmigo
+        enlace = f"/chat/{mi_id}"
         cliente.execute("INSERT INTO notificaciones (usuario_id, texto, enlace, fecha) VALUES (?, ?, ?, ?)", (dest_id, texto_noti, enlace, fecha))
-        
         cliente.close()
     except Exception as e: print(e)
     
@@ -281,7 +285,6 @@ def enviar_mensaje(id):
     try:
         cliente = libsql_client.create_client_sync(url=url, auth_token=token)
         cliente.execute("INSERT INTO mensajes (incidencia_id, usuario_id, mensaje, tipo, archivo, fecha) VALUES (?, ?, ?, ?, ?, ?)", (id, session.get('id_usuario'), request.form.get('mensaje'), request.form.get('tipo', 'chat'), archivo_url, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        # Notificar si hay un comentario en el ticket
         cliente.execute("INSERT INTO notificaciones (usuario_id, texto, enlace, fecha) VALUES (1, ?, ?, ?)", (f"{session.get('nombre')} actualizó el Ticket #{id}", f"/incidencia/{id}", datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         cliente.close()
     except: pass

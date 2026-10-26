@@ -112,18 +112,17 @@
             </div>
 
             <ul class="nav-menu">
-                <!-- Se corrigió el duplicado de Dashboard -->
                 <li class="nav-item"><a href="/" class="nav-link"><i class="fa-solid fa-house"></i> Dashboard</a></li>
 
                 <li class="nav-item">
                     <a href="/notificaciones" class="nav-link" style="justify-content: space-between;">
                         <div style="display: flex; gap: 14px; align-items: center;"><i class="fa-solid fa-bell"></i>
                             Notificaciones</div>
-                        {% if noti_pendientes > 0 %}
-                        <span
-                            style="background-color: var(--apple-red); color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold;">{{
+
+                        <!-- El badge ahora tiene un ID y se muestra/oculta automáticamente -->
+                        <span id="badge-notificaciones"
+                            style="background-color: var(--apple-red); color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; {% if noti_pendientes == 0 %}display: none;{% endif %}">{{
                             noti_pendientes }}</span>
-                        {% endif %}
                     </a>
                 </li>
 
@@ -167,6 +166,25 @@
         {% endblock %}
     </main>
 
+    <!-- SCRIPT DE TIEMPO REAL PARA LAS NOTIFICACIONES -->
+    <script>
+        setInterval(() => {
+            fetch('/api/notificaciones_count')
+                .then(res => res.json())
+                .then(data => {
+                    const badge = document.getElementById('badge-notificaciones');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.innerText = data.count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(err => console.log(err));
+        }, 3000); // Revisa cada 3 segundos
+    </script>
 </body>
 
 </html>

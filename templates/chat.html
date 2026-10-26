@@ -50,17 +50,16 @@
             </div>
         </div>
 
-        <!-- Historial de Mensajes -->
-        <div style="flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+        <!-- HISTORIAL DE MENSAJES (AHORA CON ID "chat-box") -->
+        <div id="chat-box"
+            style="flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
             {% for msg in mensajes %}
-            <!-- Si el remitente soy YO, alinear a la derecha -->
             {% if msg[3] == mi_id %}
             <div style="align-self: flex-end; max-width: 75%;">
                 <div
                     style="display: flex; align-items: baseline; gap: 8px; justify-content: flex-end; margin-bottom: 4px;">
                     <span style="font-size: 0.75rem; color: #8E8E93;">{{ msg[2] }}</span>
                 </div>
-                <!-- FONDO AZUL (#0071E3) Y TEXTO BLANCO ESTRICTOS -->
                 <div
                     style="background-color: #0071E3; color: #FFFFFF; padding: 12px 16px; border-radius: 12px 12px 0 12px; font-size: 0.95rem; line-height: 1.5; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     {{ msg[0] }}
@@ -75,7 +74,6 @@
                     {% endif %}
                 </div>
             </div>
-            <!-- Si el remitente es EL OTRO, alinear a la izquierda -->
             {% else %}
             <div style="align-self: flex-start; max-width: 75%; display: flex; gap: 12px;">
                 <img src="{{ msg[5] or 'https://ui-avatars.com/api/?name=' ~ msg[4] ~ '&background=E5E5EA&color=1D1D1F' }}"
@@ -84,7 +82,6 @@
                     <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
                         <span style="font-size: 0.75rem; color: #8E8E93;">{{ msg[2] }}</span>
                     </div>
-                    <!-- FONDO GRIS Y TEXTO OSCURO ESTRICTOS -->
                     <div
                         style="background-color: #F5F5F7; color: #1D1D1F; padding: 12px 16px; border-radius: 12px 12px 12px 0; font-size: 0.95rem; line-height: 1.5; border: 1px solid #E5E5EA;">
                         {{ msg[0] }}
@@ -143,4 +140,39 @@
         {% endif %}
     </div>
 </div>
+
+<!-- SCRIPT DE TIEMPO REAL PARA EL CHAT -->
+<script>
+    const chatBox = document.getElementById('chat-box');
+
+    // Al abrir la página, hacer scroll hasta abajo inmediatamente
+    if (chatBox) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    {% if destinatario %}
+    // Guardar el código HTML actual para comparar
+    let lastChatHTML = chatBox.innerHTML;
+
+    // Preguntar al servidor cada 3 segundos si hay cambios
+    setInterval(() => {
+        fetch(window.location.href)
+            .then(res => res.text())
+            .then(html => {
+                // Extraer solo la parte de los mensajes de la página invisible que acabamos de descargar
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newChatHTML = doc.getElementById('chat-box').innerHTML;
+
+                // Si el contenido es distinto, actualizar y bajar el scroll
+                if (newChatHTML !== lastChatHTML) {
+                    chatBox.innerHTML = newChatHTML;
+                    lastChatHTML = newChatHTML;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            })
+            .catch(err => console.log("Esperando conexión..."));
+    }, 3000);
+    {% endif %}
+</script>
 {% endblock %}
