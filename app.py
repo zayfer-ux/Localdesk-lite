@@ -56,7 +56,6 @@ def inyectar_notificaciones():
         except: return dict(noti_pendientes=0)
     return dict(noti_pendientes=0)
 
-# NUEVO: Ruta API secreta para actualizar la campanita en tiempo real
 @app.route('/api/notificaciones_count')
 @login_required
 def api_notificaciones_count():
@@ -224,6 +223,24 @@ def enviar_privado(dest_id):
         cliente.close()
     except Exception as e: print(e)
     
+    return redirect(url_for('chat_interno', dest_id=dest_id))
+
+# NUEVO: Ruta para vaciar el historial del chat
+@app.route('/vaciar_chat/<int:dest_id>', methods=['POST'])
+@login_required
+def vaciar_chat(dest_id):
+    mi_id = session.get('id_usuario')
+    try:
+        cliente = libsql_client.create_client_sync(url=url, auth_token=token)
+        sql = """
+            DELETE FROM mensajes_privados 
+            WHERE (remitente_id = ? AND destinatario_id = ?) 
+               OR (remitente_id = ? AND destinatario_id = ?)
+        """
+        cliente.execute(sql, (mi_id, dest_id, dest_id, mi_id))
+        cliente.close()
+    except Exception as e:
+        print(f"Error al vaciar chat: {e}")
     return redirect(url_for('chat_interno', dest_id=dest_id))
 
 # ==========================================

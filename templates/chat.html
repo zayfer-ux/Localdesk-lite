@@ -39,21 +39,35 @@
     <!-- COLUMNA DERECHA: CONVERSACIÓN PRIVADA -->
     <div class="apple-card" style="padding: 0; display: flex; flex-direction: column;">
         {% if destinatario %}
-        <!-- Cabecera del Chat -->
+        <!-- Cabecera del Chat con Botón de Vaciar -->
         <div
-            style="padding: 16px 20px; border-bottom: 1px solid var(--apple-border); background-color: #FAFAFA; border-radius: 12px 12px 0 0; display: flex; align-items: center; gap: 12px;">
-            <img src="{{ destinatario.foto or 'https://ui-avatars.com/api/?name=' ~ destinatario.nombre ~ '&background=E5E5EA&color=1D1D1F' }}"
-                style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-            <div>
-                <h2 style="font-size: 1.05rem; font-weight: 600; margin: 0;">{{ destinatario.nombre }}</h2>
-                <p style="margin: 0; font-size: 0.8rem; color: #8E8E93;">Mensaje Directo</p>
+            style="padding: 16px 20px; border-bottom: 1px solid var(--apple-border); background-color: #FAFAFA; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: space-between;">
+
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="{{ destinatario.foto or 'https://ui-avatars.com/api/?name=' ~ destinatario.nombre ~ '&background=E5E5EA&color=1D1D1F' }}"
+                    style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                <div>
+                    <h2 style="font-size: 1.05rem; font-weight: 600; margin: 0;">{{ destinatario.nombre }}</h2>
+                    <p style="margin: 0; font-size: 0.8rem; color: #8E8E93;">Mensaje Directo</p>
+                </div>
             </div>
+
+            <!-- NUEVO BOTÓN: VACIAR CHAT -->
+            <form action="/vaciar_chat/{{ destinatario.id }}" method="POST"
+                onsubmit="return confirm('¿Estás seguro de que quieres eliminar TODO el historial de mensajes con este usuario? Esta acción no se puede deshacer.');">
+                <button type="submit" class="btn-apple"
+                    style="background-color: var(--apple-red); padding: 6px 14px; font-size: 0.85rem;">
+                    <i class="fa-solid fa-trash-can" style="margin-right: 6px;"></i> Vaciar chat
+                </button>
+            </form>
+
         </div>
 
-        <!-- HISTORIAL DE MENSAJES (AHORA CON ID "chat-box") -->
+        <!-- Historial de Mensajes -->
         <div id="chat-box"
             style="flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
             {% for msg in mensajes %}
+            <!-- Si el remitente soy YO, alinear a la derecha -->
             {% if msg[3] == mi_id %}
             <div style="align-self: flex-end; max-width: 75%;">
                 <div
@@ -74,6 +88,7 @@
                     {% endif %}
                 </div>
             </div>
+            <!-- Si el remitente es EL OTRO, alinear a la izquierda -->
             {% else %}
             <div style="align-self: flex-start; max-width: 75%; display: flex; gap: 12px;">
                 <img src="{{ msg[5] or 'https://ui-avatars.com/api/?name=' ~ msg[4] ~ '&background=E5E5EA&color=1D1D1F' }}"
@@ -145,26 +160,21 @@
 <script>
     const chatBox = document.getElementById('chat-box');
 
-    // Al abrir la página, hacer scroll hasta abajo inmediatamente
     if (chatBox) {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     {% if destinatario %}
-    // Guardar el código HTML actual para comparar
     let lastChatHTML = chatBox.innerHTML;
 
-    // Preguntar al servidor cada 3 segundos si hay cambios
     setInterval(() => {
         fetch(window.location.href)
             .then(res => res.text())
             .then(html => {
-                // Extraer solo la parte de los mensajes de la página invisible que acabamos de descargar
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const newChatHTML = doc.getElementById('chat-box').innerHTML;
 
-                // Si el contenido es distinto, actualizar y bajar el scroll
                 if (newChatHTML !== lastChatHTML) {
                     chatBox.innerHTML = newChatHTML;
                     lastChatHTML = newChatHTML;
