@@ -1,51 +1,304 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends "base.html" %}
+{% block sidebar %}{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Registro - LocalDesk</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+{% block content %}
+<style>
+    body {
+        margin: 0;
+        padding: 0 !important;
+        background-color: var(--apple-bg, #F5F5F7) !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+    }
 
-<body
-    style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--apple-bg);">
-    <div class="apple-card" style="width: 400px;">
-        <h2 style="text-align: center; margin-bottom: 24px; font-weight: 700;">Crear Cuenta</h2>
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar {
+        display: none !important;
+    }
+
+    .login-container {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        width: 1000px;
+        height: 680px;
+        background-color: var(--apple-surface, #FFFFFF);
+        border-radius: 24px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border: 1px solid var(--apple-border, #E5E5EA);
+    }
+
+    .panel-left {
+        background: linear-gradient(135deg, #0071E3 0%, #005BB5 40%, #0d9488 80%, #f97316 120%);
+        padding: 48px;
+        color: #FFFFFF;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .panel-left::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+        border-radius: 50%;
+    }
+
+    .brand-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #FFFFFF;
+        margin: 0;
+    }
+
+    .promo-text {
+        font-size: 1.85rem;
+        font-weight: 700;
+        line-height: 1.35;
+        margin-top: 24px;
+        letter-spacing: -0.5px;
+    }
+
+    .panel-right {
+        padding: 40px 48px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-color: var(--apple-surface, #FFFFFF);
+        overflow-y: auto;
+    }
+
+    .input-group {
+        position: relative;
+        margin-bottom: 16px;
+    }
+
+    .input-group i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--apple-text-secondary, #8E8E93);
+        font-size: 1rem;
+        pointer-events: none;
+    }
+
+    .login-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 14px 12px 42px !important;
+        font-size: 0.95rem;
+        background-color: var(--apple-bg, #F5F5F7);
+        border: 1px solid var(--apple-border, #E5E5EA);
+        border-radius: 12px !important;
+        color: var(--apple-text-main, #1D1D1F);
+        transition: all 0.2s ease;
+    }
+
+    .login-input:focus {
+        outline: none;
+        border-color: #0071E3;
+        background-color: var(--apple-surface, #FFFFFF);
+        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+    }
+
+    .custom-alert {
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .custom-alert-danger {
+        background-color: rgba(255, 59, 48, 0.1);
+        color: #FF3B30;
+        border: 1px solid rgba(255, 59, 48, 0.2);
+    }
+
+    /* Estilos de las Pestañas (Tabs) */
+    .tabs-container {
+        display: flex;
+        background-color: var(--apple-bg);
+        border-radius: 10px;
+        padding: 4px;
+        margin-bottom: 24px;
+        border: 1px solid var(--apple-border);
+    }
+
+    .tab-btn {
+        flex-grow: 1;
+        padding: 10px;
+        text-align: center;
+        border-radius: 8px;
+        border: none;
+        background: transparent;
+        color: var(--apple-text-secondary);
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .tab-btn.active {
+        background-color: var(--apple-surface);
+        color: var(--apple-text-main);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 900px) {
+        .login-container {
+            grid-template-columns: 1fr;
+            width: 90%;
+            height: auto;
+            max-width: 450px;
+        }
+
+        .panel-left {
+            display: none;
+        }
+    }
+</style>
+
+<div class="login-container">
+    <div class="panel-left">
+        <div class="brand-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 5v14h7 M5 19l7-7v-7 M12 5q8 0 8 7t-8 7" />
+            </svg>
+            LocalDesk
+        </div>
+        <div style="margin-bottom: 40px;">
+            <h2 class="promo-text">Únete a la plataforma SaaS.</h2>
+            <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.8); margin-top: 12px; line-height: 1.5;">Registra tu
+                empresa para obtener el control total o únete al equipo usando tu código de invitación corporativo.</p>
+        </div>
+        <div style="font-size: 0.8rem; opacity: 0.5;">LocalDesk SaaS Platform &copy; 2026.</div>
+    </div>
+
+    <div class="panel-right">
+        <div style="margin-bottom: 24px; text-align: center;">
+            <h2
+                style="font-size: 1.4rem; font-weight: 700; color: var(--apple-text-main); margin: 0 0 4px 0; letter-spacing: -0.5px;">
+                Crear Cuenta</h2>
+        </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
-        <div
-            style="background-color: rgba(255,59,48,0.1); color: var(--apple-red); padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-size: 0.9rem;">
-            {{ message }}
+        <div class="custom-alert custom-alert-danger">
+            <i class="fa-solid fa-circle-xmark"></i> <span>{{ message }}</span>
         </div>
         {% endfor %}
         {% endif %}
         {% endwith %}
 
+        <!-- Pestañas Selectoras -->
+        <div class="tabs-container">
+            <button type="button" id="btn-unirse" class="tab-btn active" onclick="setTab('unirse')">Unirme a
+                Empresa</button>
+            <button type="button" id="btn-crear" class="tab-btn" onclick="setTab('crear')">Registrar Empresa</button>
+        </div>
+
         <form action="/registro" method="POST">
-            <label class="apple-label">Nombre Completo</label>
-            <input type="text" name="nombre" class="apple-input" required style="width: 100%; margin-bottom: 16px;">
+            <!-- Input Oculto que dice a Python qué hacer -->
+            <input type="hidden" name="tipo_registro" id="input_tipo_registro" value="unirse">
 
-            <label class="apple-label">Nombre de Usuario (@nick)</label>
-            <input type="text" name="usuario" class="apple-input" required style="width: 100%; margin-bottom: 16px;">
+            <!-- Campo dinámico: Código o Nombre de Empresa -->
+            <div class="input-group" id="grupo_unirse">
+                <i class="fa-solid fa-building-user"></i>
+                <input type="text" name="codigo_invitacion" id="codigo_invitacion" class="login-input"
+                    placeholder="Código de Invitación (Ej: X9H4K2)" required>
+            </div>
 
-            <label class="apple-label">Correo Electrónico (Real)</label>
-            <input type="email" name="email" class="apple-input" placeholder="Te enviaremos un código" required
-                style="width: 100%; margin-bottom: 16px;">
+            <div class="input-group" id="grupo_crear" style="display: none;">
+                <i class="fa-solid fa-building"></i>
+                <input type="text" name="nombre_empresa" id="nombre_empresa" class="login-input"
+                    placeholder="Nombre de tu Organización">
+            </div>
 
-            <label class="apple-label">Contraseña</label>
-            <input type="password" name="password" class="apple-input" required
-                style="width: 100%; margin-bottom: 24px;">
+            <!-- Datos del Usuario -->
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" name="nombre" class="login-input" placeholder="Nombre completo" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-at"></i>
+                <input type="text" name="usuario" class="login-input" placeholder="Nombre de usuario" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-envelope"></i>
+                <input type="email" name="email" class="login-input" placeholder="Correo electrónico" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" name="password" class="login-input" placeholder="Crear contraseña" required>
+            </div>
 
-            <button type="submit" class="btn-apple" style="width: 100%; margin-bottom: 16px;">Registrarse</button>
+            <button type="submit" class="btn-apple"
+                style="width: 100%; height: 48px; font-size: 1rem; font-weight: 600; justify-content: center; background-color: #0071E3; color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);">
+                Continuar
+            </button>
         </form>
 
-        <p style="text-align: center; font-size: 0.9rem; margin-top: 16px;">
-            ¿Ya tienes cuenta? <a href="/login"
-                style="color: var(--apple-blue); text-decoration: none; font-weight: 600;">Inicia sesión</a>
-        </p>
+        <div style="text-align: center; font-size: 0.9rem; margin-top: 20px;">
+            <span style="color: var(--apple-text-secondary);">¿Ya tienes cuenta?</span>
+            <a href="/login" style="color: #0071E3; text-decoration: none; font-weight: 600; margin-left: 4px;">Inicia
+                sesión</a>
+        </div>
     </div>
-</body>
+</div>
 
-</html>
+<script>
+    // Lógica para cambiar entre "Unirse" y "Crear"
+    function setTab(tipo) {
+        document.getElementById('input_tipo_registro').value = tipo;
+
+        if (tipo === 'unirse') {
+            document.getElementById('btn-unirse').classList.add('active');
+            document.getElementById('btn-crear').classList.remove('active');
+
+            document.getElementById('grupo_unirse').style.display = 'block';
+            document.getElementById('codigo_invitacion').required = true;
+
+            document.getElementById('grupo_crear').style.display = 'none';
+            document.getElementById('nombre_empresa').required = false;
+        } else {
+            document.getElementById('btn-crear').classList.add('active');
+            document.getElementById('btn-unirse').classList.remove('active');
+
+            document.getElementById('grupo_crear').style.display = 'block';
+            document.getElementById('nombre_empresa').required = true;
+
+            document.getElementById('grupo_unirse').style.display = 'none';
+            document.getElementById('codigo_invitacion').required = false;
+        }
+    }
+</script>
+{% endblock %}
