@@ -251,60 +251,232 @@ def perfil():
     return render_template('perfil.html', perfil=datos_perfil)
 
 # ==========================================
-# RUTAS EN TRANSICIÓN (No se caerán, pero se adaptarán en el Paso 5)
+# RUTAS DEL SISTEMA PRINCIPAL (INCIDENCIAS V2.0)
 # ==========================================
-@app.route('/chat')
-@app.route('/chat/<int:dest_id>')
-@login_required
-def chat_interno(dest_id=None):
-    return "Fase 5 en construcción..."
-
 @app.route('/')
 @login_required
 def inicio():
-    # Bloque try/except para evitar que la página se caiga con la nueva BD
+    busqueda = request.args.get('q', '')
     try:
         cliente = get_db()
-        todas = cliente.execute("SELECT * FROM incidencias WHERE org_id = ?", (org_id(),)).rows
+        
+        # Consultar con JOINs para obtener nombres de áreas y categorías en lugar de sus IDs
+        query_base = """
+            SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, 
+                   a.nombre as area, c.nombre as categoria, 
+                   i.prioridad, i.estado, u.nombre as solicitante, i.fecha_reporte
+            FROM incidencias i
+            JOIN areas a ON i.area_id = a.id
+            JOIN categorias c ON i.categoria_id = c.id
+            JOIN usuarios u ON i.solicitante_id = u.id
+            WHERE i.org_id = ?
+        """
+        parametros = [org_id()]
+
+        if busqueda:
+            query_base += " AND (CAST(i.numero AS TEXT) LIKE ? OR i.titulo LIKE ? OR i.activo_ubicacion LIKE ? OR u.nombre LIKE ?)"
+            parametros.extend([f"%{busqueda}%", f"%{busqueda}%", f"%{busqueda}%", f"%{busqueda}%"])
+            
+        query_base += " ORDER BY i.numero DESC"
+        
+        lista_incidencias = cliente.execute(query_base, parametros).rows
+        
+        # Estadísticas exclusivas de esta empresa
+        todas = cliente.execute("SELECT i.estado, c.nombre FROM incidencias i JOIN categorias c ON i.categoria_id = c.id WHERE i.org_id = ?", (org_id(),)).rows
+        
+        stats = {
+            'total': len(todas),
+            'pendientes': sum(1 for i in todas if i[0] == 'Pendiente'),
+            'revision': sum(1 for i in todas if i[0] == 'En revisión'),
+            'resueltas': sum(1 for i in todas if i[0] == 'Resuelta')
+        }
+        
+        categorias_stats = {}
+        for i in todas:
+            cat = i[1]
+            categorias_stats[cat] = categorias_stats.get(cat, 0) + 1
+            
         cliente.close()
+    except Exception as e:
+        print("Error en inicio:", e)
+        lista_incidencias = []
         stats = {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}
-        categorias = {'Hardware': 0, 'Software': 0, 'Red': 0, 'Otro': 0}
-        return render_template('index.html', incidencias=[], stats=stats, categorias=json.dumps(categorias), busqueda='')
-    except:
-        stats = {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}
-        categorias = {'Hardware': 0, 'Software': 0, 'Red': 0, 'Otro': 0}
-        return render_template('index.html', incidencias=[], stats=stats, categorias=json.dumps(categorias), busqueda='')
+        categorias_stats = {}
+
+    return render_template('index.html', incidencias=lista_incidencias, stats=stats, categorias=json.dumps(categorias_stats), busqueda=busqueda)
 
 @app.route('/nuevo', methods=['GET', 'POST'])
 @login_required
 def nuevo_registro():
-    return render_template('nuevo.html')
+    cliente = get_db()
+    if request.method == 'POST':
+        try:
+            # Calcular el siguiente número consecutivo de la empresa (LD-XXXX)
+            res_max = cliente.execute("SELECT MAX(numero) FROM incidencias WHERE org_id = ?", (org_id(),)).rows
+            siguiente_numero = (res_max[0][0] or 0) + 1 if res_max else 1
+
+            cliente.execute("""
+                INSERT INTO incidencias (org_id, numero, titulo, activo_ubicacion, area_id, categoria_id, descripcion, prioridad, estado, solicitante_id) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente', ?)
+            """, (org_id(), siguiente_numero, request.form['titulo'], request.form['activo_ubicacion'], 
+                  request.form['area_id'], request.form['categoria_id'], request.form['descripcion'], 
+                  request.form['prioridad'], session['id_usuario']))
+            
+            # Registrar en la nueva tabla de historial
+            res_id = cliente.execute("SELECT last_insert_rowid()").rows
+            nuevo_id = res_id[0][0]
+            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
+                            (org_id(), nuevo_id, session['id_usuario'], 'Ticket Creado'))
+
+            cliente.close()
+            return redirect(url_for('inicio'))
+        except Exception as e:
+            print("Error al crear:", e)
+            flash('Error al crear el ticket', 'danger')
+
+    # Cargar áreas y categorías dinámicas para el formulario HTML
+    areas = cliente.execute("SELECT id, nombre FROM areas WHERE org_id = ? ORDER BY nombre", (org_id(),)).rows
+    categorias = cliente.execute("SELECT id, nombre FROM categorias WHERE org_id = ? ORDER BY nombre", (org_id(),)).rows
+    cliente.close()
+    return render_template('nuevo.html', areas=areas, categorias=categorias)
 
 @app.route('/incidencia/<int:id>')
 @login_required
 def ver_detalle(id):
-    return "Fase 5 en construcción..."
+    try:
+        cliente = get_db()
+        # 1. Seguridad: Validar que el ticket pertenezca a la empresa
+        incidencia_raw = cliente.execute("""
+            SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, 
+                   a.nombre as area, c.nombre as categoria, 
+                   i.prioridad, i.estado, u.nombre as solicitante, i.solucion, i.fecha_reporte, i.fecha_solucion, i.descripcion
+            FROM incidencias i
+            JOIN areas a ON i.area_id = a.id
+            JOIN categorias c ON i.categoria_id = c.id
+            JOIN usuarios u ON i.solicitante_id = u.id
+            WHERE i.id = ? AND i.org_id = ?
+        """, (id, org_id())).rows
+        
+        if not incidencia_raw:
+            cliente.close()
+            return "<h1>Error 404: Incidencia no encontrada o no pertenece a tu empresa</h1>", 404
+            
+        incidencia = incidencia_raw[0]
+        
+        # 2. Consultar mensajes del chat aislando las notas internas para los Solicitantes
+        query_mensajes = """
+            SELECT m.mensaje, m.es_nota_interna, m.fecha, u.nombre, u.foto, u.rol, m.archivo 
+            FROM mensajes m 
+            JOIN usuarios u ON m.usuario_id = u.id 
+            WHERE m.incidencia_id = ? AND m.org_id = ?
+        """
+        
+        if session.get('rol') == 'Solicitante':
+            query_mensajes += " AND m.es_nota_interna = 0"
+            
+        query_mensajes += " ORDER BY m.fecha ASC"
+        
+        mensajes = cliente.execute(query_mensajes, (id, org_id())).rows
+        cliente.close()
+        return render_template('detalle.html', incidencia=incidencia, mensajes=mensajes)
+    except Exception as e:
+        print(e)
+        return "<h1>Error interno</h1>", 500
 
+@app.route('/enviar_mensaje/<int:id>', methods=['POST'])
+@login_required
+def enviar_mensaje(id):
+    archivo_url = None
+    if 'archivo' in request.files and request.files['archivo'].filename != '':
+        file = request.files['archivo']
+        filename = f"{int(datetime.now().timestamp())}_{secure_filename(file.filename)}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        archivo_url = f"/static/uploads/{filename}"
+        
+    tipo = request.form.get('tipo', 'chat')
+    es_nota = 1 if tipo == 'nota' else 0
+    
+    # Validar permisos estrictos para crear nota interna
+    if es_nota and session.get('rol') == 'Solicitante':
+        flash('No tienes permisos para crear notas internas.', 'danger')
+        return redirect(url_for('ver_detalle', id=id))
+
+    try:
+        cliente = get_db()
+        check = cliente.execute("SELECT id FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
+        if check:
+            cliente.execute("""
+                INSERT INTO mensajes (org_id, incidencia_id, usuario_id, mensaje, es_nota_interna, archivo) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (org_id(), id, session.get('id_usuario'), request.form.get('mensaje'), es_nota, archivo_url))
+            
+            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
+                            (org_id(), id, session['id_usuario'], 'Mensaje agregado'))
+        cliente.close()
+    except Exception as e: print(e)
+    return redirect(url_for('ver_detalle', id=id))
+
+@app.route('/actualizar_estado/<int:id>', methods=['POST'])
+@login_required
+@roles_required('Técnico', 'Administrador', 'Propietario')
+def actualizar_estado(id):
+    nuevo_estado = request.form['nuevo_estado']
+    try:
+        cliente = get_db()
+        check = cliente.execute("SELECT estado FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
+        if check and check[0][0] != nuevo_estado:
+            cliente.execute("UPDATE incidencias SET estado = ? WHERE id = ? AND org_id = ?", (nuevo_estado, id, org_id()))
+            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)",
+                            (org_id(), id, session['id_usuario'], 'Cambio de estado', f"A {nuevo_estado}"))
+        cliente.close()
+    except Exception as e: print(e)
+    return redirect(url_for('ver_detalle', id=id))
+
+@app.route('/resolver/<int:id>', methods=['POST'])
+@login_required
+@roles_required('Técnico', 'Administrador', 'Propietario')
+def resolver_incidencia(id):
+    try:
+        cliente = get_db()
+        cliente.execute("""
+            UPDATE incidencias 
+            SET solucion = ?, estado = 'Resuelta', fecha_solucion = CURRENT_TIMESTAMP, resuelto_por = ? 
+            WHERE id = ? AND org_id = ?
+        """, (f"{request.form['solucion']}\n\n✅ Atendido por: {session.get('nombre')} ({session.get('rol')})", session.get('id_usuario'), id, org_id()))
+        
+        cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
+                            (org_id(), id, session['id_usuario'], 'Ticket Resuelto'))
+        cliente.close()
+    except Exception as e: print(e)
+    return redirect(url_for('ver_detalle', id=id))
+    
+@app.route('/eliminar/<int:id>', methods=['POST'])
+@login_required
+@roles_required('Administrador', 'Propietario')
+def eliminar_incidencia(id):
+    try:
+        cliente = get_db()
+        cliente.execute("DELETE FROM mensajes WHERE incidencia_id = ? AND org_id = ?", (id, org_id()))
+        cliente.execute("DELETE FROM historial_incidencias WHERE incidencia_id = ? AND org_id = ?", (id, org_id()))
+        cliente.execute("DELETE FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id()))
+        cliente.close()
+    except Exception as e: print(e)
+    return redirect(url_for('inicio'))
+
+# RUTAS PENDIENTES DE ADAPTAR (PASO 6, 7 y 8)
 @app.route('/exportar_pdf')
 @login_required
-def exportar_pdf():
-    return "Fase 5 en construcción..."
-
+def exportar_pdf(): return "Fase 8 en construcción..."
 @app.route('/exportar')
 @login_required
-def exportar_csv():
-    return "Fase 5 en construcción..."
-
+def exportar_csv(): return "Fase 8 en construcción..."
 @app.route('/areas')
 @login_required
-def vista_areas():
-    return render_template('areas.html', areas=[])
-
+def vista_areas(): return "Fase 8 en construcción..."
 @app.route('/tecnicos', methods=['GET', 'POST'])
 @login_required
 @roles_required('Administrador', 'Propietario')
-def gestion_tecnicos():
-    return render_template('tecnicos.html', tecnicos=[])
+def gestion_tecnicos(): return render_template('tecnicos.html', tecnicos=[])
 
 if __name__ == '__main__':
     app.run(debug=True)

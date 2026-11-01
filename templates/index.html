@@ -3,320 +3,181 @@
 {% block content %}
 <div class="d-flex-between mb-4">
     <div>
-        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Dashboard</h1>
-        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Gestión de incidencias técnicas</p>
+        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px; margin: 0; color: var(--apple-text-main);">
+            Dashboard</h1>
+        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Resumen general de incidencias</p>
     </div>
     <div style="display: flex; gap: 12px;">
-        <a href="/exportar" class="btn-apple btn-apple-secondary">
-            <i class="fa-solid fa-file-excel" style="margin-right: 6px;"></i> CSV
-        </a>
-        <a href="/exportar_pdf" class="btn-apple btn-apple-secondary">
-            <i class="fa-solid fa-file-pdf" style="margin-right: 6px;"></i> PDF
-        </a>
-        <a href="/nuevo" class="btn-apple">
-            <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nueva Incidencia
-        </a>
+        <!-- El exportar está deshabilitado por ahora hasta el paso 8 -->
+        <a href="#" class="btn-apple btn-apple-secondary" onclick="alert('Exportar PDF se activará en el Paso 8')"><i
+                class="fa-solid fa-file-pdf text-danger"></i> PDF</a>
+        <a href="#" class="btn-apple btn-apple-secondary" onclick="alert('Exportar CSV se activará en el Paso 8')"><i
+                class="fa-solid fa-file-csv text-success"></i> CSV</a>
+        <a href="/nuevo" class="btn-apple"><i class="fa-solid fa-plus"></i> Nuevo Ticket</a>
     </div>
 </div>
 
-<!-- WIDGETS ESTADÍSTICAS -->
-<div class="stats-grid">
-    <div class="stat-widget widget-blue">
-        <div class="stat-header">
-            <span class="stat-title">Proyecto LocalDesk</span>
-            <i class="fa-solid fa-folder-open stat-icon text-blue"></i>
-        </div>
-        <div class="stat-value">{{ stats.total }}</div>
-        <div class="stat-subtitle text-blue"><i class="fa-solid fa-plus me-1"></i>Total histórico</div>
-    </div>
-    <div class="stat-widget widget-red">
-        <div class="stat-header">
-            <span class="stat-title">Pendientes</span>
-            <i class="fa-solid fa-triangle-exclamation stat-icon text-red"></i>
-        </div>
-        <div class="stat-value">{{ stats.pendientes }}</div>
-        <div class="stat-subtitle text-red"><i class="fa-solid fa-arrow-trend-up me-1"></i>Requieren atención</div>
-    </div>
-    <div class="stat-widget widget-orange">
-        <div class="stat-header">
-            <span class="stat-title">En Revisión</span>
-            <i class="fa-solid fa-spinner stat-icon text-orange"></i>
-        </div>
-        <div class="stat-value">{{ stats.revision }}</div>
-        <div class="stat-subtitle text-orange"><i class="fa-solid fa-bolt me-1"></i>Proceso activo</div>
-    </div>
-    <div class="stat-widget widget-green">
-        <div class="stat-header">
-            <span class="stat-title">Resueltas</span>
-            <i class="fa-solid fa-check-double stat-icon text-green"></i>
-        </div>
-        <div class="stat-value">{{ stats.resueltas }}</div>
-        <div class="stat-subtitle text-green"><i class="fa-solid fa-check me-1"></i>Casos cerrados</div>
-    </div>
-</div>
+<div class="dashboard-grid">
+    <!-- Panel Izquierdo: Estadísticas rápidas -->
+    <div class="apple-card" style="display: flex; flex-direction: column; justify-content: center;">
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 0; color: var(--apple-text-main);">Proporción de
+            Estados</h3>
+        <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-bottom: 24px;">Índice actual</p>
 
-<!-- PANEL DE ANALÍTICAS MEJORADO (Estilo Corporativo) -->
-<div
-    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 32px;">
-
-    <!-- GRÁFICA DE DONA (Inspirada en image_a9f781.png) -->
-    <div class="apple-card" style="margin-bottom: 0; padding: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
-            <div>
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--apple-text-main); margin: 0;">Proporción de
-                    Estados</h3>
-                <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-top: 4px;">Índice actual</p>
-            </div>
-            <i class="fa-solid fa-ellipsis" style="color: var(--apple-text-secondary); cursor: pointer;"></i>
-        </div>
-
-        <!-- Contenedor relativo para poner el número en el centro -->
-        <div
-            style="position: relative; height: 240px; display: flex; justify-content: center; align-items: center; margin-bottom: 24px;">
-            <canvas id="chartEstados"></canvas>
-            <!-- Número central -->
-            <div style="position: absolute; text-align: center; pointer-events: none;">
-                <span
-                    style="display: block; font-size: 2rem; font-weight: 700; color: var(--apple-text-main); line-height: 1;">{{
-                    stats.total }}</span>
-                <span
-                    style="display: block; font-size: 0.85rem; color: var(--apple-text-secondary); margin-top: 4px;">Total
-                    Tickets</span>
+        <div style="position: relative; width: 180px; height: 180px; margin: 0 auto;">
+            <canvas id="graficaEstados"></canvas>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                <span style="font-size: 1.8rem; font-weight: 700; color: var(--apple-text-main);">{{ stats.total
+                    }}</span><br>
+                <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">Total Tickets</span>
             </div>
         </div>
 
-        <!-- Leyenda personalizada debajo (estilo limpio) -->
-        <div
-            style="display: flex; justify-content: space-around; border-top: 1px solid var(--apple-border); padding-top: 16px;">
+        <div style="display: flex; justify-content: space-around; margin-top: 24px;">
             <div style="text-align: center;">
-                <div style="display: flex; align-items: center; gap: 6px; justify-content: center; margin-bottom: 4px;">
-                    <span
-                        style="width: 8px; height: 16px; border-radius: 4px; background-color: var(--apple-red); display: inline-block;"></span>
-                    <span style="font-size: 0.85rem; color: var(--apple-text-secondary);">Pendiente</span>
+                <div
+                    style="width: 8px; height: 16px; background-color: #FF3B30; border-radius: 4px; display: inline-block; margin-right: 6px;">
                 </div>
-                <span style="font-weight: 600; font-size: 1rem;">{{ stats.pendientes }}</span>
-            </div>
-            <div style="text-align: center;">
-                <div style="display: flex; align-items: center; gap: 6px; justify-content: center; margin-bottom: 4px;">
-                    <span
-                        style="width: 8px; height: 16px; border-radius: 4px; background-color: var(--apple-orange); display: inline-block;"></span>
-                    <span style="font-size: 0.85rem; color: var(--apple-text-secondary);">En Revisión</span>
-                </div>
-                <span style="font-weight: 600; font-size: 1rem;">{{ stats.revision }}</span>
-            </div>
-            <div style="text-align: center;">
-                <div style="display: flex; align-items: center; gap: 6px; justify-content: center; margin-bottom: 4px;">
-                    <span
-                        style="width: 8px; height: 16px; border-radius: 4px; background-color: var(--apple-green); display: inline-block;"></span>
-                    <span style="font-size: 0.85rem; color: var(--apple-text-secondary);">Resuelta</span>
-                </div>
-                <span style="font-weight: 600; font-size: 1rem;">{{ stats.resueltas }}</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- GRÁFICA DE BARRAS DEGRADADAS (Inspirada en image_a9ef7c.png) -->
-    <div class="apple-card" style="margin-bottom: 0; padding: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
-            <div>
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--apple-text-main); margin: 0;">Fallas por
-                    Categoría</h3>
-                <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-top: 4px;">Distribución técnica
+                <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">Pendiente</span>
+                <p style="font-weight: 600; margin: 4px 0 0 0; color: var(--apple-text-main);">{{ stats.pendientes }}
                 </p>
             </div>
-            <i class="fa-solid fa-ellipsis" style="color: var(--apple-text-secondary); cursor: pointer;"></i>
+            <div style="text-align: center;">
+                <div
+                    style="width: 8px; height: 16px; background-color: #FF9500; border-radius: 4px; display: inline-block; margin-right: 6px;">
+                </div>
+                <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">En Revisión</span>
+                <p style="font-weight: 600; margin: 4px 0 0 0; color: var(--apple-text-main);">{{ stats.revision }}</p>
+            </div>
+            <div style="text-align: center;">
+                <div
+                    style="width: 8px; height: 16px; background-color: #34C759; border-radius: 4px; display: inline-block; margin-right: 6px;">
+                </div>
+                <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">Resuelta</span>
+                <p style="font-weight: 600; margin: 4px 0 0 0; color: var(--apple-text-main);">{{ stats.resueltas }}</p>
+            </div>
         </div>
-        <div style="height: 280px;">
-            <canvas id="chartCategorias"></canvas>
+    </div>
+
+    <!-- Panel Derecho: Gráfica de Barras Dinámica -->
+    <div class="apple-card">
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 0; color: var(--apple-text-main);">Fallas por
+            Categoría</h3>
+        <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-bottom: 24px;">Distribución técnica de
+            la empresa</p>
+        <div style="height: 220px; width: 100%;">
+            <canvas id="graficaCategorias"></canvas>
         </div>
     </div>
 </div>
 
-<!-- BARRA DE BÚSQUEDA -->
-<form action="/" method="GET" style="margin-bottom: 24px; position: relative;">
-    <i class="fa-solid fa-magnifying-glass"
-        style="position: absolute; left: 20px; top: 16px; color: var(--apple-text-secondary); font-size: 1.1rem;"></i>
-    <input type="text" name="q" class="apple-input"
-        style="padding-left: 54px; border-radius: var(--radius-pill); font-size: 1.05rem; padding-top: 14px; padding-bottom: 14px; background-color: var(--apple-surface); box-shadow: var(--shadow-soft);"
-        placeholder="Buscar por ID, equipo, problema o técnico..." value="{{ busqueda }}">
-    {% if busqueda %}
-    <a href="/"
-        style="position: absolute; right: 20px; top: 16px; color: var(--apple-text-secondary); text-decoration: none;">
-        <i class="fa-solid fa-circle-xmark"></i> Limpiar
-    </a>
-    {% endif %}
-</form>
+<div class="apple-card mt-4" style="padding: 0; overflow: hidden;">
+    <div style="padding: 16px 24px; border-bottom: 1px solid var(--apple-border); background-color: var(--apple-bg);">
+        <form action="/" method="GET" style="display: flex; gap: 12px; align-items: center;">
+            <i class="fa-solid fa-magnifying-glass" style="color: var(--apple-text-secondary);"></i>
+            <input type="text" name="q" value="{{ busqueda }}"
+                placeholder="Buscar por ID (Ej: 1), activo, problema o usuario..."
+                style="border: none; background: transparent; outline: none; width: 100%; font-size: 0.95rem; color: var(--apple-text-main);">
+        </form>
+    </div>
 
-<!-- TABLA DE INCIDENCIAS -->
-<div class="apple-table-container">
-    <table class="apple-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Problema</th>
-                <th>Equipo</th>
-                <th>Estado</th>
-                <th>Prioridad</th>
-                <th style="text-align: right;">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in incidencias %}
-            <tr>
-                <td style="color: var(--apple-text-secondary);">{{ item[0] }}</td>
-                <td style="font-weight: 600;">{{ item[1] }}</td>
-                <td>{{ item[2] }}</td>
-                <td>
-                    {% if item[7] == 'Resuelta' %}
-                    <span class="badge badge-green">Resuelta</span>
-                    {% elif item[7] == 'En revisión' %}
-                    <span class="badge badge-orange">En revisión</span>
-                    {% else %}
-                    <span class="badge badge-red">Pendiente</span>
-                    {% endif %}
-                </td>
-                <td style="color: var(--apple-text-secondary);">{{ item[6] }}</td>
-                <td style="text-align: right;">
-                    <a href="/incidencia/{{ item[0] }}" class="btn-apple btn-apple-secondary"
-                        style="padding: 6px 14px; font-size: 0.85rem;">Inspeccionar</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 60px 20px; color: var(--apple-text-secondary);">
-                    <i class="fa-regular fa-folder-open"
-                        style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
-                    {% if busqueda %}
-                    No se encontraron incidencias para "{{ busqueda }}".
-                    {% else %}
-                    Ninguna incidencia registrada.
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div style="overflow-x: auto;">
+        <table class="apple-table">
+            <thead>
+                <tr>
+                    <th>Ticket</th>
+                    <th>Problema</th>
+                    <th>Activo / Ubicación</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for incidencia in incidencias %}
+                <tr>
+                    <td style="font-weight: 600; color: var(--apple-text-secondary);">LD-{{ "%04d" |
+                        format(incidencia[1]) }}</td>
+                    <td style="font-weight: 500;">{{ incidencia[2] }}</td>
+                    <td style="color: var(--apple-text-secondary);">{{ incidencia[3] }}</td>
+                    <td>
+                        {% if incidencia[7] == 'Resuelta' %}<span class="badge badge-green">Resuelta</span>
+                        {% elif incidencia[7] == 'En revisión' %}<span class="badge badge-orange">En revisión</span>
+                        {% else %}<span class="badge badge-red">Pendiente</span>{% endif %}
+                    </td>
+                    <td style="color: var(--apple-text-secondary);">{{ incidencia[6] }}</td>
+                    <td>
+                        <a href="/incidencia/{{ incidencia[0] }}" class="btn-apple btn-apple-secondary"
+                            style="padding: 6px 12px; font-size: 0.85rem;">Inspeccionar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--apple-text-secondary);">
+                        <i class="fa-solid fa-inbox"
+                            style="font-size: 2rem; margin-bottom: 12px; opacity: 0.5;"></i><br>
+                        No se encontraron tickets registrados en tu empresa.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<!-- SCRIPT PARA CHART.JS (CON NUEVOS ESTILOS) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Variables de Flask
-    const pendientes = {{ stats.pendientes }};
-    const revision = {{ stats.revision }};
-    const resueltas = {{ stats.resueltas }};
-    const datosCategorias = {{ categorias | safe }};
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#F5F5F7' : '#1D1D1F';
+    const gridColor = isDark ? '#38383A' : '#E5E5EA';
 
-    // Colores corporativos (variables globales para facilidad)
-    const colorRed = '#FF3B30';     // Pendientes
-    const colorOrange = '#FF9500';  // Revisión
-    const colorGreen = '#34C759';   // Resueltas
+    const stats = {
+        pendientes: {{ stats.pendientes }},
+    revision: { { stats.revision } },
+    resueltas: { { stats.resueltas } }
+    };
 
-    // 1. GRÁFICA DE DONA (Inspirada en image_a9f781.png)
-    const ctxEstados = document.getElementById('chartEstados').getContext('2d');
-    new Chart(ctxEstados, {
+    // Categorías dinámicas desde Python
+    const categoriasData = JSON.parse('{{ categorias | safe }}');
+    const catLabels = Object.keys(categoriasData);
+    const catValues = Object.values(categoriasData);
+
+    // 1. Gráfica de Dona (Estados)
+    new Chart(document.getElementById('graficaEstados').getContext('2d'), {
         type: 'doughnut',
         data: {
-            labels: ['Pendientes', 'En Revisión', 'Resueltas'],
+            labels: ['Pendiente', 'En Revisión', 'Resuelta'],
             datasets: [{
-                data: [pendientes, revision, resueltas],
-                backgroundColor: [colorRed, colorOrange, colorGreen],
-                borderWidth: 4, // Borde más grueso entre segmentos (estilo moderno)
-                borderColor: '#FFFFFF', // Borde blanco (separa los colores)
-                hoverOffset: 6,
-                borderRadius: 4 // Pequeño redondeo interno (si se soporta en versiones nuevas)
+                data: [stats.pendientes, stats.revision, stats.resueltas],
+                backgroundColor: ['#FF3B30', '#FF9500', '#34C759'],
+                borderWidth: 4,
+                borderColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                hoverOffset: 4
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '78%', // Dona más delgada, como en la imagen
-            plugins: {
-                legend: {
-                    display: false // Ocultamos la leyenda original (ya hicimos una HTML abajo)
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            let label = context.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed !== null) {
-                                label += context.parsed;
-                            }
-                            return label;
-                        }
-                    }
-                }
-            }
-        }
+        options: { cutout: '75%', plugins: { legend: { display: false }, tooltip: { padding: 12, cornerRadius: 8 } } }
     });
 
-    // 2. GRÁFICA DE BARRAS DEGRADADAS (Inspirada en image_a9ef7c.png)
-    const ctxCategorias = document.getElementById('chartCategorias').getContext('2d');
-
-    // Función para crear el degradado dinámico (Azul a Verde/Aqua)
-    let gradientBlue = ctxCategorias.createLinearGradient(0, 0, 0, 400);
-    gradientBlue.addColorStop(0, '#5AC8FA'); // Color claro arriba
-    gradientBlue.addColorStop(1, '#0071E3'); // Color oscuro abajo
-
-    let gradientPurple = ctxCategorias.createLinearGradient(0, 0, 0, 400);
-    gradientPurple.addColorStop(0, '#E58DF1');
-    gradientPurple.addColorStop(1, '#AF52DE');
-
-    let gradientTeal = ctxCategorias.createLinearGradient(0, 0, 0, 400);
-    gradientTeal.addColorStop(0, '#59EBB9');
-    gradientTeal.addColorStop(1, '#34C759');
-
-    let gradientGrey = ctxCategorias.createLinearGradient(0, 0, 0, 400);
-    gradientGrey.addColorStop(0, '#C7C7CC');
-    gradientGrey.addColorStop(1, '#8E8E93');
-
-    new Chart(ctxCategorias, {
+    // 2. Gráfica de Barras Dinámica (Categorías)
+    new Chart(document.getElementById('graficaCategorias').getContext('2d'), {
         type: 'bar',
         data: {
-            labels: ['Hardware', 'Software', 'Red', 'Otro'],
+            labels: catLabels,
             datasets: [{
-                label: 'Fallas Reportadas',
-                data: [datosCategorias['Hardware'], datosCategorias['Software'], datosCategorias['Red'], datosCategorias['Otro']],
-                // Asignamos los degradados en orden
-                backgroundColor: [gradientBlue, gradientPurple, gradientTeal, gradientGrey],
-                borderRadius: 8, // Bordes muy redondeados (estilo Apple/SaaS)
-                borderSkipped: false,
-                barThickness: 30 // Barras más delgadas y elegantes
+                label: 'Tickets',
+                data: catValues,
+                backgroundColor: '#32ADE6',
+                borderRadius: 6,
+                barThickness: 20
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        display: true, // Líneas horizontales suaves
-                        color: 'rgba(0, 0, 0, 0.04)',
-                        drawBorder: false
-                    },
-                    ticks: {
-                        stepSize: 1,
-                        font: { family: '-apple-system', size: 11 },
-                        color: '#8E8E93'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false, // Sin líneas verticales
-                        drawBorder: false
-                    },
-                    ticks: {
-                        font: { family: '-apple-system', size: 12, weight: '500' },
-                        color: '#1D1D1F'
-                    }
-                }
+                y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { precision: 0, color: textColor } },
+                x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor } }
             }
         }
     });
