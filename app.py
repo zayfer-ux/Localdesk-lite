@@ -103,7 +103,7 @@ def centro_notificaciones():
     return render_template('notificaciones.html', notificaciones=notifs)
 
 # ==========================================
-# AUTENTICACIÓN Y REGISTRO (V2.0 - MULTI-EMPRESA)
+# AUTENTICACIÓN Y REGISTRO
 # ==========================================
 def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
     msg = MIMEMultipart('alternative')
@@ -147,7 +147,7 @@ def login():
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
-        tipo_registro = request.form.get('tipo_registro') # 'crear' o 'unirse'
+        tipo_registro = request.form.get('tipo_registro')
         codigo_invitacion = request.form.get('codigo_invitacion')
         nombre_empresa = request.form.get('nombre_empresa')
         
@@ -177,19 +177,8 @@ def registro():
             flash('Error al conectar con la base de datos.', 'danger')
             return redirect(url_for('registro'))
 
-        session['reg_temp'] = { 
-            'tipo_registro': tipo_registro,
-            'codigo_invitacion': codigo_invitacion,
-            'nombre_empresa': nombre_empresa,
-            'org_id_unirse': org_id_unirse,
-            'nombre': nombre, 
-            'usuario': usuario, 
-            'email': email, 
-            'password': generate_password_hash(password), 
-            'otp': str(random.randint(100000, 999999)) 
-        }
-        if enviar_codigo_registro(email, session['reg_temp']['otp'], nombre): 
-            return redirect(url_for('verificar_registro'))
+        session['reg_temp'] = { 'tipo_registro': tipo_registro, 'codigo_invitacion': codigo_invitacion, 'nombre_empresa': nombre_empresa, 'org_id_unirse': org_id_unirse, 'nombre': nombre, 'usuario': usuario, 'email': email, 'password': generate_password_hash(password), 'otp': str(random.randint(100000, 999999)) }
+        if enviar_codigo_registro(email, session['reg_temp']['otp'], nombre): return redirect(url_for('verificar_registro'))
         else: flash('Error al enviar el correo.', 'danger')
     return render_template('registro.html')
 
@@ -202,23 +191,15 @@ def verificar_registro():
             try:
                 cliente = get_db()
                 if datos['tipo_registro'] == 'crear':
-                    # Generar código aleatorio de 8 caracteres
                     codigo_inv = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
                     res_org = cliente.execute("INSERT INTO organizaciones (nombre, codigo_invitacion) VALUES (?, ?) RETURNING id", (datos['nombre_empresa'], codigo_inv)).rows
                     nuevo_org_id = res_org[0][0]
-                    
-                    # El creador es Propietario
                     cliente.execute("INSERT INTO usuarios (org_id, nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, ?, 'Propietario')", (nuevo_org_id, datos['nombre'], datos['usuario'], datos['email'], datos['password']))
-                    
-                    # Generar configuración base de la empresa
                     for cat in ['Hardware', 'Software', 'Red', 'Otro']:
                         cliente.execute("INSERT INTO categorias (org_id, nombre) VALUES (?, ?)", (nuevo_org_id, cat))
                     cliente.execute("INSERT INTO areas (org_id, nombre) VALUES (?, 'General')", (nuevo_org_id,))
-                    
                 elif datos['tipo_registro'] == 'unirse':
-                    # Entra como Solicitante por defecto
                     cliente.execute("INSERT INTO usuarios (org_id, nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, ?, 'Solicitante')", (datos['org_id_unirse'], datos['nombre'], datos['usuario'], datos['email'], datos['password']))
-                    
                 cliente.close()
                 session.pop('reg_temp', None)
                 flash('¡Cuenta creada y verificada con éxito!', 'success')
@@ -244,11 +225,85 @@ def perfil():
             session['foto'] = request.form.get('foto')
         except: pass
         return redirect(url_for('perfil'))
-    try:
-        datos_perfil = cliente.execute("SELECT nombre, usuario, email, rol, telefono, foto FROM usuarios WHERE id = ? AND org_id = ?", (session.get('id_usuario'), org_id())).rows[0]
+    try: datos_perfil = cliente.execute("SELECT nombre, usuario, email, rol, telefono, foto FROM usuarios WHERE id = ? AND org_id = ?", (session.get('id_usuario'), org_id())).rows[0]
     except: datos_perfil = None
     cliente.close()
     return render_template('perfil.html', perfil=datos_perfil)
+
+# ==========================================
+# CHAT INTERNO PRIVADO V2.0 (Aislado por empresa)
+# ==========================================
+@app.route('/chat')
+@app.route('/chat/<int:dest_id>')
+@login_required
+@roles_required('Técnico', 'Administrador', 'Propietario')
+def chat_interno(dest_id=None):
+    mi_id = session.get('id_usuario')
+    try:
+        cliente = get_db()
+        # Solo mostrar usuarios de la misma organización
+        usuarios = cliente.execute("SELECT id, nombre, rol, foto FROM usuarios WHERE org_id = ? AND id != ? ORDER BY nombre ASC", (org_id(), mi_id)).rows
+        
+        mensajes = []
+        destinatario = None
+        
+        if dest_id:
+            dest_data = cliente.execute("SELECT id, nombre, rol, foto FROM usuarios WHERE id = ? AND org_id = ?", (dest_id, org_id())).rows
+            if dest_data:
+                destinatario = {'id': dest_data[0][0], 'nombre': dest_data[0][1], 'rol': dest_data[0][2], 'foto': dest_data[0][3]}
+                
+                sql = """
+                    SELECT m.mensaje, m.archivo, m.fecha, m.de_usuario, u.nombre, u.foto 
+                    FROM mensajes_privados m
+                    JOIN usuarios u ON m.de_usuario = u.id
+                    WHERE m.org_id = ? AND ((m.de_usuario = ? AND m.a_usuario = ?) OR (m.de_usuario = ? AND m.a_usuario = ?))
+                    ORDER BY m.fecha ASC
+                """
+                mensajes = cliente.execute(sql, (org_id(), mi_id, dest_id, dest_id, mi_id)).rows
+        cliente.close()
+    except Exception as e:
+        print(e)
+        usuarios, mensajes, destinatario = [], [], None
+        
+    return render_template('chat.html', usuarios=usuarios, mensajes=mensajes, destinatario=destinatario, mi_id=mi_id)
+
+@app.route('/enviar_privado/<int:dest_id>', methods=['POST'])
+@login_required
+@roles_required('Técnico', 'Administrador', 'Propietario')
+def enviar_privado(dest_id):
+    mi_id = session.get('id_usuario')
+    mensaje = request.form.get('mensaje')
+    archivo_url = None
+    if 'archivo' in request.files and request.files['archivo'].filename != '':
+        file = request.files['archivo']
+        filename = f"{int(datetime.now().timestamp())}_{secure_filename(file.filename)}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        archivo_url = f"/static/uploads/{filename}"
+            
+    try:
+        cliente = get_db()
+        check = cliente.execute("SELECT id FROM usuarios WHERE id = ? AND org_id = ?", (dest_id, org_id())).rows
+        if check:
+            cliente.execute("INSERT INTO mensajes_privados (org_id, de_usuario, a_usuario, mensaje, archivo) VALUES (?, ?, ?, ?, ?)", (org_id(), mi_id, dest_id, mensaje, archivo_url))
+            texto_noti = f"Tienes un nuevo mensaje privado de {session.get('nombre')}"
+            enlace = f"/chat/{mi_id}"
+            cliente.execute("INSERT INTO notificaciones (org_id, usuario_id, texto, enlace) VALUES (?, ?, ?, ?)", (org_id(), dest_id, texto_noti, enlace))
+        cliente.close()
+    except Exception as e: print(e)
+    return redirect(url_for('chat_interno', dest_id=dest_id))
+
+@app.route('/vaciar_chat/<int:dest_id>', methods=['POST'])
+@login_required
+@roles_required('Técnico', 'Administrador', 'Propietario')
+def vaciar_chat(dest_id):
+    mi_id = session.get('id_usuario')
+    try:
+        cliente = get_db()
+        sql = "DELETE FROM mensajes_privados WHERE org_id = ? AND ((de_usuario = ? AND a_usuario = ?) OR (de_usuario = ? AND a_usuario = ?))"
+        cliente.execute(sql, (org_id(), mi_id, dest_id, dest_id, mi_id))
+        cliente.close()
+    except Exception as e: print(e)
+    return redirect(url_for('chat_interno', dest_id=dest_id))
 
 # ==========================================
 # RUTAS DEL SISTEMA PRINCIPAL (INCIDENCIAS V2.0)
@@ -259,8 +314,6 @@ def inicio():
     busqueda = request.args.get('q', '')
     try:
         cliente = get_db()
-        
-        # Consultar con JOINs para obtener nombres de áreas y categorías en lugar de sus IDs
         query_base = """
             SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, 
                    a.nombre as area, c.nombre as categoria, 
@@ -272,36 +325,23 @@ def inicio():
             WHERE i.org_id = ?
         """
         parametros = [org_id()]
-
         if busqueda:
             query_base += " AND (CAST(i.numero AS TEXT) LIKE ? OR i.titulo LIKE ? OR i.activo_ubicacion LIKE ? OR u.nombre LIKE ?)"
             parametros.extend([f"%{busqueda}%", f"%{busqueda}%", f"%{busqueda}%", f"%{busqueda}%"])
-            
         query_base += " ORDER BY i.numero DESC"
         
         lista_incidencias = cliente.execute(query_base, parametros).rows
-        
-        # Estadísticas exclusivas de esta empresa
         todas = cliente.execute("SELECT i.estado, c.nombre FROM incidencias i JOIN categorias c ON i.categoria_id = c.id WHERE i.org_id = ?", (org_id(),)).rows
-        
-        stats = {
-            'total': len(todas),
-            'pendientes': sum(1 for i in todas if i[0] == 'Pendiente'),
-            'revision': sum(1 for i in todas if i[0] == 'En revisión'),
-            'resueltas': sum(1 for i in todas if i[0] == 'Resuelta')
-        }
+        stats = { 'total': len(todas), 'pendientes': sum(1 for i in todas if i[0] == 'Pendiente'), 'revision': sum(1 for i in todas if i[0] == 'En revisión'), 'resueltas': sum(1 for i in todas if i[0] == 'Resuelta') }
         
         categorias_stats = {}
         for i in todas:
             cat = i[1]
             categorias_stats[cat] = categorias_stats.get(cat, 0) + 1
-            
         cliente.close()
     except Exception as e:
         print("Error en inicio:", e)
-        lista_incidencias = []
-        stats = {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}
-        categorias_stats = {}
+        lista_incidencias, stats, categorias_stats = [], {'total': 0, 'pendientes': 0, 'revision': 0, 'resueltas': 0}, {}
 
     return render_template('index.html', incidencias=lista_incidencias, stats=stats, categorias=json.dumps(categorias_stats), busqueda=busqueda)
 
@@ -311,30 +351,18 @@ def nuevo_registro():
     cliente = get_db()
     if request.method == 'POST':
         try:
-            # Calcular el siguiente número consecutivo de la empresa (LD-XXXX)
             res_max = cliente.execute("SELECT MAX(numero) FROM incidencias WHERE org_id = ?", (org_id(),)).rows
             siguiente_numero = (res_max[0][0] or 0) + 1 if res_max else 1
-
-            cliente.execute("""
-                INSERT INTO incidencias (org_id, numero, titulo, activo_ubicacion, area_id, categoria_id, descripcion, prioridad, estado, solicitante_id) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente', ?)
-            """, (org_id(), siguiente_numero, request.form['titulo'], request.form['activo_ubicacion'], 
-                  request.form['area_id'], request.form['categoria_id'], request.form['descripcion'], 
-                  request.form['prioridad'], session['id_usuario']))
-            
-            # Registrar en la nueva tabla de historial
+            cliente.execute("INSERT INTO incidencias (org_id, numero, titulo, activo_ubicacion, area_id, categoria_id, descripcion, prioridad, estado, solicitante_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente', ?)", (org_id(), siguiente_numero, request.form['titulo'], request.form['activo_ubicacion'], request.form['area_id'], request.form['categoria_id'], request.form['descripcion'], request.form['prioridad'], session['id_usuario']))
             res_id = cliente.execute("SELECT last_insert_rowid()").rows
             nuevo_id = res_id[0][0]
-            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
-                            (org_id(), nuevo_id, session['id_usuario'], 'Ticket Creado'))
-
+            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)", (org_id(), nuevo_id, session['id_usuario'], 'Ticket Creado'))
             cliente.close()
             return redirect(url_for('inicio'))
         except Exception as e:
             print("Error al crear:", e)
             flash('Error al crear el ticket', 'danger')
 
-    # Cargar áreas y categorías dinámicas para el formulario HTML
     areas = cliente.execute("SELECT id, nombre FROM areas WHERE org_id = ? ORDER BY nombre", (org_id(),)).rows
     categorias = cliente.execute("SELECT id, nombre FROM categorias WHERE org_id = ? ORDER BY nombre", (org_id(),)).rows
     cliente.close()
@@ -345,35 +373,18 @@ def nuevo_registro():
 def ver_detalle(id):
     try:
         cliente = get_db()
-        # 1. Seguridad: Validar que el ticket pertenezca a la empresa
         incidencia_raw = cliente.execute("""
-            SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, 
-                   a.nombre as area, c.nombre as categoria, 
-                   i.prioridad, i.estado, u.nombre as solicitante, i.solucion, i.fecha_reporte, i.fecha_solucion, i.descripcion
-            FROM incidencias i
-            JOIN areas a ON i.area_id = a.id
-            JOIN categorias c ON i.categoria_id = c.id
-            JOIN usuarios u ON i.solicitante_id = u.id
+            SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, a.nombre as area, c.nombre as categoria, i.prioridad, i.estado, u.nombre as solicitante, i.solucion, i.fecha_reporte, i.fecha_solucion, i.descripcion
+            FROM incidencias i JOIN areas a ON i.area_id = a.id JOIN categorias c ON i.categoria_id = c.id JOIN usuarios u ON i.solicitante_id = u.id
             WHERE i.id = ? AND i.org_id = ?
         """, (id, org_id())).rows
-        
         if not incidencia_raw:
             cliente.close()
             return "<h1>Error 404: Incidencia no encontrada o no pertenece a tu empresa</h1>", 404
-            
         incidencia = incidencia_raw[0]
         
-        # 2. Consultar mensajes del chat aislando las notas internas para los Solicitantes
-        query_mensajes = """
-            SELECT m.mensaje, m.es_nota_interna, m.fecha, u.nombre, u.foto, u.rol, m.archivo 
-            FROM mensajes m 
-            JOIN usuarios u ON m.usuario_id = u.id 
-            WHERE m.incidencia_id = ? AND m.org_id = ?
-        """
-        
-        if session.get('rol') == 'Solicitante':
-            query_mensajes += " AND m.es_nota_interna = 0"
-            
+        query_mensajes = "SELECT m.mensaje, m.es_nota_interna, m.fecha, u.nombre, u.foto, u.rol, m.archivo FROM mensajes m JOIN usuarios u ON m.usuario_id = u.id WHERE m.incidencia_id = ? AND m.org_id = ?"
+        if session.get('rol') == 'Solicitante': query_mensajes += " AND m.es_nota_interna = 0"
         query_mensajes += " ORDER BY m.fecha ASC"
         
         mensajes = cliente.execute(query_mensajes, (id, org_id())).rows
@@ -395,8 +406,6 @@ def enviar_mensaje(id):
         
     tipo = request.form.get('tipo', 'chat')
     es_nota = 1 if tipo == 'nota' else 0
-    
-    # Validar permisos estrictos para crear nota interna
     if es_nota and session.get('rol') == 'Solicitante':
         flash('No tienes permisos para crear notas internas.', 'danger')
         return redirect(url_for('ver_detalle', id=id))
@@ -405,13 +414,8 @@ def enviar_mensaje(id):
         cliente = get_db()
         check = cliente.execute("SELECT id FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
         if check:
-            cliente.execute("""
-                INSERT INTO mensajes (org_id, incidencia_id, usuario_id, mensaje, es_nota_interna, archivo) 
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (org_id(), id, session.get('id_usuario'), request.form.get('mensaje'), es_nota, archivo_url))
-            
-            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
-                            (org_id(), id, session['id_usuario'], 'Mensaje agregado'))
+            cliente.execute("INSERT INTO mensajes (org_id, incidencia_id, usuario_id, mensaje, es_nota_interna, archivo) VALUES (?, ?, ?, ?, ?, ?)", (org_id(), id, session.get('id_usuario'), request.form.get('mensaje'), es_nota, archivo_url))
+            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)", (org_id(), id, session['id_usuario'], 'Mensaje agregado'))
         cliente.close()
     except Exception as e: print(e)
     return redirect(url_for('ver_detalle', id=id))
@@ -426,8 +430,7 @@ def actualizar_estado(id):
         check = cliente.execute("SELECT estado FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
         if check and check[0][0] != nuevo_estado:
             cliente.execute("UPDATE incidencias SET estado = ? WHERE id = ? AND org_id = ?", (nuevo_estado, id, org_id()))
-            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)",
-                            (org_id(), id, session['id_usuario'], 'Cambio de estado', f"A {nuevo_estado}"))
+            cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)", (org_id(), id, session['id_usuario'], 'Cambio de estado', f"A {nuevo_estado}"))
         cliente.close()
     except Exception as e: print(e)
     return redirect(url_for('ver_detalle', id=id))
@@ -438,14 +441,8 @@ def actualizar_estado(id):
 def resolver_incidencia(id):
     try:
         cliente = get_db()
-        cliente.execute("""
-            UPDATE incidencias 
-            SET solucion = ?, estado = 'Resuelta', fecha_solucion = CURRENT_TIMESTAMP, resuelto_por = ? 
-            WHERE id = ? AND org_id = ?
-        """, (f"{request.form['solucion']}\n\n✅ Atendido por: {session.get('nombre')} ({session.get('rol')})", session.get('id_usuario'), id, org_id()))
-        
-        cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
-                            (org_id(), id, session['id_usuario'], 'Ticket Resuelto'))
+        cliente.execute("UPDATE incidencias SET solucion = ?, estado = 'Resuelta', fecha_solucion = CURRENT_TIMESTAMP, resuelto_por = ? WHERE id = ? AND org_id = ?", (f"{request.form['solucion']}\n\n✅ Atendido por: {session.get('nombre')} ({session.get('rol')})", session.get('id_usuario'), id, org_id()))
+        cliente.execute("INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)", (org_id(), id, session['id_usuario'], 'Ticket Resuelto'))
         cliente.close()
     except Exception as e: print(e)
     return redirect(url_for('ver_detalle', id=id))
@@ -463,7 +460,7 @@ def eliminar_incidencia(id):
     except Exception as e: print(e)
     return redirect(url_for('inicio'))
 
-# RUTAS PENDIENTES DE ADAPTAR (PASO 6, 7 y 8)
+# RUTAS PENDIENTES DE ADAPTAR (PASO 8 y 9)
 @app.route('/exportar_pdf')
 @login_required
 def exportar_pdf(): return "Fase 8 en construcción..."
@@ -472,7 +469,7 @@ def exportar_pdf(): return "Fase 8 en construcción..."
 def exportar_csv(): return "Fase 8 en construcción..."
 @app.route('/areas')
 @login_required
-def vista_areas(): return "Fase 8 en construcción..."
+def vista_areas(): return render_template('areas.html', areas=[])
 @app.route('/tecnicos', methods=['GET', 'POST'])
 @login_required
 @roles_required('Administrador', 'Propietario')

@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalDesk - Soporte Técnico</title>
+    <title>LocalDesk SaaS - Soporte Técnico</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <!-- SCRIPT DE CARGA TEMPRANA -->
+    <!-- SCRIPT DE CARGA TEMPRANA: Evita el parpadeo blanco al recargar la página -->
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
@@ -19,15 +19,11 @@
     <style>
         :root {
             --sidebar-width: 260px;
-
-            /* Variables globales por defecto (Modo Claro) */
             --apple-bg: #F5F5F7;
             --apple-surface: #FFFFFF;
             --apple-border: #E5E5EA;
             --apple-text-main: #1D1D1F;
             --apple-text-secondary: #8E8E93;
-
-            /* Variables específicas para el Chat (Modo Claro) */
             --chat-active-bg: #F0F7FF;
             --chat-header-bg: #FAFAFA;
             --chat-receiver-bg: #F5F5F7;
@@ -133,8 +129,6 @@
             --apple-border: #38383A !important;
             --apple-text-main: #F5F5F7 !important;
             --apple-text-secondary: #98989D !important;
-
-            /* Variables específicas para el Chat (Modo Oscuro) */
             --chat-active-bg: #2C2C2E !important;
             --chat-header-bg: #1C1C1E !important;
             --chat-receiver-bg: #2C2C2E !important;
@@ -177,7 +171,6 @@
             border-color: var(--apple-border) !important;
         }
 
-        /* PARCHE DEFINITIVO PARA LAS TABLAS (Soluciona las filas blancas del Dashboard) */
         [data-theme="dark"] table,
         [data-theme="dark"] tr,
         [data-theme="dark"] td,
@@ -187,17 +180,10 @@
             border-color: var(--apple-border) !important;
         }
 
-        [data-theme="dark"] tbody tr,
-        [data-theme="dark"] tbody tr:nth-child(even),
-        [data-theme="dark"] tbody tr:nth-child(odd) {
-            background-color: transparent !important;
-        }
-
         [data-theme="dark"] tbody tr:hover {
             background-color: rgba(255, 255, 255, 0.05) !important;
         }
 
-        /* Parche para badges (etiquetas de estado) en modo oscuro */
         [data-theme="dark"] .badge-green {
             background-color: rgba(52, 199, 89, 0.2) !important;
             color: #34C759 !important;
@@ -217,6 +203,7 @@
 
 <body>
 
+    {% block sidebar %}
     <aside class="sidebar">
         <div>
             <div class="brand">
@@ -235,20 +222,28 @@
                         <div style="display: flex; gap: 14px; align-items: center;"><i class="fa-solid fa-bell"></i>
                             Notificaciones</div>
                         <span id="badge-notificaciones"
-                            style="background-color: var(--apple-red, #FF3B30); color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; {% if noti_pendientes == 0 %}display: none;{% endif %}">{{
+                            style="background-color: #FF3B30; color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; {% if noti_pendientes == 0 %}display: none;{% endif %}">{{
                             noti_pendientes }}</span>
                     </a>
                 </li>
 
+                <!-- Aislar menú según rol de la base de datos -->
+                {% if session.get('rol') != 'Solicitante' %}
                 <li class="nav-item"><a href="/chat" class="nav-link"><i class="fa-solid fa-comments"></i> Chat
                         Interno</a></li>
+                {% endif %}
+
+                {% if session.get('rol') == 'Administrador' or session.get('rol') == 'Propietario' %}
                 <li class="nav-item"><a href="/areas" class="nav-link"><i class="fa-solid fa-layer-group"></i>
                         Departamentos</a></li>
+                {% endif %}
+
                 <li class="nav-item"><a href="/nuevo" class="nav-link"><i class="fa-solid fa-plus-circle"></i> Nuevo
                         Ticket</a></li>
-                {% if session.get('rol') == 'Admin' or session.get('rol') == 'Administrador' %}
+
+                {% if session.get('rol') == 'Administrador' or session.get('rol') == 'Propietario' %}
                 <li class="nav-item"><a href="/tecnicos" class="nav-link"><i class="fa-solid fa-users-gear"></i> Gestión
-                        Técnicos</a></li>
+                        de Equipo</a></li>
                 {% endif %}
             </ul>
         </div>
@@ -256,18 +251,18 @@
         <div style="margin-top: auto; padding-top: 20px;">
             <p
                 style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 12px; margin-left: 12px; font-weight: 600;">
-                Otros</p>
+                Opciones</p>
 
             <button id="theme-toggle" class="nav-link">
                 <i class="fa-solid fa-moon" id="theme-icon"></i>
                 <span id="theme-text">Modo Oscuro</span>
             </button>
 
-            <a href="/perfil" class="nav-link"><i class="fa-solid fa-gear"></i> Ajustes</a>
-            <a href="/logout" class="nav-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
+            <a href="/perfil" class="nav-link"><i class="fa-solid fa-gear"></i> Perfil</a>
+            <a href="/logout" class="nav-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Salir</a>
 
             <div class="profile-box"
-                style="display: flex; align-items: center; gap: 12px; background-color: var(--apple-bg, #F5F5F7); padding: 12px; border-radius: 12px; margin-top: 16px; border: 1px solid var(--apple-border, #E5E5EA); transition: all 0.3s;">
+                style="display: flex; align-items: center; gap: 12px; background-color: var(--apple-bg); padding: 12px; border-radius: 12px; margin-top: 16px; border: 1px solid var(--apple-border); transition: all 0.3s;">
                 <img src="{{ session.get('foto') or 'https://ui-avatars.com/api/?name=' + session.get('nombre', 'U') + '&background=0071E3&color=fff' }}"
                     style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover;">
                 <div style="overflow: hidden;">
@@ -280,6 +275,7 @@
             </div>
         </div>
     </aside>
+    {% endblock %}
 
     <main class="main-content">
         {% block content %}
@@ -301,7 +297,7 @@
                         }
                     }
                 })
-                .catch(err => console.log(err));
+                .catch(err => console.log("Revisando notificaciones..."));
         }, 3000);
 
         const themeToggle = document.getElementById('theme-toggle');
@@ -322,14 +318,16 @@
 
         updateThemeUI(document.documentElement.getAttribute('data-theme') || 'light');
 
-        themeToggle.addEventListener('click', () => {
-            let currentTheme = document.documentElement.getAttribute('data-theme');
-            let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                let currentTheme = document.documentElement.getAttribute('data-theme');
+                let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeUI(newTheme);
-        });
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeUI(newTheme);
+            });
+        }
     </script>
 </body>
 
