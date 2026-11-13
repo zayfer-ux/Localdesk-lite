@@ -3,44 +3,106 @@
 {% block content %}
 <div class="d-flex-between mb-4">
     <div>
-        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Departamentos</h1>
-        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Incidencias organizadas por área de la empresa
-        </p>
+        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px; margin: 0; color: var(--apple-text-main);">
+            Departamentos y Categorías</h1>
+        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Configura las áreas y el tipo de soporte técnico
+            de tu organización</p>
     </div>
 </div>
 
-<!-- Grid de Carpetas estilo macOS -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
 <div
-    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; margin-bottom: 32px;">
-    {% for item in areas %}
-    <a href="/area/{{ item[0] }}" style="text-decoration: none; color: inherit; display: block;">
-        <div class="apple-card stat-widget widget-blue" style="margin-bottom: 0;">
-            <div class="stat-header">
-                <span class="stat-title" style="font-size: 0.85rem;">Departamento</span>
-                <i class="fa-solid fa-folder text-blue" style="font-size: 1.4rem;"></i>
-            </div>
-            <div class="stat-value" style="font-size: 1.6rem; margin-bottom: 12px;">{{ item[0] }}</div>
+    style="padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background-color: {% if category == 'success' %}rgba(52, 199, 89, 0.1){% else %}rgba(255, 59, 48, 0.1){% endif %}; color: {% if category == 'success' %}#34C759{% else %}#FF3B30{% endif %}; border: 1px solid {% if category == 'success' %}rgba(52, 199, 89, 0.2){% else %}rgba(255, 59, 48, 0.2){% endif %};">
+    <i class="fa-solid {% if category == 'success' %}fa-circle-check{% else %}fa-circle-xmark{% endif %}"></i> <span>{{
+        message }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
 
-            <div
-                style="display: flex; justify-content: space-between; border-top: 1px solid var(--apple-border); padding-top: 12px;">
-                <span style="font-size: 0.85rem; color: var(--apple-text-secondary);"><b>{{ item[1] }}</b>
-                    Tickets</span>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
 
-                {% if item[2] > 0 %}
-                <span style="font-size: 0.85rem;" class="text-red"><i class="fa-solid fa-circle-exclamation"></i> {{
-                    item[2] }} Pendientes</span>
-                {% else %}
-                <span style="font-size: 0.85rem;" class="text-green"><i class="fa-solid fa-circle-check"></i> Todo
-                    resuelto</span>
-                {% endif %}
-            </div>
+    <!-- PANEL DE ÁREAS (DEPARTAMENTOS) -->
+    <div class="apple-card">
+        <h3
+            style="font-size: 1.1rem; font-weight: 600; margin-top: 0; color: var(--apple-text-main); margin-bottom: 16px;">
+            <i class="fa-solid fa-layer-group" style="color: #0071E3;"></i> Departamentos / Áreas</h3>
+
+        <form action="/areas" method="POST" style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <input type="hidden" name="tipo" value="area">
+            <input type="text" name="nombre" class="apple-input" placeholder="Ej: Recursos Humanos, Bodega..." required
+                style="flex-grow: 1;">
+            <button type="submit" class="btn-apple"
+                style="background-color: #0071E3; color: white; border: none;">Añadir</button>
+        </form>
+
+        <div style="border: 1px solid var(--apple-border); border-radius: 12px; overflow: hidden;">
+            <table class="apple-table" style="margin: 0;">
+                <tbody>
+                    {% for area in areas %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ area[1] }}</td>
+                        <td style="text-align: right; width: 60px;">
+                            <form action="/eliminar_area/{{ area[0] }}" method="POST"
+                                onsubmit="return confirm('¿Seguro que deseas eliminar este departamento?');">
+                                <button type="submit"
+                                    style="background: none; border: none; color: #FF3B30; cursor: pointer; padding: 6px;"><i
+                                        class="fa-solid fa-trash-can"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" style="text-align: center; color: var(--apple-text-secondary); padding: 16px;">
+                            No hay departamentos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </a>
-    {% else %}
-    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--apple-text-secondary);">
-        <i class="fa-solid fa-building-circle-xmark" style="font-size: 2rem; margin-bottom: 12px;"></i>
-        <p>No hay departamentos registrados aún.</p>
     </div>
-    {% endfor %}
+
+    <!-- PANEL DE CATEGORÍAS -->
+    <div class="apple-card">
+        <h3
+            style="font-size: 1.1rem; font-weight: 600; margin-top: 0; color: var(--apple-text-main); margin-bottom: 16px;">
+            <i class="fa-solid fa-tags" style="color: #F59E0B;"></i> Categorías de Fallas</h3>
+
+        <form action="/areas" method="POST" style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <input type="hidden" name="tipo" value="categoria">
+            <input type="text" name="nombre" class="apple-input" placeholder="Ej: Redes, Impresoras, Servidores..."
+                required style="flex-grow: 1;">
+            <button type="submit" class="btn-apple"
+                style="background-color: #F59E0B; color: white; border: none;">Añadir</button>
+        </form>
+
+        <div style="border: 1px solid var(--apple-border); border-radius: 12px; overflow: hidden;">
+            <table class="apple-table" style="margin: 0;">
+                <tbody>
+                    {% for cat in categorias %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ cat[1] }}</td>
+                        <td style="text-align: right; width: 60px;">
+                            <form action="/eliminar_categoria/{{ cat[0] }}" method="POST"
+                                onsubmit="return confirm('¿Seguro que deseas eliminar esta categoría?');">
+                                <button type="submit"
+                                    style="background: none; border: none; color: #FF3B30; cursor: pointer; padding: 6px;"><i
+                                        class="fa-solid fa-trash-can"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" style="text-align: center; color: var(--apple-text-secondary); padding: 16px;">
+                            No hay categorías registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
