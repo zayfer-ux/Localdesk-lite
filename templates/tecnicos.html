@@ -3,87 +3,151 @@
 {% block content %}
 <div class="d-flex-between mb-4">
     <div>
-        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px;">Equipo Técnico</h1>
-        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Gestión de accesos y perfiles del sistema</p>
+        <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px; margin: 0; color: var(--apple-text-main);">
+            Gestión de Equipo</h1>
+        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Administra los miembros, roles y el código de
+            invitación de <strong>{{ empresa.nombre }}</strong></p>
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div
+    style="padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background-color: {% if category == 'success' %}rgba(52, 199, 89, 0.1){% else %}rgba(255, 59, 48, 0.1){% endif %}; color: {% if category == 'success' %}#34C759{% else %}#FF3B30{% endif %}; border: 1px solid {% if category == 'success' %}rgba(52, 199, 89, 0.2){% else %}rgba(255, 59, 48, 0.2){% endif %};">
+    <i class="fa-solid {% if category == 'success' %}fa-circle-check{% else %}fa-circle-xmark{% endif %}"></i> <span>{{
+        message }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
 
-    <div class="apple-card" style="height: fit-content;">
-        <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 20px;">
-            <i class="fa-solid fa-user-plus text-blue" style="margin-right: 8px;"></i>Nuevo Técnico
-        </h2>
-
-        <form action="/tecnicos" method="POST">
-            <label class="apple-label">Nombre Completo</label>
-            <input type="text" name="nombre" class="apple-input" required style="margin-bottom: 16px; width: 100%;">
-
-            <label class="apple-label">Nombre de Usuario (@nick)</label>
-            <input type="text" name="usuario" class="apple-input" required style="margin-bottom: 16px; width: 100%;">
-
-            <label class="apple-label">Correo Electrónico (Para Login)</label>
-            <input type="email" name="email" class="apple-input" required style="margin-bottom: 16px; width: 100%;">
-
-            <label class="apple-label">Contraseña de acceso</label>
-            <input type="password" name="password" class="apple-input" required
-                style="margin-bottom: 16px; width: 100%;">
-
-            <label class="apple-label">Rol en el sistema</label>
-            <select name="rol" class="apple-input" style="margin-bottom: 24px; width: 100%;">
-                <option value="Soporte Técnico">Soporte Técnico</option>
-                <option value="Administrador">Administrador</option>
-            </select>
-
-            <button type="submit" class="btn-apple" style="width: 100%;">Registrar Técnico</button>
-        </form>
+<!-- TARJETA DE CÓDIGO DE INVITACIÓN -->
+<div class="apple-card mb-4"
+    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 6px 0; color: var(--apple-text-main);">
+            <i class="fa-solid fa-key" style="color: #0071E3;"></i> Código de Invitación Corporativo
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--apple-text-secondary); margin: 0;">Comparte este código con tu equipo
+            para que se unan a <strong>{{ empresa.nombre }}</strong> al registrarse.</p>
     </div>
 
-    <div class="apple-table-container" style="margin-top: 0;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="codigo-empresa"
+            style="font-family: monospace; font-size: 1.4rem; font-weight: 700; letter-spacing: 3px; background-color: var(--apple-bg); border: 1px solid var(--apple-border); padding: 10px 18px; border-radius: 10px; color: #0071E3;">{{
+            empresa.codigo }}</span>
+
+        <button type="button" onclick="copiarCodigo()" class="btn-apple btn-apple-secondary" title="Copiar código">
+            <i class="fa-solid fa-copy"></i> Copiar
+        </button>
+
+        <form action="/regenerar_codigo" method="POST"
+            onsubmit="return confirm('¿Generar un nuevo código? El código anterior dejará de funcionar para nuevos registros.');"
+            style="margin: 0;">
+            <button type="submit" class="btn-apple" style="background-color: #0071E3; color: white; border: none;">
+                <i class="fa-solid fa-rotate"></i> Regenerar
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- TABLA DE MIEMBROS Y ROLES -->
+<div class="apple-card mb-4" style="padding: 0; overflow: hidden;">
+    <div style="padding: 20px 24px; border-bottom: 1px solid var(--apple-border);">
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin: 0; color: var(--apple-text-main);">Miembros de la
+            Organización</h3>
+    </div>
+    <div style="overflow-x: auto;">
         <table class="apple-table">
             <thead>
                 <tr>
                     <th>Nombre</th>
+                    <th>Usuario</th>
                     <th>Correo</th>
-                    <th>Perfil</th>
-                    <th style="text-align: right;">Acciones</th>
+                    <th>Rol Actual</th>
+                    <th>Cambiar Rol</th>
                 </tr>
             </thead>
             <tbody>
-                {% for tec in tecnicos %}
+                {% for miembro in tecnicos %}
                 <tr>
-                    <td style="font-weight: 600;">{{ tec[1] }}</td>
-                    <td style="color: var(--apple-text-secondary);">{{ tec[3] }}</td>
+                    <td style="font-weight: 600;">{{ miembro[1] }}</td>
+                    <td style="color: var(--apple-text-secondary);">@{{ miembro[2] }}</td>
+                    <td style="color: var(--apple-text-secondary);">{{ miembro[3] }}</td>
                     <td>
-                        {% if tec[4] == 'Administrador' or tec[4] == 'Admin' %}
-                        <span class="badge badge-orange"><i class="fa-solid fa-crown" style="margin-right: 4px;"></i>{{
-                            tec[4] }}</span>
+                        {% if miembro[4] == 'Propietario' %}
+                        <span class="badge badge-orange"><i class="fa-solid fa-crown"></i> Propietario</span>
+                        {% elif miembro[4] == 'Administrador' %}
+                        <span class="badge badge-green">Administrador</span>
+                        {% elif miembro[4] == 'Técnico' %}
+                        <span class="badge"
+                            style="background-color: rgba(0, 113, 227, 0.15); color: #0071E3;">Técnico</span>
                         {% else %}
-                        <span class="badge badge-blue"><i class="fa-solid fa-headset" style="margin-right: 4px;"></i>{{
-                            tec[4] }}</span>
+                        <span class="badge"
+                            style="background-color: var(--apple-bg); color: var(--apple-text-secondary);">Solicitante</span>
                         {% endif %}
                     </td>
-                    <td style="text-align: right;">
-                        {% if tec[0] != 1 %}
-                        <form action="/eliminar_tecnico/{{ tec[0] }}" method="POST"
-                            onsubmit="return confirm('¿Revocar acceso?');">
-                            <button type="submit" class="btn-apple"
-                                style="background-color: var(--apple-red); padding: 6px 12px; font-size: 0.85rem;"><i
-                                    class="fa-solid fa-user-xmark"></i></button>
+                    <td>
+                        {% if miembro[4] == 'Propietario' %}
+                        <span style="font-size: 0.85rem; color: var(--apple-text-secondary);">Protegido</span>
+                        {% else %}
+                        <form action="/cambiar_rol/{{ miembro[0] }}" method="POST"
+                            style="display: flex; gap: 8px; align-items: center;">
+                            <select name="rol" class="apple-input"
+                                style="padding: 6px 10px; font-size: 0.85rem; width: auto;">
+                                <option value="Solicitante" {% if miembro[4]=='Solicitante' %}selected{% endif %}>
+                                    Solicitante</option>
+                                <option value="Técnico" {% if miembro[4]=='Técnico' %}selected{% endif %}>Técnico
+                                </option>
+                                <option value="Administrador" {% if miembro[4]=='Administrador' %}selected{% endif %}>
+                                    Administrador</option>
+                            </select>
+                            <button type="submit" class="btn-apple btn-apple-secondary"
+                                style="padding: 6px 12px; font-size: 0.85rem;">Guardar</button>
                         </form>
-                        {% else %}
-                        <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">Principal</span>
                         {% endif %}
                     </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" style="text-align: center; padding: 40px; color: var(--apple-text-secondary);">No
-                        hay técnicos.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- TRANSFERIR PROPIEDAD (SOLO VISIBLE PARA EL PROPIETARIO) -->
+{% if session.get('rol') == 'Propietario' and tecnicos|length > 1 %}
+<div class="apple-card" style="border: 1px solid rgba(255, 59, 48, 0.3);">
+    <h3 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0; color: #FF3B30;">
+        <i class="fa-solid fa-shield-halved"></i> Transferir Propiedad de la Empresa
+    </h3>
+    <p style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 16px;">
+        Al transferir la propiedad, el miembro elegido pasará a ser el nuevo <strong>Propietario</strong> y tu cuenta
+        cambiará automáticamente al rol de <strong>Administrador</strong>.
+    </p>
+    <form action="/transferir_propiedad" method="POST"
+        onsubmit="return confirm('¿Estás seguro de transferir la propiedad de la empresa? Dejarás de ser el Propietario.');"
+        style="display: flex; gap: 12px; align-items: center; max-width: 500px;">
+        <select name="nuevo_propietario_id" class="apple-input" required style="flex-grow: 1;">
+            <option value="" disabled selected>Selecciona al nuevo Propietario...</option>
+            {% for miembro in tecnicos %}
+            {% if miembro[0] != session.get('id_usuario') %}
+            <option value="{{ miembro[0] }}">{{ miembro[1] }} ({{ miembro[4] }})</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-apple"
+            style="background-color: #FF3B30; color: white; border: none;">Transferir</button>
+    </form>
+</div>
+{% endif %}
+
+<script>
+    function copiarCodigo() {
+        const codigo = document.getElementById('codigo-empresa').innerText;
+        navigator.clipboard.writeText(codigo).then(() => {
+            alert('Código copiado al portapapeles: ' + codigo);
+        });
+    }
+</script>
 {% endblock %}

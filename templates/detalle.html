@@ -14,6 +14,18 @@
     </a>
 </div>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div
+    style="padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background-color: {% if category == 'success' %}rgba(52, 199, 89, 0.1){% else %}rgba(255, 59, 48, 0.1){% endif %}; color: {% if category == 'success' %}#34C759{% else %}#FF3B30{% endif %}; border: 1px solid {% if category == 'success' %}rgba(52, 199, 89, 0.2){% else %}rgba(255, 59, 48, 0.2){% endif %};">
+    <i class="fa-solid {% if category == 'success' %}fa-circle-check{% else %}fa-circle-xmark{% endif %}"></i> <span>{{
+        message }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
 <div style="display: grid; grid-template-columns: 280px 1fr 280px; gap: 24px; align-items: start;">
 
     <!-- COLUMNA IZQUIERDA: DETALLES -->
@@ -30,6 +42,11 @@
                 <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{ incidencia[8]
                     }}</span>
             </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin: 0 0 4px 0;">Técnico Asignado</p>
+            <p style="margin: 0; font-weight: 600; color: #0071E3;">{{ incidencia[15] }}</p>
         </div>
 
         <div style="margin-bottom: 16px;">
@@ -96,7 +113,7 @@
                         <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{ msg[3]
                             }}</span>
                         <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
-                        {% if msg[5] == 'Administrador' or msg[5] == 'Propietario' %}<span
+                        {% if msg[5] != 'Solicitante' %}<span
                             style="font-size: 0.65rem; background-color: var(--apple-border); padding: 2px 6px; border-radius: 4px; color: var(--apple-text-main);">{{
                             msg[5] }}</span>{% endif %}
                     </div>
@@ -137,7 +154,6 @@
                             class="fa-solid fa-comment" style="color: #0071E3;"></i> Respuesta
                     </label>
 
-                    <!-- Condicional: El Solicitante NO puede crear Notas Internas -->
                     {% if session.get('rol') != 'Solicitante' %}
                     <label
                         style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; color: var(--apple-text-secondary);">
@@ -175,11 +191,34 @@
             style="font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 20px; color: var(--apple-text-main);">
             Acciones</h3>
 
-        <!-- Condicional: Un Solicitante NO puede modificar el estado de los tickets -->
         {% if session.get('rol') != 'Solicitante' %}
-        <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" style="margin-bottom: 24px;">
+        <!-- Asignación de Técnico -->
+        <form action="/asignar/{{ incidencia[0] }}" method="POST" style="margin-bottom: 20px;">
+            <label
+                style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--apple-text-secondary); margin-bottom: 6px;">Asignar
+                responsable</label>
+            <select name="asignado_a" class="apple-input"
+                style="width: 100%; margin-bottom: 10px; background-color: var(--chat-active-bg); color: var(--apple-text-main); border-color: var(--apple-border);">
+                <option value="">-- Sin asignar --</option>
+                {% for tec in tecnicos_equipo %}
+                <option value="{{ tec[0] }}" {% if incidencia[14]==tec[0] %}selected{% endif %}>{{ tec[1] }} ({{ tec[2]
+                    }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-apple"
+                style="width: 100%; background-color: #0071E3; color: white; border: none; justify-content: center;">Guardar
+                Asignación</button>
+        </form>
+
+        <hr style="border: 0; border-top: 1px solid var(--apple-border); margin: 20px 0;">
+
+        <!-- Cambio de Estado -->
+        <form action="/actualizar_estado/{{ incidencia[0] }}" method="POST" style="margin-bottom: 20px;">
+            <label
+                style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--apple-text-secondary); margin-bottom: 6px;">Estado
+                del ticket</label>
             <select name="nuevo_estado" class="apple-input"
-                style="width: 100%; margin-bottom: 12px; background-color: var(--chat-active-bg); color: var(--apple-text-main); border-color: var(--apple-border);">
+                style="width: 100%; margin-bottom: 10px; background-color: var(--chat-active-bg); color: var(--apple-text-main); border-color: var(--apple-border);">
                 <option value="Pendiente" {% if incidencia[7]=='Pendiente' %}selected{% endif %}>Pendiente</option>
                 <option value="En revisión" {% if incidencia[7]=='En revisión' %}selected{% endif %}>En revisión
                 </option>
@@ -220,7 +259,6 @@
         {% endif %}
 
         {% else %}
-        <!-- Vista de acciones para el Solicitante (Lectura) -->
         <p style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 24px; text-align: center;">Los
             técnicos encargados actualizarán el estado de tu reporte.</p>
         {% if incidencia[7] == 'Resuelta' %}
