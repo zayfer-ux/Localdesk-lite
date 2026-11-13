@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
 load_dotenv()
@@ -49,8 +49,7 @@ def roles_required(*roles):
             if 'logeado' not in session:
                 return redirect(url_for('login'))
             if session.get('rol') not in roles:
-                flash('Acceso denegado: Tu rol no tiene permisos para esta acción.', 'danger')
-                return redirect(url_for('inicio'))
+                return "<h1>403 Forbidden: Tu rol no tiene permisos para acceder a esta sección.</h1>", 403
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -142,11 +141,14 @@ def login():
         try:
             cliente = get_db()
             user_data = cliente.execute(
-                "SELECT id, org_id, nombre, usuario, password, rol, email, telefono, foto FROM usuarios WHERE email = ?",
+                "SELECT id, org_id, nombre, usuario, password, rol, email, telefono, foto, activo FROM usuarios WHERE email = ?",
                 (request.form.get('email'),)
             ).rows
             cliente.close()
             if user_data and check_password_hash(user_data[0][4], request.form.get('password')):
+                if user_data[0][9] == 0:
+                    flash('Tu cuenta está desactivada. Contacta al administrador de tu empresa.', 'danger')
+                    return render_template('login.html')
                 session['logeado'] = True
                 session['id_usuario'] = user_data[0][0]
                 session['org_id'] = user_data[0][1]
@@ -167,8 +169,8 @@ def login():
 def registro():
     if request.method == 'POST':
         tipo_registro = request.form.get('tipo_registro')
-        codigo_invitacion = request.form.get('codigo_invitacion')
-        nombre_empresa = request.form.get('nombre_empresa')
+        codigo_invitacion = request.form.get('codigo_invitacion', '').strip().upper()
+        nombre_empresa = request.form.get('nombre_empresa', '').strip()
 
         nombre = request.form.get('nombre')
         usuario = request.form.get('usuario')
@@ -233,7 +235,7 @@ def verificar_registro():
                     ).rows
                     nuevo_org_id = res_org[0][0]
                     cliente.execute(
-                        "INSERT INTO usuarios (org_id, nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, ?, 'Propietario')",
+                        "INSERT INTO usuarios (org_id, nombre, usuario, email, password, rol, verificado) VALUES (?, ?, ?, ?, ?, 'Propietario', 1)",
                         (nuevo_org_id, datos['nombre'], datos['usuario'], datos['email'], datos['password'])
                     )
                     for cat in ['Hardware', 'Software', 'Red', 'Otro']:
@@ -247,7 +249,7 @@ def verificar_registro():
                     )
                 elif datos['tipo_registro'] == 'unirse':
                     cliente.execute(
-                        "INSERT INTO usuarios (org_id, nombre, usuario, email, password, rol) VALUES (?, ?, ?, ?, ?, 'Solicitante')",
+                        "INSERT INTO usuarios (org_id, nombre, usuario, email, password, rol, verificado) VALUES (?, ?, ?, ?, ?, 'Solicitante', 1)",
                         (datos['org_id_unirse'], datos['nombre'], datos['usuario'], datos['email'], datos['password'])
                     )
                 cliente.close()
@@ -302,7 +304,7 @@ def chat_interno(dest_id=None):
     try:
         cliente = get_db()
         usuarios = cliente.execute(
-            "SELECT id, nombre, rol, foto FROM usuarios WHERE org_id = ? AND id != ? ORDER BY nombre ASC",
+            "SELECT id, nombre, rol, foto FROM usuarios WHERE org_id = ? AND id != ? AND rol != 'Solicitante' ORDER BY nombre ASC",
             (org_id(), mi_id)
         ).rows
 
@@ -311,7 +313,7 @@ def chat_interno(dest_id=None):
 
         if dest_id:
             dest_data = cliente.execute(
-                "SELECT id, nombre, rol, foto FROM usuarios WHERE id = ? AND org_id = ?",
+                "SELECT id, nombre, rol, foto FROM usuarios WHERE id = ? AND org_id = ? AND rol != 'Solicitante'",
                 (dest_id, org_id())
             ).rows
             if dest_data:
@@ -353,7 +355,7 @@ def enviar_privado(dest_id):
     try:
         cliente = get_db()
         check = cliente.execute(
-            "SELECT id FROM usuarios WHERE id = ? AND org_id = ?",
+            "SELECT id FROM usuarios WHERE id = ? AND org_id = ? AND rol != 'Solicitante'",
             (dest_id, org_id())
         ).rows
         if check:
@@ -393,29 +395,45 @@ def vaciar_chat(dest_id):
 @login_required
 def inicio():
     busqueda = request.args.get('q', '')
+    es_solicitante = (session.get('rol') == 'Solicitante')
     try:
         cliente = get_db()
         query_base = """
             SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, 
                    a.nombre as area, c.nombre as categoria, 
-                   i.prioridad, i.estado, u.nombre as solicitante, i.fecha_reporte
+                   i.prioridad, i.estado, u.nombre as solicitante, i.fecha_reporte,
+                   COALESCE(u2.nombre, 'Sin asignar') as asignado
             FROM incidencias i
             JOIN areas a ON i.area_id = a.id
             JOIN categorias c ON i.categoria_id = c.id
             JOIN usuarios u ON i.solicitante_id = u.id
+            LEFT JOIN usuarios u2 ON i.asignado_a = u2.id
             WHERE i.org_id = ?
         """
         parametros = [org_id()]
+
+        if es_solicitante:
+            query_base += " AND i.solicitante_id = ?"
+            parametros.append(session.get('id_usuario'))
+
         if busqueda:
             query_base += " AND (CAST(i.numero AS TEXT) LIKE ? OR i.titulo LIKE ? OR i.activo_ubicacion LIKE ? OR u.nombre LIKE ?)"
             parametros.extend([f"%{busqueda}%", f"%{busqueda}%", f"%{busqueda}%", f"%{busqueda}%"])
         query_base += " ORDER BY i.numero DESC"
 
         lista_incidencias = cliente.execute(query_base, parametros).rows
-        todas = cliente.execute(
-            "SELECT i.estado, c.nombre FROM incidencias i JOIN categorias c ON i.categoria_id = c.id WHERE i.org_id = ?",
-            (org_id(),)
-        ).rows
+
+        if es_solicitante:
+            todas = cliente.execute(
+                "SELECT i.estado, c.nombre FROM incidencias i JOIN categorias c ON i.categoria_id = c.id WHERE i.org_id = ? AND i.solicitante_id = ?",
+                (org_id(), session.get('id_usuario'))
+            ).rows
+        else:
+            todas = cliente.execute(
+                "SELECT i.estado, c.nombre FROM incidencias i JOIN categorias c ON i.categoria_id = c.id WHERE i.org_id = ?",
+                (org_id(),)
+            ).rows
+
         stats = {
             'total': len(todas),
             'pendientes': sum(1 for i in todas if i[0] == 'Pendiente'),
@@ -434,6 +452,37 @@ def inicio():
 
     return render_template('index.html', incidencias=lista_incidencias, stats=stats, categorias=json.dumps(categorias_stats), busqueda=busqueda)
 
+@app.route('/mis-tickets')
+@login_required
+def mis_tickets():
+    es_solicitante = (session.get('rol') == 'Solicitante')
+    try:
+        cliente = get_db()
+        query = """
+            SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, 
+                   a.nombre as area, c.nombre as categoria, 
+                   i.prioridad, i.estado, u.nombre as solicitante, i.fecha_reporte,
+                   COALESCE(u2.nombre, 'Sin asignar') as asignado
+            FROM incidencias i
+            JOIN areas a ON i.area_id = a.id
+            JOIN categorias c ON i.categoria_id = c.id
+            JOIN usuarios u ON i.solicitante_id = u.id
+            LEFT JOIN usuarios u2 ON i.asignado_a = u2.id
+            WHERE i.org_id = ?
+        """
+        if es_solicitante:
+            query += " AND i.solicitante_id = ? ORDER BY i.numero DESC"
+        else:
+            query += " AND i.asignado_a = ? ORDER BY i.numero DESC"
+
+        tickets = cliente.execute(query, (org_id(), session.get('id_usuario'))).rows
+        cliente.close()
+    except Exception as e:
+        print("Error en mis_tickets:", e)
+        tickets = []
+
+    return render_template('mis_tickets.html', incidencias=tickets)
+
 @app.route('/nuevo', methods=['GET', 'POST'])
 @login_required
 def nuevo_registro():
@@ -442,8 +491,7 @@ def nuevo_registro():
         try:
             area_id = request.form['area_id']
             categoria_id = request.form['categoria_id']
-            
-            # Verificar que el área y la categoría pertenezcan a la empresa de la sesión
+
             check_area = cliente.execute("SELECT id FROM areas WHERE id = ? AND org_id = ?", (area_id, org_id())).rows
             check_cat = cliente.execute("SELECT id FROM categorias WHERE id = ? AND org_id = ?", (categoria_id, org_id())).rows
             if not check_area or not check_cat:
@@ -453,7 +501,7 @@ def nuevo_registro():
 
             res_max = cliente.execute("SELECT MAX(numero) FROM incidencias WHERE org_id = ?", (org_id(),)).rows
             siguiente_numero = (res_max[0][0] or 0) + 1 if res_max else 1
-            
+
             cliente.execute(
                 "INSERT INTO incidencias (org_id, numero, titulo, activo_ubicacion, area_id, categoria_id, descripcion, prioridad, estado, solicitante_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente', ?)",
                 (org_id(), siguiente_numero, request.form['titulo'], request.form['activo_ubicacion'], area_id, categoria_id, request.form['descripcion'], request.form['prioridad'], session['id_usuario'])
@@ -464,6 +512,18 @@ def nuevo_registro():
                 "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
                 (org_id(), nuevo_id, session['id_usuario'], 'Ticket Creado')
             )
+
+            # Notificar al equipo de soporte de la empresa
+            equipo = cliente.execute(
+                "SELECT id FROM usuarios WHERE org_id = ? AND rol IN ('Técnico', 'Administrador', 'Propietario') AND id != ?",
+                (org_id(), session['id_usuario'])
+            ).rows
+            for miembro in equipo:
+                cliente.execute(
+                    "INSERT INTO notificaciones (org_id, usuario_id, texto, enlace) VALUES (?, ?, ?, ?)",
+                    (org_id(), miembro[0], f"Nuevo ticket LD-{siguiente_numero:04d}: {request.form['titulo']}", f"/incidencia/{nuevo_id}")
+                )
+
             cliente.close()
             return redirect(url_for('inicio'))
         except Exception as e:
@@ -481,14 +541,30 @@ def ver_detalle(id):
     try:
         cliente = get_db()
         incidencia_raw = cliente.execute("""
-            SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, a.nombre as area, c.nombre as categoria, i.prioridad, i.estado, u.nombre as solicitante, i.solucion, i.fecha_reporte, i.fecha_solucion, i.descripcion
-            FROM incidencias i JOIN areas a ON i.area_id = a.id JOIN categorias c ON i.categoria_id = c.id JOIN usuarios u ON i.solicitante_id = u.id
+            SELECT i.id, i.numero, i.titulo, i.activo_ubicacion, 
+                   a.nombre as area, c.nombre as categoria, 
+                   i.prioridad, i.estado, u.nombre as solicitante, 
+                   i.solucion, i.fecha_reporte, i.fecha_solucion, 
+                   i.descripcion, i.solicitante_id, i.asignado_a,
+                   COALESCE(u2.nombre, 'Sin asignar') as asignado_nombre
+            FROM incidencias i 
+            JOIN areas a ON i.area_id = a.id 
+            JOIN categorias c ON i.categoria_id = c.id 
+            JOIN usuarios u ON i.solicitante_id = u.id
+            LEFT JOIN usuarios u2 ON i.asignado_a = u2.id
             WHERE i.id = ? AND i.org_id = ?
         """, (id, org_id())).rows
+
         if not incidencia_raw:
             cliente.close()
             return "<h1>Error 404: Incidencia no encontrada o no pertenece a tu empresa</h1>", 404
+
         incidencia = incidencia_raw[0]
+
+        # Un Solicitante solo puede ver sus propios tickets
+        if session.get('rol') == 'Solicitante' and incidencia[13] != session.get('id_usuario'):
+            cliente.close()
+            return "<h1>403 Forbidden: No tienes permiso para ver este ticket.</h1>", 403
 
         query_mensajes = "SELECT m.mensaje, m.es_nota_interna, m.fecha, u.nombre, u.foto, u.rol, m.archivo FROM mensajes m JOIN usuarios u ON m.usuario_id = u.id WHERE m.incidencia_id = ? AND m.org_id = ?"
         if session.get('rol') == 'Solicitante':
@@ -496,11 +572,69 @@ def ver_detalle(id):
         query_mensajes += " ORDER BY m.fecha ASC"
 
         mensajes = cliente.execute(query_mensajes, (id, org_id())).rows
+
+        tecnicos_equipo = []
+        if session.get('rol') != 'Solicitante':
+            tecnicos_equipo = cliente.execute(
+                "SELECT id, nombre, rol FROM usuarios WHERE org_id = ? AND rol IN ('Técnico', 'Administrador', 'Propietario') AND activo = 1 ORDER BY nombre ASC",
+                (org_id(),)
+            ).rows
+
         cliente.close()
-        return render_template('detalle.html', incidencia=incidencia, mensajes=mensajes)
+        return render_template('detalle.html', incidencia=incidencia, mensajes=mensajes, tecnicos_equipo=tecnicos_equipo)
     except Exception as e:
         print(e)
         return "<h1>Error interno</h1>", 500
+
+@app.route('/asignar/<int:id>', methods=['POST'])
+@login_required
+@roles_required('Técnico', 'Administrador', 'Propietario')
+def asignar_ticket(id):
+    tecnico_id = request.form.get('asignado_a')
+    try:
+        cliente = get_db()
+        ticket = cliente.execute("SELECT numero, titulo FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
+        if not ticket:
+            cliente.close()
+            return "<h1>Error 404: Incidencia no encontrada</h1>", 404
+
+        if not tecnico_id:
+            cliente.execute("UPDATE incidencias SET asignado_a = NULL WHERE id = ? AND org_id = ?", (id, org_id()))
+            cliente.execute(
+                "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)",
+                (org_id(), id, session['id_usuario'], 'Asignación removida', 'Ticket sin asignar')
+            )
+            flash('Asignación removida del ticket.', 'success')
+        else:
+            # Verificar que el técnico pertenezca a la misma empresa y tenga rol de soporte
+            tec = cliente.execute(
+                "SELECT id, nombre FROM usuarios WHERE id = ? AND org_id = ? AND rol IN ('Técnico', 'Administrador', 'Propietario')",
+                (tecnico_id, org_id())
+            ).rows
+            if not tec:
+                cliente.close()
+                flash('El usuario seleccionado no es válido en tu organización.', 'danger')
+                return redirect(url_for('ver_detalle', id=id))
+
+            cliente.execute("UPDATE incidencias SET asignado_a = ? WHERE id = ? AND org_id = ?", (tec[0][0], id, org_id()))
+            cliente.execute(
+                "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)",
+                (org_id(), id, session['id_usuario'], 'Ticket Asignado', f"Asignado a {tec[0][1]}")
+            )
+
+            # Notificar al técnico asignado
+            if tec[0][0] != session.get('id_usuario'):
+                cliente.execute(
+                    "INSERT INTO notificaciones (org_id, usuario_id, texto, enlace) VALUES (?, ?, ?, ?)",
+                    (org_id(), tec[0][0], f"Te asignaron el ticket LD-{ticket[0][0]:04d}: {ticket[0][1]}", f"/incidencia/{id}")
+                )
+            flash(f'Ticket asignado a {tec[0][1]}.', 'success')
+
+        cliente.close()
+    except Exception as e:
+        print(e)
+        flash('Error al asignar el ticket.', 'danger')
+    return redirect(url_for('ver_detalle', id=id))
 
 @app.route('/enviar_mensaje/<int:id>', methods=['POST'])
 @login_required
@@ -520,8 +654,13 @@ def enviar_mensaje(id):
 
     try:
         cliente = get_db()
-        check = cliente.execute("SELECT id FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
+        check = cliente.execute("SELECT id, solicitante_id FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
         if check:
+            # Un solicitante solo puede escribir en sus propios tickets
+            if session.get('rol') == 'Solicitante' and check[0][1] != session.get('id_usuario'):
+                cliente.close()
+                return "<h1>403 Forbidden: No puedes comentar en este ticket.</h1>", 403
+
             cliente.execute(
                 "INSERT INTO mensajes (org_id, incidencia_id, usuario_id, mensaje, es_nota_interna, archivo) VALUES (?, ?, ?, ?, ?, ?)",
                 (org_id(), id, session.get('id_usuario'), request.form.get('mensaje'), es_nota, archivo_url)
@@ -560,14 +699,21 @@ def actualizar_estado(id):
 def resolver_incidencia(id):
     try:
         cliente = get_db()
-        cliente.execute(
-            "UPDATE incidencias SET solucion = ?, estado = 'Resuelta', fecha_solucion = CURRENT_TIMESTAMP, resuelto_por = ? WHERE id = ? AND org_id = ?",
-            (f"{request.form['solucion']}\n\n✅ Atendido por: {session.get('nombre')} ({session.get('rol')})", session.get('id_usuario'), id, org_id())
-        )
-        cliente.execute(
-            "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
-            (org_id(), id, session['id_usuario'], 'Ticket Resuelto')
-        )
+        ticket = cliente.execute("SELECT numero, solicitante_id FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
+        if ticket:
+            cliente.execute(
+                "UPDATE incidencias SET solucion = ?, estado = 'Resuelta', fecha_solucion = CURRENT_TIMESTAMP, resuelto_por = ? WHERE id = ? AND org_id = ?",
+                (f"{request.form['solucion']}\n\n✅ Atendido por: {session.get('nombre')} ({session.get('rol')})", session.get('id_usuario'), id, org_id())
+            )
+            cliente.execute(
+                "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
+                (org_id(), id, session['id_usuario'], 'Ticket Resuelto')
+            )
+            if ticket[0][1] != session.get('id_usuario'):
+                cliente.execute(
+                    "INSERT INTO notificaciones (org_id, usuario_id, texto, enlace) VALUES (?, ?, ?, ?)",
+                    (org_id(), ticket[0][1], f"Tu ticket LD-{ticket[0][0]:04d} ha sido resuelto.", f"/incidencia/{id}")
+                )
         cliente.close()
     except Exception as e:
         print(e)
@@ -647,6 +793,116 @@ def eliminar_categoria(id):
     except Exception as e:
         print(e)
     return redirect(url_for('vista_areas'))
+
+# ==========================================
+# GESTIÓN DE EQUIPO, ROLES Y PROPIEDAD (PASO 9)
+# ==========================================
+@app.route('/tecnicos')
+@login_required
+@roles_required('Administrador', 'Propietario')
+def gestion_tecnicos():
+    try:
+        cliente = get_db()
+        org_data = cliente.execute(
+            "SELECT nombre, codigo_invitacion FROM organizaciones WHERE id = ?",
+            (org_id(),)
+        ).rows
+        empresa = {'nombre': org_data[0][0], 'codigo': org_data[0][1]} if org_data else {'nombre': '', 'codigo': ''}
+
+        miembros = cliente.execute(
+            "SELECT id, nombre, usuario, email, rol, activo FROM usuarios WHERE org_id = ? ORDER BY CASE rol WHEN 'Propietario' THEN 1 WHEN 'Administrador' THEN 2 WHEN 'Técnico' THEN 3 ELSE 4 END, nombre ASC",
+            (org_id(),)
+        ).rows
+        cliente.close()
+    except Exception as e:
+        print(e)
+        empresa = {'nombre': '', 'codigo': ''}
+        miembros = []
+    return render_template('tecnicos.html', tecnicos=miembros, empresa=empresa)
+
+@app.route('/cambiar_rol/<int:user_id>', methods=['POST'])
+@login_required
+@roles_required('Administrador', 'Propietario')
+def cambiar_rol(user_id):
+    nuevo_rol = request.form.get('rol')
+    if nuevo_rol not in ['Solicitante', 'Técnico', 'Administrador']:
+        flash('Rol no válido.', 'danger')
+        return redirect(url_for('gestion_tecnicos'))
+
+    try:
+        cliente = get_db()
+        target = cliente.execute(
+            "SELECT id, rol, nombre FROM usuarios WHERE id = ? AND org_id = ?",
+            (user_id, org_id())
+        ).rows
+        if not target:
+            cliente.close()
+            flash('Usuario no encontrado en tu empresa.', 'danger')
+            return redirect(url_for('gestion_tecnicos'))
+
+        # Restricción: un administrador no puede modificar al propietario y siempre debe haber al menos 1 propietario
+        if target[0][1] == 'Propietario':
+            cliente.close()
+            flash('No se puede cambiar el rol del Propietario directamente. Usa la opción de transferir propiedad.', 'danger')
+            return redirect(url_for('gestion_tecnicos'))
+
+        cliente.execute(
+            "UPDATE usuarios SET rol = ? WHERE id = ? AND org_id = ?",
+            (nuevo_rol, user_id, org_id())
+        )
+        if user_id == session.get('id_usuario'):
+            session['rol'] = nuevo_rol
+        cliente.close()
+        flash(f'Rol de {target[0][2]} actualizado a {nuevo_rol}.', 'success')
+    except Exception as e:
+        print(e)
+        flash('Error al actualizar el rol.', 'danger')
+    return redirect(url_for('gestion_tecnicos'))
+
+@app.route('/regenerar_codigo', methods=['POST'])
+@login_required
+@roles_required('Administrador', 'Propietario')
+def regenerar_codigo():
+    try:
+        nuevo_codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        cliente = get_db()
+        cliente.execute(
+            "UPDATE organizaciones SET codigo_invitacion = ? WHERE id = ?",
+            (nuevo_codigo, org_id())
+        )
+        cliente.close()
+        flash(f'Código de invitación regenerado: {nuevo_codigo}', 'success')
+    except Exception as e:
+        print(e)
+        flash('Error al regenerar el código.', 'danger')
+    return redirect(url_for('gestion_tecnicos'))
+
+@app.route('/transferir_propiedad', methods=['POST'])
+@login_required
+@roles_required('Propietario')
+def transferir_propiedad():
+    nuevo_prop_id = request.form.get('nuevo_propietario_id')
+    try:
+        cliente = get_db()
+        target = cliente.execute(
+            "SELECT id, nombre FROM usuarios WHERE id = ? AND org_id = ? AND id != ?",
+            (nuevo_prop_id, org_id(), session.get('id_usuario'))
+        ).rows
+        if not target:
+            cliente.close()
+            flash('Selecciona un miembro válido de tu empresa.', 'danger')
+            return redirect(url_for('gestion_tecnicos'))
+
+        # El nuevo usuario pasa a Propietario y el actual pasa a Administrador
+        cliente.execute("UPDATE usuarios SET rol = 'Propietario' WHERE id = ? AND org_id = ?", (target[0][0], org_id()))
+        cliente.execute("UPDATE usuarios SET rol = 'Administrador' WHERE id = ? AND org_id = ?", (session.get('id_usuario'), org_id()))
+        session['rol'] = 'Administrador'
+        cliente.close()
+        flash(f'Propiedad transferida a {target[0][1]}. Tu rol actual es Administrador.', 'success')
+    except Exception as e:
+        print(e)
+        flash('Error al transferir la propiedad.', 'danger')
+    return redirect(url_for('gestion_tecnicos'))
 
 # ==========================================
 # REPORTES Y EXPORTACIÓN (PASO 8)
@@ -743,15 +999,6 @@ def exportar_pdf():
     except Exception as e:
         print(e)
         return redirect(url_for('inicio'))
-
-# ==========================================
-# RUTAS PENDIENTES DE ADAPTAR (PASO 9)
-# ==========================================
-@app.route('/tecnicos', methods=['GET', 'POST'])
-@login_required
-@roles_required('Administrador', 'Propietario')
-def gestion_tecnicos():
-    return render_template('tecnicos.html', tecnicos=[])
 
 if __name__ == '__main__':
     app.run(debug=True)
