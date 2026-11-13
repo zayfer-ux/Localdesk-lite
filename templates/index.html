@@ -5,7 +5,10 @@
     <div>
         <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px; margin: 0; color: var(--apple-text-main);">
             Dashboard</h1>
-        <p style="color: var(--apple-text-secondary); margin-top: 4px;">Resumen general de incidencias</p>
+        <p style="color: var(--apple-text-secondary); margin-top: 4px;">
+            {% if session.get('rol') == 'Solicitante' %}Resumen de tus incidencias reportadas{% else %}Resumen general
+            de incidencias de la empresa{% endif %}
+        </p>
     </div>
     <div style="display: flex; gap: 12px;">
         {% if session.get('rol') in ['Administrador', 'Propietario'] %}
@@ -64,8 +67,7 @@
     <div class="apple-card">
         <h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 0; color: var(--apple-text-main);">Fallas por
             Categoría</h3>
-        <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-bottom: 24px;">Distribución técnica de
-            la empresa</p>
+        <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-bottom: 24px;">Distribución técnica</p>
         <div style="height: 220px; width: 100%;">
             <canvas id="graficaCategorias"></canvas>
         </div>
@@ -89,6 +91,7 @@
                     <th>Ticket</th>
                     <th>Problema</th>
                     <th>Activo / Ubicación</th>
+                    <th>Asignado a</th>
                     <th>Estado</th>
                     <th>Prioridad</th>
                     <th>Acciones</th>
@@ -101,6 +104,7 @@
                         format(incidencia[1]) }}</td>
                     <td style="font-weight: 500;">{{ incidencia[2] }}</td>
                     <td style="color: var(--apple-text-secondary);">{{ incidencia[3] }}</td>
+                    <td style="color: var(--apple-text-secondary); font-size: 0.9rem;">{{ incidencia[10] }}</td>
                     <td>
                         {% if incidencia[7] == 'Resuelta' %}<span class="badge badge-green">Resuelta</span>
                         {% elif incidencia[7] == 'En revisión' %}<span class="badge badge-orange">En revisión</span>
@@ -114,10 +118,10 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--apple-text-secondary);">
+                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--apple-text-secondary);">
                         <i class="fa-solid fa-inbox"
                             style="font-size: 2rem; margin-bottom: 12px; opacity: 0.5;"></i><br>
-                        No se encontraron tickets registrados en tu empresa.
+                        No se encontraron tickets registrados.
                     </td>
                 </tr>
                 {% endfor %}
@@ -138,12 +142,10 @@
     resueltas: { { stats.resueltas } }
     };
 
-    // Categorías dinámicas desde Python
     const categoriasData = JSON.parse('{{ categorias | safe }}');
     const catLabels = Object.keys(categoriasData);
     const catValues = Object.values(categoriasData);
 
-    // 1. Gráfica de Dona (Estados)
     new Chart(document.getElementById('graficaEstados').getContext('2d'), {
         type: 'doughnut',
         data: {
@@ -159,7 +161,6 @@
         options: { cutout: '75%', plugins: { legend: { display: false }, tooltip: { padding: 12, cornerRadius: 8 } } }
     });
 
-    // 2. Gráfica de Barras Dinámica (Categorías)
     new Chart(document.getElementById('graficaCategorias').getContext('2d'), {
         type: 'bar',
         data: {
