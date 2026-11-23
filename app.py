@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
 load_dotenv()
@@ -509,11 +509,10 @@ def nuevo_registro():
             res_id = cliente.execute("SELECT last_insert_rowid()").rows
             nuevo_id = res_id[0][0]
             cliente.execute(
-                "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
-                (org_id(), nuevo_id, session['id_usuario'], 'Ticket Creado')
+                "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)",
+                (org_id(), nuevo_id, session['id_usuario'], 'Ticket Creado', f"Prioridad: {request.form['prioridad']}")
             )
 
-            # Notificar al equipo de soporte de la empresa
             equipo = cliente.execute(
                 "SELECT id FROM usuarios WHERE org_id = ? AND rol IN ('Técnico', 'Administrador', 'Propietario') AND id != ?",
                 (org_id(), session['id_usuario'])
@@ -561,7 +560,6 @@ def ver_detalle(id):
 
         incidencia = incidencia_raw[0]
 
-        # Un Solicitante solo puede ver sus propios tickets
         if session.get('rol') == 'Solicitante' and incidencia[13] != session.get('id_usuario'):
             cliente.close()
             return "<h1>403 Forbidden: No tienes permiso para ver este ticket.</h1>", 403
@@ -573,6 +571,15 @@ def ver_detalle(id):
 
         mensajes = cliente.execute(query_mensajes, (id, org_id())).rows
 
+        # Consultar historial de auditoría del ticket
+        historial = cliente.execute("""
+            SELECT h.accion, h.detalle, h.fecha, u.nombre, u.rol
+            FROM historial_incidencias h
+            JOIN usuarios u ON h.usuario_id = u.id
+            WHERE h.incidencia_id = ? AND h.org_id = ?
+            ORDER BY h.fecha DESC, h.id DESC
+        """, (id, org_id())).rows
+
         tecnicos_equipo = []
         if session.get('rol') != 'Solicitante':
             tecnicos_equipo = cliente.execute(
@@ -581,7 +588,7 @@ def ver_detalle(id):
             ).rows
 
         cliente.close()
-        return render_template('detalle.html', incidencia=incidencia, mensajes=mensajes, tecnicos_equipo=tecnicos_equipo)
+        return render_template('detalle.html', incidencia=incidencia, mensajes=mensajes, tecnicos_equipo=tecnicos_equipo, historial=historial)
     except Exception as e:
         print(e)
         return "<h1>Error interno</h1>", 500
@@ -606,7 +613,6 @@ def asignar_ticket(id):
             )
             flash('Asignación removida del ticket.', 'success')
         else:
-            # Verificar que el técnico pertenezca a la misma empresa y tenga rol de soporte
             tec = cliente.execute(
                 "SELECT id, nombre FROM usuarios WHERE id = ? AND org_id = ? AND rol IN ('Técnico', 'Administrador', 'Propietario')",
                 (tecnico_id, org_id())
@@ -622,7 +628,6 @@ def asignar_ticket(id):
                 (org_id(), id, session['id_usuario'], 'Ticket Asignado', f"Asignado a {tec[0][1]}")
             )
 
-            # Notificar al técnico asignado
             if tec[0][0] != session.get('id_usuario'):
                 cliente.execute(
                     "INSERT INTO notificaciones (org_id, usuario_id, texto, enlace) VALUES (?, ?, ?, ?)",
@@ -656,7 +661,6 @@ def enviar_mensaje(id):
         cliente = get_db()
         check = cliente.execute("SELECT id, solicitante_id FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id())).rows
         if check:
-            # Un solicitante solo puede escribir en sus propios tickets
             if session.get('rol') == 'Solicitante' and check[0][1] != session.get('id_usuario'):
                 cliente.close()
                 return "<h1>403 Forbidden: No puedes comentar en este ticket.</h1>", 403
@@ -665,9 +669,10 @@ def enviar_mensaje(id):
                 "INSERT INTO mensajes (org_id, incidencia_id, usuario_id, mensaje, es_nota_interna, archivo) VALUES (?, ?, ?, ?, ?, ?)",
                 (org_id(), id, session.get('id_usuario'), request.form.get('mensaje'), es_nota, archivo_url)
             )
+            accion_hist = 'Nota interna agregada' if es_nota else 'Respuesta enviada'
             cliente.execute(
                 "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
-                (org_id(), id, session['id_usuario'], 'Mensaje agregado')
+                (org_id(), id, session['id_usuario'], accion_hist)
             )
         cliente.close()
     except Exception as e:
@@ -686,8 +691,9 @@ def actualizar_estado(id):
             cliente.execute("UPDATE incidencias SET estado = ? WHERE id = ? AND org_id = ?", (nuevo_estado, id, org_id()))
             cliente.execute(
                 "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)",
-                (org_id(), id, session['id_usuario'], 'Cambio de estado', f"A {nuevo_estado}")
+                (org_id(), id, session['id_usuario'], 'Cambio de estado', f"De {check[0][0]} a {nuevo_estado}")
             )
+            flash(f'Estado actualizado a "{nuevo_estado}".', 'success')
         cliente.close()
     except Exception as e:
         print(e)
@@ -706,17 +712,69 @@ def resolver_incidencia(id):
                 (f"{request.form['solucion']}\n\n✅ Atendido por: {session.get('nombre')} ({session.get('rol')})", session.get('id_usuario'), id, org_id())
             )
             cliente.execute(
-                "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion) VALUES (?, ?, ?, ?)",
-                (org_id(), id, session['id_usuario'], 'Ticket Resuelto')
+                "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)",
+                (org_id(), id, session['id_usuario'], 'Ticket Resuelto', 'Solución documentada y ticket cerrado')
             )
             if ticket[0][1] != session.get('id_usuario'):
                 cliente.execute(
                     "INSERT INTO notificaciones (org_id, usuario_id, texto, enlace) VALUES (?, ?, ?, ?)",
                     (org_id(), ticket[0][1], f"Tu ticket LD-{ticket[0][0]:04d} ha sido resuelto.", f"/incidencia/{id}")
                 )
+            flash('Incidencia marcada como resuelta.', 'success')
         cliente.close()
     except Exception as e:
         print(e)
+    return redirect(url_for('ver_detalle', id=id))
+
+@app.route('/reabrir/<int:id>', methods=['POST'])
+@login_required
+def reabrir_incidencia(id):
+    motivo = request.form.get('motivo', '').strip()
+    if not motivo:
+        flash('Debes indicar el motivo para reabrir el ticket.', 'danger')
+        return redirect(url_for('ver_detalle', id=id))
+
+    try:
+        cliente = get_db()
+        ticket = cliente.execute(
+            "SELECT numero, solicitante_id, asignado_a, estado FROM incidencias WHERE id = ? AND org_id = ?",
+            (id, org_id())
+        ).rows
+        if not ticket:
+            cliente.close()
+            return "<h1>Error 404: Incidencia no encontrada</h1>", 404
+
+        if session.get('rol') == 'Solicitante' and ticket[0][1] != session.get('id_usuario'):
+            cliente.close()
+            return "<h1>403 Forbidden: No puedes reabrir este ticket.</h1>", 403
+
+        if ticket[0][3] == 'Resuelta':
+            cliente.execute(
+                "UPDATE incidencias SET estado = 'En revisión', solucion = NULL, fecha_solucion = NULL, resuelto_por = NULL WHERE id = ? AND org_id = ?",
+                (id, org_id())
+            )
+            cliente.execute(
+                "INSERT INTO historial_incidencias (org_id, incidencia_id, usuario_id, accion, detalle) VALUES (?, ?, ?, ?, ?)",
+                (org_id(), id, session['id_usuario'], 'Ticket Reabierto', f"Motivo: {motivo}")
+            )
+            cliente.execute(
+                "INSERT INTO mensajes (org_id, incidencia_id, usuario_id, mensaje, es_nota_interna) VALUES (?, ?, ?, ?, 0)",
+                (org_id(), id, session['id_usuario'], f"🔄 Ticket reabierto. Motivo: {motivo}")
+            )
+
+            # Notificar al técnico asignado o al solicitante según quién reabrió
+            destino_noti = ticket[0][2] if session.get('rol') == 'Solicitante' else ticket[0][1]
+            if destino_noti and destino_noti != session.get('id_usuario'):
+                cliente.execute(
+                    "INSERT INTO notificaciones (org_id, usuario_id, texto, enlace) VALUES (?, ?, ?, ?)",
+                    (org_id(), destino_noti, f"El ticket LD-{ticket[0][0]:04d} fue reabierto: {motivo}", f"/incidencia/{id}")
+                )
+
+            flash('El ticket ha sido reabierto y puesto en revisión.', 'success')
+        cliente.close()
+    except Exception as e:
+        print(e)
+        flash('Error al reabrir el ticket.', 'danger')
     return redirect(url_for('ver_detalle', id=id))
 
 @app.route('/eliminar/<int:id>', methods=['POST'])
@@ -729,6 +787,7 @@ def eliminar_incidencia(id):
         cliente.execute("DELETE FROM historial_incidencias WHERE incidencia_id = ? AND org_id = ?", (id, org_id()))
         cliente.execute("DELETE FROM incidencias WHERE id = ? AND org_id = ?", (id, org_id()))
         cliente.close()
+        flash('Ticket eliminado permanentemente.', 'success')
     except Exception as e:
         print(e)
     return redirect(url_for('inicio'))
@@ -840,7 +899,6 @@ def cambiar_rol(user_id):
             flash('Usuario no encontrado en tu empresa.', 'danger')
             return redirect(url_for('gestion_tecnicos'))
 
-        # Restricción: un administrador no puede modificar al propietario y siempre debe haber al menos 1 propietario
         if target[0][1] == 'Propietario':
             cliente.close()
             flash('No se puede cambiar el rol del Propietario directamente. Usa la opción de transferir propiedad.', 'danger')
@@ -893,7 +951,6 @@ def transferir_propiedad():
             flash('Selecciona un miembro válido de tu empresa.', 'danger')
             return redirect(url_for('gestion_tecnicos'))
 
-        # El nuevo usuario pasa a Propietario y el actual pasa a Administrador
         cliente.execute("UPDATE usuarios SET rol = 'Propietario' WHERE id = ? AND org_id = ?", (target[0][0], org_id()))
         cliente.execute("UPDATE usuarios SET rol = 'Administrador' WHERE id = ? AND org_id = ?", (session.get('id_usuario'), org_id()))
         session['rol'] = 'Administrador'
@@ -905,34 +962,43 @@ def transferir_propiedad():
     return redirect(url_for('gestion_tecnicos'))
 
 # ==========================================
-# REPORTES Y EXPORTACIÓN (PASO 8)
+# REPORTES Y EXPORTACIÓN AVANZADA (PASO 8 & 11)
 # ==========================================
 @app.route('/exportar')
 @login_required
 @roles_required('Administrador', 'Propietario')
 def exportar_csv():
+    estado_filtro = request.args.get('estado', '')
     try:
         cliente = get_db()
         query = """
-            SELECT i.numero, i.titulo, a.nombre, c.nombre, i.prioridad, i.estado, u.nombre, i.fecha_reporte 
+            SELECT i.numero, i.titulo, i.activo_ubicacion, a.nombre, c.nombre, i.prioridad, i.estado, 
+                   u.nombre, COALESCE(u2.nombre, 'Sin asignar'), i.fecha_reporte, COALESCE(i.fecha_solucion, '')
             FROM incidencias i 
             JOIN areas a ON i.area_id = a.id 
             JOIN categorias c ON i.categoria_id = c.id 
             JOIN usuarios u ON i.solicitante_id = u.id 
-            WHERE i.org_id = ? ORDER BY i.numero DESC
+            LEFT JOIN usuarios u2 ON i.asignado_a = u2.id
+            WHERE i.org_id = ?
         """
-        filas = cliente.execute(query, (org_id(),)).rows
+        params = [org_id()]
+        if estado_filtro:
+            query += " AND i.estado = ?"
+            params.append(estado_filtro)
+        query += " ORDER BY i.numero DESC"
+
+        filas = cliente.execute(query, params).rows
         cliente.close()
 
         def generate():
             data = io.StringIO()
             writer = csv.writer(data)
-            writer.writerow(['Ticket', 'Titulo', 'Departamento', 'Categoria', 'Prioridad', 'Estado', 'Solicitante', 'Fecha'])
+            writer.writerow(['Ticket', 'Titulo', 'Activo / Ubicacion', 'Departamento', 'Categoria', 'Prioridad', 'Estado', 'Solicitante', 'Tecnico Asignado', 'Fecha Reporte', 'Fecha Solucion'])
             yield data.getvalue()
             data.seek(0)
             data.truncate(0)
             for fila in filas:
-                writer.writerow([f"LD-{fila[0]:04d}", fila[1], fila[2], fila[3], fila[4], fila[5], fila[6], fila[7]])
+                writer.writerow([f"LD-{fila[0]:04d}", fila[1], fila[2], fila[3], fila[4], fila[5], fila[6], fila[7], fila[8], fila[9], fila[10]])
                 yield data.getvalue()
                 data.seek(0)
                 data.truncate(0)
@@ -948,45 +1014,87 @@ def exportar_csv():
 @login_required
 @roles_required('Administrador', 'Propietario')
 def exportar_pdf():
+    estado_filtro = request.args.get('estado', '')
     try:
         cliente = get_db()
         empresa_row = cliente.execute("SELECT nombre FROM organizaciones WHERE id = ?", (org_id(),)).rows
         nombre_empresa = empresa_row[0][0] if empresa_row else "Empresa"
 
         query = """
-            SELECT i.numero, i.titulo, a.nombre, i.estado, u.nombre 
+            SELECT i.numero, i.titulo, i.activo_ubicacion, a.nombre, i.prioridad, i.estado, 
+                   u.nombre, COALESCE(u2.nombre, 'Sin asignar')
             FROM incidencias i 
             JOIN areas a ON i.area_id = a.id 
             JOIN usuarios u ON i.solicitante_id = u.id 
-            WHERE i.org_id = ? ORDER BY i.numero DESC
+            LEFT JOIN usuarios u2 ON i.asignado_a = u2.id
+            WHERE i.org_id = ?
         """
-        filas = cliente.execute(query, (org_id(),)).rows
+        params = [org_id()]
+        if estado_filtro:
+            query += " AND i.estado = ?"
+            params.append(estado_filtro)
+        query += " ORDER BY i.numero DESC"
+
+        filas = cliente.execute(query, params).rows
         cliente.close()
 
+        total = len(filas)
+        pendientes = sum(1 for f in filas if f[5] == 'Pendiente')
+        revision = sum(1 for f in filas if f[5] == 'En revisión')
+        resueltas = sum(1 for f in filas if f[5] == 'Resuelta')
+
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
         elements = []
         styles = getSampleStyleSheet()
 
-        elements.append(Paragraph(f"Reporte de Incidencias - {nombre_empresa}", styles['Title']))
-        elements.append(Paragraph(f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
-        elements.append(Spacer(1, 20))
+        elements.append(Paragraph(f"Reporte Ejecutivo de Incidencias — {nombre_empresa}", styles['Title']))
+        elements.append(Paragraph(f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M')} | Emitido por: {session.get('nombre')}", styles['Normal']))
+        elements.append(Spacer(1, 14))
 
-        data = [['Ticket', 'Problema', 'Departamento', 'Estado', 'Solicitante']]
+        # Tabla resumen ejecutivo
+        resumen_data = [
+            ['Total Incidencias', 'Pendientes', 'En Revisión', 'Resueltas'],
+            [str(total), str(pendientes), str(revision), str(resueltas)]
+        ]
+        t_resumen = Table(resumen_data, colWidths=[135, 135, 135, 135])
+        t_resumen.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1D1D1F')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#F5F5F7')),
+            ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 1), (-1, 1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.white),
+        ]))
+        elements.append(t_resumen)
+        elements.append(Spacer(1, 18))
+
+        data = [['Ticket', 'Problema / Activo', 'Depto.', 'Prioridad', 'Estado', 'Asignado a']]
         for f in filas:
-            data.append([f"LD-{f[0]:04d}", f[1], f[2], f[3], f[4]])
+            detalle_col = f"{f[1]} ({f[2]})"
+            if len(detalle_col) > 38:
+                detalle_col = detalle_col[:35] + "..."
+            data.append([f"LD-{f[0]:04d}", detalle_col, f[3], f[4], f[5], f[7]])
 
-        t = Table(data, colWidths=[60, 200, 100, 70, 100])
+        t = Table(data, colWidths=[58, 192, 75, 62, 68, 85])
         t.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0071E3')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('TOPPADDING', (0, 0), (-1, 0), 10),
             ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F5F5F7')),
-            ('GRID', (0, 0), (-1, -1), 1, colors.white),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#F5F5F7'), colors.white]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E5EA')),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
         elements.append(t)
         doc.build(elements)

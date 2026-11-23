@@ -75,113 +75,145 @@
         </div>
     </div>
 
-    <!-- COLUMNA CENTRAL: CHAT / HISTORIAL -->
-    <div class="apple-card" style="padding: 0; display: flex; flex-direction: column; height: 600px;">
+    <!-- COLUMNA CENTRAL: CHAT Y HISTORIAL DE AUDITORÍA -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <div class="apple-card" style="padding: 0; display: flex; flex-direction: column; height: 560px;">
 
-        <div
-            style="padding: 20px 24px; border-bottom: 1px solid var(--apple-border); background-color: var(--chat-header-bg); border-radius: 12px 12px 0 0; transition: background-color 0.3s;">
-            <h2 style="margin: 0; font-size: 1.1rem; font-weight: 600; color: var(--apple-text-main);">{{ incidencia[2]
-                }}</h2>
-        </div>
-
-        <div
-            style="flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background-color: var(--apple-surface);">
-
-            <div style="display: flex; gap: 12px;">
-                <img src="https://ui-avatars.com/api/?name={{ incidencia[8] }}&background=E5E5EA&color=1D1D1F"
-                    style="width: 36px; height: 36px; border-radius: 50%;">
-                <div style="flex-grow: 1;">
-                    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-                        <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{
-                            incidencia[8] }}</span>
-                        <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ incidencia[10]
-                            }}</span>
-                    </div>
-                    <div
-                        style="background-color: var(--chat-receiver-bg); padding: 12px 16px; border-radius: 0 12px 12px 12px; font-size: 0.95rem; line-height: 1.5; color: var(--apple-text-main); border: 1px solid var(--apple-border); transition: background-color 0.3s;">
-                        {{ incidencia[12] }}
-                    </div>
-                </div>
+            <div
+                style="padding: 20px 24px; border-bottom: 1px solid var(--apple-border); background-color: var(--chat-header-bg); border-radius: 12px 12px 0 0; transition: background-color 0.3s;">
+                <h2 style="margin: 0; font-size: 1.1rem; font-weight: 600; color: var(--apple-text-main);">{{
+                    incidencia[2] }}</h2>
             </div>
 
-            {% for msg in mensajes %}
-            <div style="display: flex; gap: 12px;">
-                <img src="{{ msg[4] or 'https://ui-avatars.com/api/?name=' ~ msg[3] ~ '&background=E5E5EA&color=1D1D1F' }}"
-                    style="width: 36px; height: 36px; border-radius: 50%;">
-                <div style="flex-grow: 1;">
-                    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-                        <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{ msg[3]
-                            }}</span>
-                        <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
-                        {% if msg[5] != 'Solicitante' %}<span
-                            style="font-size: 0.65rem; background-color: var(--apple-border); padding: 2px 6px; border-radius: 4px; color: var(--apple-text-main);">{{
-                            msg[5] }}</span>{% endif %}
-                    </div>
+            <div
+                style="flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background-color: var(--apple-surface);">
 
-                    <div
-                        style="padding: 12px 16px; font-size: 0.95rem; line-height: 1.5; color: var(--apple-text-main); border-radius: 0 12px 12px 12px; border: 1px solid {% if msg[1] == 1 %}#FDE68A{% else %}var(--apple-border){% endif %}; background-color: {% if msg[1] == 1 %}#FEF3C7{% else %}var(--chat-receiver-bg){% endif %}; transition: background-color 0.3s;">
-                        {% if msg[1] == 1 %}
-                        <div
-                            style="font-size: 0.8rem; font-weight: 600; color: #D97706; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                            <i class="fa-solid fa-lock"></i> NOTA INTERNA (Solo técnicos)</div>
-                        {% endif %}
-
-                        <span style="{% if msg[1] == 1 %}color: #92400E;{% endif %}">{{ msg[0] }}</span>
-
-                        {% if msg[6] %}
-                        <div
-                            style="margin-top: 8px; padding: 8px; background-color: rgba(0,0,0,0.05); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-file-arrow-down" style="color: #0071E3;"></i>
-                            <a href="{{ msg[6] }}" target="_blank"
-                                style="color: #0071E3; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Ver
-                                archivo adjunto</a>
+                <div style="display: flex; gap: 12px;">
+                    <img src="https://ui-avatars.com/api/?name={{ incidencia[8] }}&background=E5E5EA&color=1D1D1F"
+                        style="width: 36px; height: 36px; border-radius: 50%;">
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+                            <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{
+                                incidencia[8] }}</span>
+                            <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ incidencia[10]
+                                }}</span>
                         </div>
+                        <div
+                            style="background-color: var(--chat-receiver-bg); padding: 12px 16px; border-radius: 0 12px 12px 12px; font-size: 0.95rem; line-height: 1.5; color: var(--apple-text-main); border: 1px solid var(--apple-border); transition: background-color 0.3s;">
+                            {{ incidencia[12] }}
+                        </div>
+                    </div>
+                </div>
+
+                {% for msg in mensajes %}
+                <div style="display: flex; gap: 12px;">
+                    <img src="{{ msg[4] or 'https://ui-avatars.com/api/?name=' ~ msg[3] ~ '&background=E5E5EA&color=1D1D1F' }}"
+                        style="width: 36px; height: 36px; border-radius: 50%;">
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+                            <span style="font-weight: 600; font-size: 0.95rem; color: var(--apple-text-main);">{{ msg[3]
+                                }}</span>
+                            <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">{{ msg[2] }}</span>
+                            {% if msg[5] != 'Solicitante' %}<span
+                                style="font-size: 0.65rem; background-color: var(--apple-border); padding: 2px 6px; border-radius: 4px; color: var(--apple-text-main);">{{
+                                msg[5] }}</span>{% endif %}
+                        </div>
+
+                        <div
+                            style="padding: 12px 16px; font-size: 0.95rem; line-height: 1.5; color: var(--apple-text-main); border-radius: 0 12px 12px 12px; border: 1px solid {% if msg[1] == 1 %}#FDE68A{% else %}var(--apple-border){% endif %}; background-color: {% if msg[1] == 1 %}#FEF3C7{% else %}var(--chat-receiver-bg){% endif %}; transition: background-color 0.3s;">
+                            {% if msg[1] == 1 %}
+                            <div
+                                style="font-size: 0.8rem; font-weight: 600; color: #D97706; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-lock"></i> NOTA INTERNA (Solo técnicos)</div>
+                            {% endif %}
+
+                            <span style="{% if msg[1] == 1 %}color: #92400E;{% endif %}">{{ msg[0] }}</span>
+
+                            {% if msg[6] %}
+                            <div
+                                style="margin-top: 8px; padding: 8px; background-color: rgba(0,0,0,0.05); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-file-arrow-down" style="color: #0071E3;"></i>
+                                <a href="{{ msg[6] }}" target="_blank"
+                                    style="color: #0071E3; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Ver
+                                    archivo adjunto</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div
+                style="padding: 20px 24px; border-top: 1px solid var(--apple-border); background-color: var(--chat-header-bg); border-radius: 0 0 12px 12px; transition: background-color 0.3s;">
+                <form action="/enviar_mensaje/{{ incidencia[0] }}" method="POST" enctype="multipart/form-data">
+
+                    <div style="display: flex; gap: 16px; margin-bottom: 12px;">
+                        <label
+                            style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; color: var(--apple-text-secondary);">
+                            <input type="radio" name="tipo" value="chat" checked style="accent-color: #0071E3;"> <i
+                                class="fa-solid fa-comment" style="color: #0071E3;"></i> Respuesta
+                        </label>
+
+                        {% if session.get('rol') != 'Solicitante' %}
+                        <label
+                            style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; color: var(--apple-text-secondary);">
+                            <input type="radio" name="tipo" value="nota" style="accent-color: #F59E0B;"> <i
+                                class="fa-solid fa-lock" style="color: #F59E0B;"></i> Nota Interna
+                        </label>
                         {% endif %}
                     </div>
-                </div>
+
+                    <textarea name="mensaje" class="apple-input" rows="2" placeholder="Escribe un mensaje..." required
+                        style="width: 100%; margin-bottom: 12px; resize: none;"></textarea>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <label
+                                style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--clip-btn-bg); border: 1px solid var(--apple-border); border-radius: 8px; transition: 0.2s;">
+                                <i class="fa-solid fa-paperclip" style="color: var(--apple-text-secondary);"></i>
+                                <input type="file" name="archivo" style="display: none;"
+                                    onchange="document.getElementById('nombre-archivo-ticket').innerText = this.files[0].name">
+                            </label>
+                            <span id="nombre-archivo-ticket"
+                                style="font-size: 0.8rem; color: var(--apple-text-secondary);"></span>
+                        </div>
+
+                        <button type="submit" class="btn-apple"
+                            style="background-color: #0071E3; color: white; border: none;">Enviar</button>
+                    </div>
+                </form>
             </div>
-            {% endfor %}
         </div>
 
-        <div
-            style="padding: 20px 24px; border-top: 1px solid var(--apple-border); background-color: var(--chat-header-bg); border-radius: 0 0 12px 12px; transition: background-color 0.3s;">
-            <form action="/enviar_mensaje/{{ incidencia[0] }}" method="POST" enctype="multipart/form-data">
-
-                <div style="display: flex; gap: 16px; margin-bottom: 12px;">
-                    <label
-                        style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; color: var(--apple-text-secondary);">
-                        <input type="radio" name="tipo" value="chat" checked style="accent-color: #0071E3;"> <i
-                            class="fa-solid fa-comment" style="color: #0071E3;"></i> Respuesta
-                    </label>
-
-                    {% if session.get('rol') != 'Solicitante' %}
-                    <label
-                        style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; color: var(--apple-text-secondary);">
-                        <input type="radio" name="tipo" value="nota" style="accent-color: #F59E0B;"> <i
-                            class="fa-solid fa-lock" style="color: #F59E0B;"></i> Nota Interna
-                    </label>
-                    {% endif %}
-                </div>
-
-                <textarea name="mensaje" class="apple-input" rows="2" placeholder="Escribe un mensaje..." required
-                    style="width: 100%; margin-bottom: 12px; resize: none;"></textarea>
-
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <label
-                            style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--clip-btn-bg); border: 1px solid var(--apple-border); border-radius: 8px; transition: 0.2s;">
-                            <i class="fa-solid fa-paperclip" style="color: var(--apple-text-secondary);"></i>
-                            <input type="file" name="archivo" style="display: none;"
-                                onchange="document.getElementById('nombre-archivo-ticket').innerText = this.files[0].name">
-                        </label>
-                        <span id="nombre-archivo-ticket"
-                            style="font-size: 0.8rem; color: var(--apple-text-secondary);"></span>
+        <!-- TARJETA DE HISTORIAL DE AUDITORÍA -->
+        <div class="apple-card">
+            <h3
+                style="font-size: 1.05rem; font-weight: 600; margin-top: 0; margin-bottom: 16px; color: var(--apple-text-main); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-clock-rotate-left" style="color: #0071E3;"></i> Historial de Actividad
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto;">
+                {% for item in historial %}
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; border-bottom: 1px solid var(--apple-border); font-size: 0.85rem;">
+                    <div>
+                        <span style="font-weight: 600; color: var(--apple-text-main);">{{ item[0] }}</span>
+                        <span style="color: var(--apple-text-secondary);"> por <strong>{{ item[3] }}</strong> ({{
+                            item[4] }})</span>
+                        {% if item[1] %}
+                        <p style="margin: 3px 0 0 0; color: var(--apple-text-secondary); font-size: 0.8rem;">{{ item[1]
+                            }}</p>
+                        {% endif %}
                     </div>
-
-                    <button type="submit" class="btn-apple"
-                        style="background-color: #0071E3; color: white; border: none;">Enviar</button>
+                    <span
+                        style="color: var(--apple-text-secondary); font-size: 0.75rem; white-space: nowrap; margin-left: 12px;">{{
+                        item[2] }}</span>
                 </div>
-            </form>
+                {% else %}
+                <p style="margin: 0; font-size: 0.85rem; color: var(--apple-text-secondary);">Sin registros de actividad
+                    aún.</p>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
@@ -238,7 +270,7 @@
         </button>
         {% else %}
         <div
-            style="background-color: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.3); padding: 16px; border-radius: 8px;">
+            style="background-color: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.3); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
             <h4 style="color: #34C759; margin: 0 0 8px 0; font-size: 0.95rem;"><i class="fa-solid fa-circle-check"></i>
                 Solución Aplicada</h4>
             <p style="margin: 0; font-size: 0.85rem; color: var(--apple-text-main); white-space: pre-wrap;">{{
@@ -246,6 +278,10 @@
             <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: var(--apple-text-secondary);">Cerrado el: {{
                 incidencia[11] }}</p>
         </div>
+        <button onclick="document.getElementById('modal-reabrir').style.display='flex'" class="btn-apple"
+            style="width: 100%; background-color: #FF9500; color: white; border: none; justify-content: center; font-weight: 600;">
+            <i class="fa-solid fa-rotate-left"></i> Reabrir Ticket
+        </button>
         {% endif %}
 
         {% if session.get('rol') == 'Administrador' or session.get('rol') == 'Propietario' %}
@@ -259,11 +295,11 @@
         {% endif %}
 
         {% else %}
-        <p style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 24px; text-align: center;">Los
+        <p style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 20px; text-align: center;">Los
             técnicos encargados actualizarán el estado de tu reporte.</p>
         {% if incidencia[7] == 'Resuelta' %}
         <div
-            style="background-color: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.3); padding: 16px; border-radius: 8px;">
+            style="background-color: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.3); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
             <h4 style="color: #34C759; margin: 0 0 8px 0; font-size: 0.95rem;"><i class="fa-solid fa-circle-check"></i>
                 Solución Aplicada</h4>
             <p style="margin: 0; font-size: 0.85rem; color: var(--apple-text-main); white-space: pre-wrap;">{{
@@ -271,6 +307,10 @@
             <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: var(--apple-text-secondary);">Cerrado el: {{
                 incidencia[11] }}</p>
         </div>
+        <button onclick="document.getElementById('modal-reabrir').style.display='flex'" class="btn-apple"
+            style="width: 100%; background-color: #FF9500; color: white; border: none; justify-content: center; font-weight: 600;">
+            <i class="fa-solid fa-rotate-left"></i> El problema persiste (Reabrir)
+        </button>
         {% endif %}
         {% endif %}
     </div>
@@ -291,6 +331,27 @@
                     onclick="document.getElementById('modal-resolver').style.display='none'">Cancelar</button>
                 <button type="submit" class="btn-apple"
                     style="background-color: #34C759; color: white; border: none;">Confirmar Solución</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Reabrir -->
+<div id="modal-reabrir"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="apple-card" style="width: 400px; padding: 24px;">
+        <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--apple-text-main);">Reabrir Ticket</h3>
+        <form action="/reabrir/{{ incidencia[0] }}" method="POST">
+            <p style="font-size: 0.9rem; color: var(--apple-text-secondary); margin-bottom: 8px;">Explica el motivo por
+                el cual se vuelve a abrir esta incidencia:</p>
+            <textarea name="motivo" class="apple-input" rows="4" required
+                style="width: 100%; margin-bottom: 16px; resize: none;"
+                placeholder="Ej: La falla volvió a presentarse tras reiniciar el equipo..."></textarea>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" class="btn-apple btn-apple-secondary"
+                    onclick="document.getElementById('modal-reabrir').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn-apple"
+                    style="background-color: #FF9500; color: white; border: none;">Confirmar Reapertura</button>
             </div>
         </form>
     </div>
