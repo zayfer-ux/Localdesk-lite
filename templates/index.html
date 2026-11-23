@@ -1,6 +1,21 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 24px;
+        align-items: stretch;
+    }
+
+    @media (max-width: 960px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
 <div class="d-flex-between mb-4">
     <div>
         <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -1px; margin: 0; color: var(--apple-text-main);">
@@ -22,17 +37,22 @@
 </div>
 
 <div class="dashboard-grid">
-    <!-- Panel Izquierdo: Estadísticas rápidas -->
-    <div class="apple-card" style="display: flex; flex-direction: column; justify-content: center;">
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 0; color: var(--apple-text-main);">Proporción de
-            Estados</h3>
-        <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-bottom: 24px;">Índice actual</p>
+    <!-- Panel Izquierdo: Gráfica de Dona (Estados) -->
+    <div class="apple-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <h3
+                style="font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 4px; color: var(--apple-text-main);">
+                Proporción de Estados</h3>
+            <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-top: 0; margin-bottom: 20px;">
+                Índice actual</p>
+        </div>
 
         <div style="position: relative; width: 180px; height: 180px; margin: 0 auto;">
             <canvas id="graficaEstados"></canvas>
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                <span style="font-size: 1.8rem; font-weight: 700; color: var(--apple-text-main);">{{ stats.total
-                    }}</span><br>
+            <div
+                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                <span style="font-size: 1.8rem; font-weight: 700; color: var(--apple-text-main); line-height: 1;">{{
+                    stats.total }}</span><br>
                 <span style="font-size: 0.75rem; color: var(--apple-text-secondary);">Total Tickets</span>
             </div>
         </div>
@@ -40,7 +60,7 @@
         <div style="display: flex; justify-content: space-around; margin-top: 24px;">
             <div style="text-align: center;">
                 <div
-                    style="width: 8px; height: 16px; background-color: #FF3B30; border-radius: 4px; display: inline-block; margin-right: 6px;">
+                    style="width: 8px; height: 14px; background-color: #FF3B30; border-radius: 4px; display: inline-block; margin-right: 4px; vertical-align: middle;">
                 </div>
                 <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">Pendiente</span>
                 <p style="font-weight: 600; margin: 4px 0 0 0; color: var(--apple-text-main);">{{ stats.pendientes }}
@@ -48,14 +68,14 @@
             </div>
             <div style="text-align: center;">
                 <div
-                    style="width: 8px; height: 16px; background-color: #FF9500; border-radius: 4px; display: inline-block; margin-right: 6px;">
+                    style="width: 8px; height: 14px; background-color: #FF9500; border-radius: 4px; display: inline-block; margin-right: 4px; vertical-align: middle;">
                 </div>
                 <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">En Revisión</span>
                 <p style="font-weight: 600; margin: 4px 0 0 0; color: var(--apple-text-main);">{{ stats.revision }}</p>
             </div>
             <div style="text-align: center;">
                 <div
-                    style="width: 8px; height: 16px; background-color: #34C759; border-radius: 4px; display: inline-block; margin-right: 6px;">
+                    style="width: 8px; height: 14px; background-color: #34C759; border-radius: 4px; display: inline-block; margin-right: 4px; vertical-align: middle;">
                 </div>
                 <span style="font-size: 0.8rem; color: var(--apple-text-secondary);">Resuelta</span>
                 <p style="font-weight: 600; margin: 4px 0 0 0; color: var(--apple-text-main);">{{ stats.resueltas }}</p>
@@ -63,12 +83,14 @@
         </div>
     </div>
 
-    <!-- Panel Derecho: Gráfica de Barras Dinámica -->
-    <div class="apple-card">
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 0; color: var(--apple-text-main);">Fallas por
-            Categoría</h3>
-        <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-bottom: 24px;">Distribución técnica</p>
-        <div style="height: 220px; width: 100%;">
+    <!-- Panel Derecho: Gráfica de Barras Dinámica (Categorías) -->
+    <div class="apple-card" style="display: flex; flex-direction: column;">
+        <h3
+            style="font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 4px; color: var(--apple-text-main);">
+            Fallas por Categoría</h3>
+        <p style="font-size: 0.85rem; color: var(--apple-text-secondary); margin-top: 0; margin-bottom: 20px;">
+            Distribución técnica</p>
+        <div style="position: relative; flex-grow: 1; min-height: 230px; width: 100%;">
             <canvas id="graficaCategorias"></canvas>
         </div>
     </div>
@@ -130,57 +152,98 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Datos serializados en atributos HTML para aislar Jinja2 de JavaScript -->
+<div id="chart-payload" data-pendientes="{{ stats.pendientes | default(0) }}"
+    data-revision="{{ stats.revision | default(0) }}" data-resueltas="{{ stats.resueltas | default(0) }}"
+    data-categorias='{{ categorias | safe }}' style="display: none;"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#F5F5F7' : '#1D1D1F';
-    const gridColor = isDark ? '#38383A' : '#E5E5EA';
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no pudo cargarse.');
+            return;
+        }
 
-    const stats = {
-        pendientes: {{ stats.pendientes }},
-    revision: { { stats.revision } },
-    resueltas: { { stats.resueltas } }
-    };
+        const payload = document.getElementById('chart-payload');
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#F5F5F7' : '#1D1D1F';
+        const gridColor = isDark ? '#38383A' : '#E5E5EA';
 
-    const categoriasData = JSON.parse('{{ categorias | safe }}');
-    const catLabels = Object.keys(categoriasData);
-    const catValues = Object.values(categoriasData);
+        const pendientes = Number(payload.dataset.pendientes || 0);
+        const revision = Number(payload.dataset.revision || 0);
+        const resueltas = Number(payload.dataset.resueltas || 0);
+        const total = pendientes + revision + resueltas;
 
-    new Chart(document.getElementById('graficaEstados').getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Pendiente', 'En Revisión', 'Resuelta'],
-            datasets: [{
-                data: [stats.pendientes, stats.revision, stats.resueltas],
-                backgroundColor: ['#FF3B30', '#FF9500', '#34C759'],
-                borderWidth: 4,
-                borderColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                hoverOffset: 4
-            }]
-        },
-        options: { cutout: '75%', plugins: { legend: { display: false }, tooltip: { padding: 12, cornerRadius: 8 } } }
-    });
+        // 1. Gráfica de Dona (Estados)
+        const ctxEstados = document.getElementById('graficaEstados');
+        if (ctxEstados) {
+            new Chart(ctxEstados.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: total > 0 ? ['Pendiente', 'En Revisión', 'Resuelta'] : ['Sin tickets'],
+                    datasets: [{
+                        data: total > 0 ? [pendientes, revision, resueltas] : [1],
+                        backgroundColor: total > 0 ? ['#FF3B30', '#FF9500', '#34C759'] : [gridColor],
+                        borderWidth: 4,
+                        borderColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: total > 0, padding: 12, cornerRadius: 8 }
+                    }
+                }
+            });
+        }
 
-    new Chart(document.getElementById('graficaCategorias').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: catLabels,
-            datasets: [{
-                label: 'Tickets',
-                data: catValues,
-                backgroundColor: '#32ADE6',
-                borderRadius: 6,
-                barThickness: 20
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { precision: 0, color: textColor } },
-                x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor } }
-            }
+        // 2. Gráfica de Barras Dinámica (Categorías)
+        let categoriasData = {};
+        try {
+            categoriasData = JSON.parse(payload.dataset.categorias || '{}');
+        } catch (e) {
+            categoriasData = {};
+        }
+
+        const catLabels = Object.keys(categoriasData);
+        const catValues = Object.values(categoriasData);
+
+        const ctxCategorias = document.getElementById('graficaCategorias');
+        if (ctxCategorias) {
+            new Chart(ctxCategorias.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: catLabels.length > 0 ? catLabels : ['Sin datos'],
+                    datasets: [{
+                        label: 'Tickets',
+                        data: catValues.length > 0 ? catValues : [0],
+                        backgroundColor: '#32ADE6',
+                        borderRadius: 6,
+                        barThickness: 28
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor, drawBorder: false },
+                            ticks: { precision: 0, color: textColor }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: textColor }
+                        }
+                    }
+                }
+            });
         }
     });
 </script>
