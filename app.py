@@ -33,6 +33,11 @@ app.secret_key = os.getenv("SECRET_KEY", "super_secreto_futurista_123")
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+
+def archivo_imagen_valido(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+
 # ==========================================
 # FUNCIONES BASE MULTI-EMPRESA (V2.0)
 # ==========================================
@@ -274,14 +279,38 @@ def perfil():
     cliente = get_db()
     if request.method == 'POST':
         try:
+            actual = cliente.execute(
+                "SELECT foto FROM usuarios WHERE id = ? AND org_id = ?",
+                (session.get('id_usuario'), org_id())
+            ).rows
+            nueva_foto = actual[0][0] if actual else None
+
+            if request.form.get('eliminar_foto') == '1':
+                nueva_foto = None
+            elif 'foto_archivo' in request.files and request.files['foto_archivo'].filename != '':
+                file = request.files['foto_archivo']
+                if not archivo_imagen_valido(file.filename):
+                    cliente.close()
+                    flash('Formato de imagen no válido. Usa PNG, JPG, JPEG, WEBP o GIF.', 'danger')
+                    return redirect(url_for('perfil'))
+                filename = f"perfil_{session.get('id_usuario')}_{int(datetime.now().timestamp())}_{secure_filename(file.filename)}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                nueva_foto = f"/static/uploads/{filename}"
+            elif request.form.get('foto_url', '').strip():
+                nueva_foto = request.form.get('foto_url').strip()
+
             cliente.execute(
                 "UPDATE usuarios SET telefono = ?, foto = ? WHERE id = ? AND org_id = ?",
-                (request.form.get('telefono'), request.form.get('foto'), session.get('id_usuario'), org_id())
+                (request.form.get('telefono'), nueva_foto, session.get('id_usuario'), org_id())
             )
-            session['foto'] = request.form.get('foto')
-        except Exception:
-            pass
+            session['foto'] = nueva_foto
+            flash('Tu perfil se actualizó correctamente.', 'success')
+        except Exception as e:
+            print(e)
+            flash('No se pudieron guardar los cambios.', 'danger')
+        cliente.close()
         return redirect(url_for('perfil'))
+
     try:
         datos_perfil = cliente.execute(
             "SELECT nombre, usuario, email, rol, telefono, foto FROM usuarios WHERE id = ? AND org_id = ?",
@@ -571,7 +600,6 @@ def ver_detalle(id):
 
         mensajes = cliente.execute(query_mensajes, (id, org_id())).rows
 
-        # Consultar historial de auditoría del ticket
         historial = cliente.execute("""
             SELECT h.accion, h.detalle, h.fecha, u.nombre, u.rol
             FROM historial_incidencias h
@@ -762,7 +790,6 @@ def reabrir_incidencia(id):
                 (org_id(), id, session['id_usuario'], f"🔄 Ticket reabierto. Motivo: {motivo}")
             )
 
-            # Notificar al técnico asignado o al solicitante según quién reabrió
             destino_noti = ticket[0][2] if session.get('rol') == 'Solicitante' else ticket[0][1]
             if destino_noti and destino_noti != session.get('id_usuario'):
                 cliente.execute(
@@ -1052,7 +1079,6 @@ def exportar_pdf():
         elements.append(Paragraph(f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M')} | Emitido por: {session.get('nombre')}", styles['Normal']))
         elements.append(Spacer(1, 14))
 
-        # Tabla resumen ejecutivo
         resumen_data = [
             ['Total Incidencias', 'Pendientes', 'En Revisión', 'Resueltas'],
             [str(total), str(pendientes), str(revision), str(resueltas)]

@@ -263,18 +263,21 @@
             <a href="/perfil" class="nav-link"><i class="fa-solid fa-gear"></i> Perfil</a>
             <a href="/logout" class="nav-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Salir</a>
 
-            <div class="profile-box"
-                style="display: flex; align-items: center; gap: 12px; background-color: var(--apple-bg); padding: 12px; border-radius: 12px; margin-top: 16px; border: 1px solid var(--apple-border); transition: all 0.3s;">
-                <img src="{{ session.get('foto') or 'https://ui-avatars.com/api/?name=' + session.get('nombre', 'U') + '&background=0071E3&color=fff' }}"
-                    style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover;">
-                <div style="overflow: hidden;">
+            {% set partes_nombre = (session.get('nombre') or 'Usuario').split() %}
+            {% set nombre_corto = partes_nombre[0] ~ (' ' ~ partes_nombre[1] if partes_nombre|length > 1 else '') %}
+            <a href="/perfil" class="profile-box"
+                style="display: flex; align-items: center; gap: 14px; text-decoration: none; background-color: var(--apple-bg); padding: 12px 14px; border-radius: 14px; margin-top: 16px; border: 1px solid var(--apple-border); transition: all 0.2s;">
+                <img src="{{ session.get('foto') or 'https://ui-avatars.com/api/?name=' + (nombre_corto | urlencode) + '&background=0071E3&color=fff&bold=true' }}"
+                    style="width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex-shrink: 0;">
+                <div style="overflow: hidden; min-width: 0;">
                     <p
-                        style="margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--apple-text-main); white-space: nowrap; text-overflow: ellipsis;">
-                        {{ session.get('nombre') }}</p>
-                    <p style="margin: 0; font-size: 0.8rem; color: var(--apple-text-secondary);">{{ session.get('rol')
-                        }}</p>
+                        style="margin: 0; font-size: 0.98rem; font-weight: 600; color: var(--apple-text-main); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ nombre_corto }}</p>
+                    <p
+                        style="margin: 2px 0 0 0; font-size: 0.84rem; color: var(--apple-text-secondary); line-height: 1.2;">
+                        {{ session.get('rol') }}</p>
                 </div>
-            </div>
+            </a>
         </div>
     </aside>
     {% endblock %}
