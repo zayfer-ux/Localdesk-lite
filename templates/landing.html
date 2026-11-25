@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalDesk — Plataforma Help Desk Multi-empresa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-canvas: #F5F5F7;
+            --surface: #FFFFFF;
+            --text-primary: #1D1D1F;
+            --text-secondary: #86868B;
+            --apple-blue: #0071E3;
+            --apple-blue-hover: #0077ED;
+            --apple-blue-soft: rgba(0, 113, 227, 0.10);
+            --apple-cyan: #32ADE6;
+            --apple-green: #34C759;
+            --apple-green-soft: rgba(52, 199, 89, 0.12);
+            --apple-orange: #FF9500;
+            --border-light: #E5E5EA;
+            --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.07), 0 4px 14px -2px rgba(0, 0, 0, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            background-image:
+                radial-gradient(circle at 82% 22%, rgba(0, 113, 227, 0.07) 0%, transparent 42%),
+                radial-gradient(circle at 15% 65%, rgba(50, 173, 230, 0.05) 0%, transparent 38%);
+        }
+
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 28px;
+        }
+
+        /* =========================================
+           NAVBAR SUPERIOR (APPLE FROSTED GLASS)
+           ========================================= */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(245, 245, 247, 0.82);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(229, 229, 234, 0.8);
+        }
+
+        .navbar {
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.4px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0071E3 0%, #32ADE6 100%);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 14px rgba(0, 113, 227, 0.28);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--apple-blue);
+        }
+
+        .btn-apple-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--apple-blue);
+            color: #FFFFFF;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 11px 22px;
+            border-radius: 980px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(0, 113, 227, 0.28);
+        }
+
+        .btn-apple-primary:hover {
+            background-color: var(--apple-blue-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(0, 113, 227, 0.36);
+        }
+
+        .btn-apple-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #FFFFFF;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 600;
+            padding: 13px 24px;
+            border-radius: 980px;
+            border: 1px solid var(--border-light);
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-apple-secondary:hover {
+            background-color: #FAFAFC;
+            border-color: #D2D2D7;
+            color: var(--apple-blue);
+        }
+
+        /* =========================================
+           HERO SECTION (SPLIT 2 COLUMNAS)
+           ========================================= */
+        .hero {
+            padding: 68px 0 76px 0;
+            display: grid;
+            grid-template-columns: 1.12fr 0.88fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .pill-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            padding: 5px 15px 5px 6px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+
+        .pill-tag {
+            background: linear-gradient(135deg, #0071E3 0%, #32ADE6 100%);
+            color: #FFFFFF;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.2px;
+        }
+
+        .hero-title {
+            font-size: 3.55rem;
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -1.8px;
+            color: var(--text-primary);
+            margin-bottom: 22px;
+        }
+
+        .hero-title .accent-word {
+            background: linear-gradient(135deg, #0071E3 0%, #32ADE6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+        }
+
+        .inline-metric-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 7px 14px;
+            vertical-align: middle;
+            margin-left: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            transform: translateY(-4px);
+        }
+
+        .inline-metric-text {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            line-height: 1.1;
+        }
+
+        .inline-metric-text strong {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0;
+        }
+
+        .inline-metric-text span {
+            font-size: 0.64rem;
+            color: var(--text-secondary);
+            letter-spacing: 0;
+            font-weight: 500;
+        }
+
+        .mini-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 22px;
+        }
+
+        .mini-bars i {
+            display: block;
+            width: 5px;
+            border-radius: 2px;
+            background: #E5E5EA;
+        }
+
+        .mini-bars i:nth-child(1) {
+            height: 11px;
+        }
+
+        .mini-bars i:nth-child(2) {
+            height: 16px;
+            background: var(--apple-cyan);
+        }
+
+        .mini-bars i:nth-child(3) {
+            height: 22px;
+            background: var(--apple-green);
+        }
+
+        .hero-subtitle {
+            font-size: 1.06rem;
+            color: var(--text-secondary);
+            max-width: 510px;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            padding: 14px 28px;
+            font-size: 0.96rem;
+        }
+
+        .trust-strip p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            font-weight: 500;
+        }
+
+        .trust-logos {
+            display: flex;
+            align-items: center;
+            gap: 26px;
+            flex-wrap: wrap;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.92rem;
+        }
+
+        .trust-logos span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+        }
+
+        .trust-logos i {
+            color: var(--apple-blue);
+        }
+
+        /* =========================================
+           COLUMNA DERECHA: TARJETAS UI FLOTANTES
+           ========================================= */
+        .ui-showcase {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .ui-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 20px 24px;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .ui-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 24px 48px -15px rgba(0, 113, 227, 0.12);
+        }
+
+        /* Tarjeta 1: Equipo y eficiencia */
+        .card-team {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            max-width: 420px;
+            margin-left: auto;
+            width: 100%;
+        }
+
+        .avatar-stack {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .avatar-stack img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2.5px solid #FFFFFF;
+            margin-left: -10px;
+            object-fit: cover;
+        }
+
+        .avatar-stack img:first-child {
+            margin-left: 0;
+        }
+
+        .card-team-text {
+            font-size: 0.84rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.35;
+        }
+
+        .card-team-text strong {
+            color: var(--apple-blue);
+            font-weight: 700;
+        }
+
+        /* Tarjeta 2: Métricas y barras */
+        .card-analytics {
+            padding: 22px 24px;
+        }
+
+        .mini-tabs {
+            display: flex;
+            justify-content: space-around;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .mini-tabs span.active {
+            color: var(--apple-blue);
+            position: relative;
+        }
+
+        .mini-tabs span.active::after {
+            content: "";
+            position: absolute;
+            bottom: -13px;
+            left: 0;
+            right: 0;
+            height: 2.5px;
+            background: var(--apple-blue);
+            border-radius: 2px;
+        }
+
+        .analytics-body {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .big-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .big-stat h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: var(--text-primary);
+        }
+
+        .stat-delta {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--apple-green);
+        }
+
+        .analytics-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            max-width: 195px;
+        }
+
+        .chart-columns {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .chart-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-col .bar {
+            width: 18px;
+            border-radius: 6px;
+            background: #E5E5EA;
+        }
+
+        .chart-col.mid .bar {
+            background: var(--apple-cyan);
+        }
+
+        .chart-col.highlight .bar {
+            background: var(--apple-blue);
+        }
+
+        .chart-col span {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .chart-col.highlight span {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        /* Tarjeta 3: SLA y Exportación */
+        .card-export {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 390px;
+            width: 100%;
+        }
+
+        .export-metric span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .export-metric strong {
+            font-size: 1.45rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+        }
+
+        .export-badge-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--apple-blue);
+            color: #FFFFFF;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
+        }
+
+        .export-badge-btn i {
+            background: rgba(255, 255, 255, 0.18);
+            padding: 6px;
+            border-radius: 7px;
+        }
+
+        /* =========================================
+           SECCIÓN DE CARACTERÍSTICAS DEL PROYECTO
+           ========================================= */
+        .section {
+            padding: 72px 0;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 640px;
+            margin: 0 auto 48px auto;
+        }
+
+        .section-header span {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--apple-blue);
+        }
+
+        .section-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.025);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05);
+        }
+
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--apple-blue-soft);
+            color: var(--apple-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            margin-bottom: 18px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+
+        /* =========================================
+           CTA FINAL Y FOOTER
+           ========================================= */
+        .cta-box {
+            background: linear-gradient(145deg, #1D1D1F 0%, #2C2C2E 100%);
+            color: #FFFFFF;
+            border-radius: 26px;
+            padding: 56px 40px;
+            text-align: center;
+            margin: 24px 0 64px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.18);
+        }
+
+        .cta-box::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 560px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(0, 113, 227, 0.35) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-box h2 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .cta-box p {
+            color: #A1A1A6;
+            max-width: 520px;
+            margin: 0 auto 28px auto;
+            font-size: 0.98rem;
+            position: relative;
+        }
+
+        .btn-cta-glass {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(255, 255, 255, 0.12);
+            color: #FFFFFF;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 13px 24px;
+            border-radius: 980px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            transition: all 0.2s;
+        }
+
+        .btn-cta-glass:hover {
+            background-color: rgba(255, 255, 255, 0.20);
+        }
+
+        footer {
+            border-top: 1px solid var(--border-light);
+            padding: 28px 0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        @media (max-width: 960px) {
+            .hero {
+                grid-template-columns: 1fr;
+                padding-top: 40px;
+            }
+
+            .hero-title {
+                font-size: 2.6rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card-team,
+            .card-export {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="container navbar">
+            <a href="/" class="brand">
+                <span class="brand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 5v14h7 M5 19l7-7v-7 M12 5q8 0 8 7t-8 7" />
+                    </svg>
+                </span>
+                LocalDesk
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="#caracteristicas">Características</a></li>
+                <li><a href="#arquitectura">Arquitectura SaaS</a></li>
+                <li><a href="#roles">Roles y Permisos</a></li>
+                <li><a href="/registro">Crear Empresa</a></li>
+            </ul>
+
+            <a href="/login" class="btn-apple-primary">
+                Ir al Sistema <i class="fa-solid fa-chevron-right" style="font-size: 0.72rem;"></i>
+            </a>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- HERO PRINCIPAL -->
+        <section class="hero">
+            <div>
+                <div class="pill-banner">
+                    <span class="pill-tag">v2.0</span>
+                    <span>Mesa de Ayuda Multi-empresa con Auditoría <i class="fa-solid fa-chevron-right"
+                            style="font-size: 0.68rem; margin-left: 4px;"></i></span>
+                </div>
+
+                <h1 class="hero-title">
+                    Convierte tus Reportes
+                    <span>
+                        Técnicos en
+                        <span class="inline-metric-pill">
+                            <span class="inline-metric-text">
+                                <strong>99.4%</strong>
+                                <span>Resolución</span>
+                            </span>
+                            <span class="mini-bars">
+                                <i></i><i></i><i></i>
+                            </span>
+                        </span>
+                    </span>
+                    <span class="accent-word">Soluciones Ágiles</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    Administra incidencias de soporte técnico sin complicaciones con una plataforma centralizada:
+                    aislamiento por organización, seguimiento con historial auditado, chat interno y reportes
+                    ejecutivos.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="/login" class="btn-apple-primary btn-hero-primary">
+                        Ir al Sistema <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <a href="/registro" class="btn-apple-secondary">
+                        Registrar Organización <i class="fa-solid fa-chevron-right" style="font-size: 0.72rem;"></i>
+                    </a>
+                </div>
+
+                <div class="trust-strip">
+                    <p>Diseñado bajo estándares modernos de ingeniería de software</p>
+                    <div class="trust-logos">
+                        <span><i class="fa-solid fa-database"></i> Turso Cloud</span>
+                        <span><i class="fa-brands fa-python"></i> Flask Core</span>
+                        <span><i class="fa-solid fa-shield-halved"></i> Multi-Tenant</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARJETAS VISUALES FLOTANTES -->
+            <div class="ui-showcase">
+                <!-- Tarjeta 1 -->
+                <div class="ui-card card-team">
+                    <div class="avatar-stack">
+                        <img src="https://ui-avatars.com/api/?name=Equipo+Soporte&background=0071E3&color=fff&bold=true"
+                            alt="Soporte">
+                        <img src="https://ui-avatars.com/api/?name=Ana+Lopez&background=32ADE6&color=fff&bold=true"
+                            alt="Técnico">
+                        <img src="https://ui-avatars.com/api/?name=Carlos+Ruiz&background=1D1D1F&color=fff&bold=true"
+                            alt="Admin">
+                    </div>
+                    <div class="card-team-text">
+                        Tu equipo de soporte resolvió <strong>+94%</strong> de los tickets asignados esta semana
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2 -->
+                <div class="ui-card card-analytics">
+                    <div class="mini-tabs">
+                        <span class="active">Resumen</span>
+                        <span>Incidencias</span>
+                        <span>Auditoría</span>
+                    </div>
+                    <div class="analytics-body">
+                        <div>
+                            <div class="big-stat">
+                                <h3>LD-0148</h3>
+                                <span class="stat-delta"><i class="fa-solid fa-arrow-trend-up"></i> 58%</span>
+                            </div>
+                            <p class="analytics-desc">
+                                Reducción en tiempos de atención técnica por departamento
+                            </p>
+                        </div>
+
+                        <div class="chart-columns">
+                            <div class="chart-col">
+                                <div class="bar" style="height: 46px;"></div>
+                                <span>Abr</span>
+                            </div>
+                            <div class="chart-col">
+                                <div class="bar" style="height: 36px;"></div>
+                                <span>May</span>
+                            </div>
+                            <div class="chart-col mid">
+                                <div class="bar" style="height: 54px;"></div>
+                                <span>Jun</span>
+                            </div>
+                            <div class="chart-col highlight">
+                                <div class="bar" style="height: 68px;"></div>
+                                <span>Jul</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3 -->
+                <div class="ui-card card-export">
+                    <div class="export-metric">
+                        <span>Efectividad de Cierre</span>
+                        <strong>98.5% SLA</strong>
+                    </div>
+                    <div class="export-badge-btn">
+                        <span>Exportar PDF</span>
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CARACTERÍSTICAS DEL PROYECTO -->
+        <section id="caracteristicas" class="section">
+            <div class="section-header">
+                <span>Capacidades del Sistema</span>
+                <h2>Todo el ciclo de soporte en un solo lugar</h2>
+                <p>Desde que un usuario reporta una falla hasta el cierre documentado con respaldo en PDF y CSV.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-building-shield"></i></div>
+                    <h3>Aislamiento Multi-empresa</h3>
+                    <p>Cada organización opera en su propio entorno privado mediante código de invitación único, áreas
+                        personalizadas y verificación OTP por correo.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(50, 173, 230, 0.14); color: #0071E3;"><i
+                            class="fa-solid fa-clock-rotate-left"></i></div>
+                    <h3>Tickets LD-XXXX y Auditoría</h3>
+                    <p>Asignación de técnicos, notas internas invisibles para solicitantes, reapertura controlada y
+                        línea de tiempo con cada cambio registrado.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: var(--apple-green-soft); color: var(--apple-green);"><i
+                            class="fa-solid fa-comments"></i></div>
+                    <h3>Chat Interno y Alertas en Vivo</h3>
+                    <p>Comunicación directa 1 a 1 entre técnicos con envío de archivos adjuntos, notificaciones
+                        instantáneas y exportación ejecutiva en PDF.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ROLES Y ARQUITECTURA -->
+        <section id="roles" class="section">
+            <div class="section-header" id="arquitectura">
+                <span>Control de Acceso</span>
+                <h2>Cuatro niveles de permisos integrados</h2>
+                <p>Seguridad basada en roles (RBAC) para proteger la operación diaria de cada equipo.</p>
+            </div>
+
+            <div class="features-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="feature-card">
+                    <div class="feature-icon" style="width: 38px; height: 38px; font-size: 1rem;"><i
+                            class="fa-solid fa-crown"></i></div>
+                    <h3>Propietario</h3>
+                    <p>Crea la empresa, administra roles globales, regenera códigos de invitación y puede transferir la
+                        titularidad.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="width: 38px; height: 38px; font-size: 1rem;"><i
+                            class="fa-solid fa-sliders"></i></div>
+                    <h3>Administrador</h3>
+                    <p>Configura departamentos y categorías, gestiona usuarios, elimina tickets y exporta reportes
+                        ejecutivos.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"
+                        style="width: 38px; height: 38px; font-size: 1rem; background: rgba(50, 173, 230, 0.14); color: #0071E3;">
+                        <i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <h3>Técnico</h3>
+                    <p>Atiende incidencias asignadas, actualiza estados, redacta notas internas, cierra tickets y usa el
+                        chat privado.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"
+                        style="width: 38px; height: 38px; font-size: 1rem; background: var(--apple-green-soft); color: var(--apple-green);">
+                        <i class="fa-solid fa-user-check"></i></div>
+                    <h3>Solicitante</h3>
+                    <p>Reporta incidencias indicando activo y ubicación, adjunta evidencias, recibe respuestas y reabre
+                        casos si persisten.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- BANNER FINAL DE ACCESO -->
+        <section class="cta-box">
+            <h2>Comienza a gestionar tus incidencias hoy</h2>
+            <p>Accede con tu cuenta empresarial o crea una nueva organización en menos de un minuto con verificación por
+                correo.</p>
+            <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; position: relative;">
+                <a href="/login" class="btn-apple-primary btn-hero-primary">
+                    Ir al Sistema <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <a href="/registro" class="btn-cta-glass">
+                    Crear Cuenta Nueva
+                </a>
+            </div>
+        </section>
+
+        <footer>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="brand-icon" style="width: 26px; height: 26px; border-radius: 7px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 5v14h7 M5 19l7-7v-7 M12 5q8 0 8 7t-8 7" />
+                    </svg>
+                </span>
+                <strong style="color: var(--text-primary);">LocalDesk</strong>
+                <span>&mdash; Sistema de Gestión de Incidencias y Soporte Técnico</span>
+            </div>
+            <div>&copy; 2026 LocalDesk. Todos los derechos reservados.</div>
+        </footer>
+    </main>
+
+</body>
+
+</html>

@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
 load_dotenv()
@@ -121,7 +121,7 @@ def centro_notificaciones():
     return render_template('notificaciones.html', notificaciones=notifs)
 
 # ==========================================
-# AUTENTICACIÓN Y REGISTRO (V2.0 - MULTI-EMPRESA)
+# AUTENTICACIÓN, REGISTRO Y PERFIL (V2.0)
 # ==========================================
 def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
     msg = MIMEMultipart('alternative')
@@ -142,6 +142,9 @@ def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'logeado' in session:
+        return redirect(url_for('inicio'))
+
     if request.method == 'POST':
         try:
             cliente = get_db()
@@ -271,7 +274,7 @@ def verificar_registro():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(url_for('inicio'))
 
 @app.route('/perfil', methods=['GET', 'POST'])
 @login_required
@@ -418,11 +421,13 @@ def vaciar_chat(dest_id):
     return redirect(url_for('chat_interno', dest_id=dest_id))
 
 # ==========================================
-# RUTAS DEL SISTEMA PRINCIPAL (INCIDENCIAS V2.0)
+# RUTAS DEL SISTEMA PRINCIPAL (LANDING + DASHBOARD)
 # ==========================================
 @app.route('/')
-@login_required
 def inicio():
+    if 'logeado' not in session:
+        return render_template('landing.html')
+
     busqueda = request.args.get('q', '')
     es_solicitante = (session.get('rol') == 'Solicitante')
     try:
