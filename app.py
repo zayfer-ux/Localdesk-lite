@@ -4,6 +4,8 @@ import csv
 import string
 import random
 import smtplib
+import urllib.request
+import urllib.error
 from datetime import datetime
 import json
 from functools import wraps
@@ -26,6 +28,7 @@ url = os.getenv("TURSO_DATABASE_URL")
 token = os.getenv("TURSO_AUTH_TOKEN")
 MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super_secreto_futurista_123")
@@ -124,20 +127,75 @@ def centro_notificaciones():
 # AUTENTICACIÓN, REGISTRO Y PERFIL (V2.0)
 # ==========================================
 def enviar_codigo_registro(destinatario, codigo, nombre_usuario):
+    cuerpo_html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #F5F5F7; padding: 40px 20px; text-align: center; margin: 0; }}
+        .box {{ max-width: 460px; margin: 0 auto; background: #FFFFFF; padding: 36px 32px; border-radius: 16px; border: 1px solid #E5E5EA; }}
+        .brand {{ font-size: 18px; font-weight: 700; color: #1D1D1F; margin-bottom: 16px; }}
+        .code {{ font-size: 32px; letter-spacing: 8px; color: #0071E3; background: #F5F5F7; padding: 16px 24px; border-radius: 12px; display: inline-block; font-weight: 700; margin: 20px 0; }}
+        .footer {{ font-size: 12px; color: #86868B; margin-top: 20px; }}
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="brand">LocalDesk</div>
+        <h2 style="color: #1D1D1F; margin: 0 0 8px 0; font-size: 20px;">Hola, {nombre_usuario}</h2>
+        <p style="color: #86868B; font-size: 14px; margin: 0;">Utiliza este código de verificación para activar tu cuenta empresarial:</p>
+        <div class="code">{codigo}</div>
+        <p class="footer">Si no solicitaste este registro, puedes ignorar este mensaje.</p>
+    </div>
+</body>
+</html>"""
+
+    api_key = os.getenv("BREVO_API_KEY")
+    remitente = os.getenv("MAIL_USERNAME")
+
+    # 1. Envío mediante API HTTP de Brevo (recomendado para Render / nube)
+    if api_key and remitente:
+        payload = {
+            "sender": {"name": "LocalDesk Soporte", "email": remitente},
+            "to": [{"email": destinatario, "name": nombre_usuario}],
+            "subject": "Verifica tu cuenta - LocalDesk",
+            "htmlContent": cuerpo_html
+        }
+        req = urllib.request.Request(
+            "https://api.brevo.com/v3/smtp/email",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "accept": "application/json",
+                "api-key": api_key,
+                "content-type": "application/json"
+            },
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return resp.status in (200, 201, 202)
+        except urllib.error.HTTPError as e:
+            print("Error HTTP Brevo:", e.code, e.read().decode("utf-8", errors="ignore"))
+            return False
+        except Exception as e:
+            print("Error de red Brevo:", e)
+            return False
+
+    # 2. Respaldo SMTP tradicional (para pruebas locales si no hay BREVO_API_KEY)
     msg = MIMEMultipart('alternative')
-    msg['From'] = f'"LocalDesk Soporte" <{MAIL_USERNAME}>'
+    msg['From'] = f'"LocalDesk Soporte" <{remitente}>'
     msg['To'] = destinatario
     msg['Subject'] = "Verifica tu cuenta - LocalDesk"
-    cuerpo_html = f"""<!DOCTYPE html><html lang="es"><head><style>body {{ font-family: sans-serif; background-color: #F5F5F7; padding: 40px; text-align: center; }} .box {{ background: white; padding: 40px; border-radius: 12px; }} .code {{ font-size: 32px; letter-spacing: 8px; color: #0071E3; background: #F5F5F7; padding: 16px; border-radius: 8px; display: inline-block; font-weight: bold; margin: 24px 0; }}</style></head><body><div class="box"><h2 style="color: #1D1D1F;">Hola, {nombre_usuario}</h2><p style="color: #86868B;">Utiliza este código para activar tu cuenta.</p><div class="code">{codigo}</div></div></body></html>"""
     msg.attach(MIMEText(cuerpo_html, 'html'))
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
         server.starttls()
-        server.login(MAIL_USERNAME, MAIL_PASSWORD)
+        server.login(remitente, os.getenv("MAIL_PASSWORD"))
         server.send_message(msg)
         server.quit()
         return True
-    except Exception:
+    except Exception as e:
+        print("Error SMTP:", e)
         return False
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -223,7 +281,7 @@ def registro():
         if enviar_codigo_registro(email, session['reg_temp']['otp'], nombre):
             return redirect(url_for('verificar_registro'))
         else:
-            flash('Error al enviar el correo.', 'danger')
+            flash('Error al enviar el correo de verificación.', 'danger')
     return render_template('registro.html')
 
 @app.route('/verificar_registro', methods=['GET', 'POST'])
